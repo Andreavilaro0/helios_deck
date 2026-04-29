@@ -115,7 +115,7 @@ GET https://api.open-meteo.com/v1/forecast?latitude=...&longitude=...&hourly=tem
 
 ---
 
-## NOAA Kp Endpoint Details (for Phase 1)
+## NOAA Kp Endpoint Details (Phase 1 — implemented ✓)
 
 ```
 GET https://services.swpc.noaa.gov/json/planetary_k_index_1m.json

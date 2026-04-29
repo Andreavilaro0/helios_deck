@@ -10,6 +10,7 @@ import {
   getLatestSignalByName,
   listSignals,
   saveSignal,
+  signalExists,
 } from "./signals.server";
 import type { SignalRecordInput } from "~/types/signal";
 
@@ -104,6 +105,61 @@ describe("getLatestSignalByName", () => {
   it("does not return records of a different signal name", () => {
     saveSignal({ ...VALID_INPUT, signal: "solar-wind-speed", unit: "km/s" }, db);
     expect(getLatestSignalByName("kp-index", db)).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// signalExists
+// ---------------------------------------------------------------------------
+
+describe("signalExists", () => {
+  it("returns false when the database is empty", () => {
+    expect(
+      signalExists(
+        { timestamp: VALID_INPUT.timestamp, source: "noaa-swpc", signal: "kp-index" },
+        db
+      )
+    ).toBe(false);
+  });
+
+  it("returns true after the matching signal is saved", () => {
+    saveSignal(VALID_INPUT, db);
+    expect(
+      signalExists(
+        { timestamp: VALID_INPUT.timestamp, source: "noaa-swpc", signal: "kp-index" },
+        db
+      )
+    ).toBe(true);
+  });
+
+  it("returns false when timestamp differs", () => {
+    saveSignal(VALID_INPUT, db);
+    expect(
+      signalExists(
+        { timestamp: "2026-04-29T00:00:00Z", source: "noaa-swpc", signal: "kp-index" },
+        db
+      )
+    ).toBe(false);
+  });
+
+  it("returns false when source differs", () => {
+    saveSignal(VALID_INPUT, db);
+    expect(
+      signalExists(
+        { timestamp: VALID_INPUT.timestamp, source: "gfz-potsdam", signal: "kp-index" },
+        db
+      )
+    ).toBe(false);
+  });
+
+  it("returns false when signal name differs", () => {
+    saveSignal(VALID_INPUT, db);
+    expect(
+      signalExists(
+        { timestamp: VALID_INPUT.timestamp, source: "noaa-swpc", signal: "solar-wind-speed" },
+        db
+      )
+    ).toBe(false);
   });
 });
 

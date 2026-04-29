@@ -86,17 +86,23 @@ the column names make the serialization visible at every call site. See ADR-010.
 External APIs are not called on every page load. Data is pre-fetched and stored:
 
 ```
-Ingest trigger (cron route or scheduled action)
-  └─ fetcher: GET https://services.swpc.noaa.gov/...
-       └─ normalizer: raw JSON → SignalRecord[]
-            └─ db.insertSignals(records)
+Ingest trigger (npm run ingest:noaa-kp, or future cron route)
+  └─ app/services/ingest/noaa-kp.server.ts  (coordinator)
+       └─ fetcher: GET https://services.swpc.noaa.gov/json/planetary_k_index_1m.json
+            └─ normalizer: raw JSON → SignalRecordInput[]
+                 └─ signalExists() — skip if (timestamp, source, signal) already stored
+                      └─ saveSignal() → data/helios.sqlite
 
 Page load
-  └─ loader: db.getLatestSignals({ signal: 'kp-index', limit: 24 })
+  └─ loader: listSignals() / getLatestSignalByName('kp-index')
        └─ component receives clean SignalRecord[]
 ```
 
 This separation means the UI is never blocked by a slow external API.
+
+The ingest coordinator (`ingest/noaa-kp.server.ts`) returns an `IngestResult`
+summary (`fetched`, `saved`, `skipped`, `errors`) so callers can report or act
+on partial failures without crashing the entire ingest run.
 
 ---
 
@@ -124,7 +130,8 @@ See `docs/data-contract.md` for the full field-level specification.
 | `types/<domain>.ts` | `types/signal.ts` | Domain type definitions |
 | `services/fetchers/<source>.server.ts` | `fetchers/noaa-swpc.server.ts` | One file per API source |
 | `services/normalizers/<source>.ts` | `normalizers/noaa-swpc.ts` | One normalizer per source |
-| `services/signals.server.ts` | — | Server-only data access facade (saveSignal, listSignals, …) |
+| `services/signals.server.ts` | — | Server-only data access facade (saveSignal, listSignals, signalExists, …) |
+| `services/ingest/<source>.server.ts` | `ingest/noaa-kp.server.ts` | Pipeline coordinator: fetcher → normalizer → saveSignal |
 | `db/schema.sql` | — | Canonical SQLite table and index definitions |
 | `db/db.server.ts` | — | `openDb()` / `getDb()` — better-sqlite3 connection |
 | `widgets/<Signal>Widget.tsx` | `KpIndexWidget.tsx` | One widget per signal type |

@@ -139,6 +139,25 @@ export function listSignals(
 }
 
 /**
+ * Returns true if a record with the same (timestamp, source, signal) already exists.
+ * Used by the ingest layer to skip duplicates without relying on INSERT OR IGNORE,
+ * which would silently swallow constraint errors unrelated to duplicates.
+ */
+export function signalExists(
+  identity: { timestamp: ISOTimestamp; source: SignalSource; signal: SignalName },
+  db: Database.Database = getDb()
+): boolean {
+  const row = db
+    .prepare(
+      `SELECT 1 FROM signals
+       WHERE timestamp = ? AND source = ? AND signal = ?
+       LIMIT 1`
+    )
+    .get(identity.timestamp, identity.source, identity.signal);
+  return row !== undefined;
+}
+
+/**
  * Returns the most recent record for a given signal name, or null if none.
  * ISO 8601 timestamps sort correctly as strings, so ORDER BY timestamp DESC works.
  */

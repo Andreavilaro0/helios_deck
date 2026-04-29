@@ -222,3 +222,35 @@ Loaders should not import from `app/db/` directly. `signals.server.ts` is the si
 - **`value REAL NOT NULL`** — rejected. Would force structured signals (ISS position object, flare event object) to break the contract. `TEXT` (JSON blob) accommodates both scalar and structured values.
 - **`metadata TEXT` (nullable)** — considered. Rejected in favour of `NOT NULL DEFAULT '{}'` to keep the read path simple: callers always get a valid JSON object, never `null`.
 - **Drizzle ORM** — deferred. Once the schema is stable and Phase 2 adds more complex queries, Drizzle provides type-safe SQL without the overhead of Prisma's generated client. Not needed yet.
+
+---
+
+## ADR-011 — Ingest coordinator as a separate service layer
+
+**Date:** 2026-04-30
+**Status:** Accepted
+
+**Context:**
+Phase 1D connects the full pipeline: fetcher → normalizer → `saveSignal()`. This coordination logic needs to live somewhere. Options are: inline in a route action, inside `signals.server.ts`, or as a dedicated ingest service.
+
+**Decision:** A dedicated `app/services/ingest/<source>.server.ts` file per source. Each exports a single async function (`ingestNoaaKpSignals`) that coordinates the pipeline and returns an `IngestResult` summary.
+
+**What `IngestResult` contains:**
+```ts
+{ source, signal, fetched, saved, skipped, errors }
+```
+Errors are collected (not thrown) so a partial failure in one record does not abort the entire ingest run. The caller (script or future cron route) decides what to do with errors.
+
+**Duplicate detection:** `signalExists({ timestamp, source, signal })` added to `signals.server.ts`. Checked before every `saveSignal()` call. Avoids `INSERT OR IGNORE` (which would silently swallow unrelated constraint violations) while keeping the logic explicit.
+
+**Dependency injection:** Both `fetcher` and `db` are injectable parameters. Tests pass a fake fetcher and `openDb(':memory:')` — the real NOAA API is never called from tests.
+
+**Why not inline in a route action?**
+Route actions run per HTTP request. Ingest is a background operation triggered on demand (script today, cron route in Phase 3). Keeping it as a standalone function makes it reusable across both contexts.
+
+**Why not add coordination to `signals.server.ts`?**
+`signals.server.ts` is the DB boundary — it knows SQL, not NOAA. Adding fetcher/normalizer calls there would violate the layer contract: `signals.server.ts` must not import from `services/fetchers/` or `services/normalizers/`.
+
+**Alternatives considered:**
+- **Inline in a `+server` route** — couples pipeline logic to an HTTP handler; harder to test.
+- **Throw on first error instead of collecting** — rejected. NOAA returns up to 500 entries per call; a single bad entry would silently discard valid data. Collecting errors and continuing is safer for bulk ingestion.

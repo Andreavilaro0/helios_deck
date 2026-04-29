@@ -34,7 +34,7 @@ Signals tracked:
 
 ## Project Status
 
-**Current phase: 0 — Documentation and Architecture**
+**Current phase: 1D — Full ingest pipeline (NOAA → SQLite)**
 
 See [`docs/plan.md`](docs/plan.md) for the full roadmap.
 
@@ -88,14 +88,28 @@ docker run -p 3000:3000 helios-deck
 
 ```
 NOAA SWPC API
-  └─ app/services/fetchers/noaa.js
-       └─ app/services/normalizers/noaa.js  →  SignalRecord
-            └─ app/db/signals.js  (SQLite)
-                 └─ app/routes/dashboard.jsx  (loader)
-                      └─ KpIndexWidget, SolarWindWidget, ...
+  └─ app/services/fetchers/noaa-swpc.server.ts   (raw HTTP)
+       └─ app/services/normalizers/noaa-swpc.ts   (→ SignalRecordInput[])
+            └─ app/services/ingest/noaa-kp.server.ts  (coordinator + dedup)
+                 └─ app/services/signals.server.ts     (saveSignal → SQLite)
+                      └─ app/routes/<page>.tsx          (loader reads DB)
+                           └─ app/widgets/<Widget>.tsx  (renders SignalRecord[])
 ```
 
 See [`docs/architecture.md`](docs/architecture.md) for the full diagram.
+
+---
+
+## Manual Ingestion
+
+```bash
+npm run ingest:noaa-kp
+```
+
+Queries the NOAA SWPC real-time Kp index endpoint, normalizes each entry into
+a `SignalRecord`, and persists new records to the local SQLite database at
+`data/helios.sqlite`. Duplicate entries (same timestamp, source, and signal)
+are skipped automatically. Prints a summary of fetched / saved / skipped counts.
 
 ---
 
