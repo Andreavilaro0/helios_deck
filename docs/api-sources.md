@@ -121,27 +121,31 @@ GET https://api.open-meteo.com/v1/forecast?latitude=...&longitude=...&hourly=tem
 GET https://services.swpc.noaa.gov/json/planetary_k_index_1m.json
 ```
 
-**Response shape (abbreviated):**
+**Response shape (verified live 2026-04-29):**
 ```json
 [
-  ["2024-05-12 15:00:00.000", 4.33],
-  ["2024-05-12 15:01:00.000", 4.33],
+  { "time_tag": "2026-04-29T16:26:00", "kp_index": 0, "estimated_kp": 0.33, "kp": "0P" },
+  { "time_tag": "2026-04-29T16:27:00", "kp_index": 1, "estimated_kp": 0.67, "kp": "1M" },
   ...
 ]
 ```
 
-Each element: `[timestamp_string, kp_value]`
+Fields per entry:
+- `time_tag` — ISO 8601 timestamp, no timezone suffix (implicitly UTC)
+- `kp_index` — integer Kp (0–9), the rounded planetary K-index
+- `estimated_kp` — float estimated Kp (more precise, used as `value`)
+- `kp` — Kp string class, e.g. `"0P"`, `"1M"`, `"2+"` (letter indicates sub-index)
 
 **Normalizer target:**
-```js
+```ts
 {
-  timestamp:  "2024-05-12T15:00:00Z",
+  timestamp:  "2026-04-29T16:26:00Z",   // time_tag + "Z"
   source:     "noaa-swpc",
   signal:     "kp-index",
-  value:      4.33,
+  value:      0.33,                      // estimated_kp
   unit:       "index",
   confidence: 0.9,
-  metadata:   { raw_timestamp: "2024-05-12 15:00:00.000" }
+  metadata:   { kp_index: 0, kp_class: "0P" }
 }
 ```
 

@@ -10,23 +10,22 @@ Este es el punto donde el sistema deja de depender del formato de NOAA, NASA, GF
 
 - Una función `normalize` por fuente de datos.
 - El input es `unknown` — la respuesta cruda tal como llegó del fetcher.
-- El output es siempre `SignalRecord[]` — nunca un objeto único, siempre un array.
-- Un archivo por fuente: `noaa.ts`, `nasa.ts`, `gfz.ts`, etc.
+- El output es siempre `SignalRecordInput[]` — nunca un objeto único, siempre un array.
+- Un archivo por fuente: `noaa-swpc.ts`, `nasa.ts`, `gfz.ts`, etc.
 
 Contrato obligatorio para toda función normalize:
 
 ```ts
 // Cada normalizer debe exportar esta firma exacta
-export function normalize(raw: unknown): SignalRecord[] { ... }
+export function normalize(raw: unknown): SignalRecordInput[] { ... }
 ```
 
 Reglas que todo normalizer debe cumplir:
-1. **Nunca lanzar excepciones** — devolver `[]` si el input es inesperado o malformado.
-2. **Nunca mutar el input** — trabajar con copias o desestructuración.
-3. **Nunca hacer peticiones de red** — es una función pura de transformación.
-4. **Filtrar registros inválidos** — descartar cualquier registro donde `value` sea `undefined`,
-   o donde sea un número que resulte `NaN` o `Infinity`. `null` es un `JsonPrimitive` válido
-   en el tipo, pero semánticamente una medición nula no debería almacenarse — filtrarlo también.
+1. **Lanzar un error claro** si el input no tiene la forma esperada. El mensaje debe nombrar el campo problemático cuando sea posible. No usar `[]` como mecanismo de ocultación de errores.
+2. **Devolver `[]`** únicamente si la API devuelve un array vacío válido.
+3. **Nunca mutar el input** — trabajar con copias o desestructuración.
+4. **Nunca hacer peticiones de red** — es una función pura de transformación.
+5. **Lanzar error en lugar de filtrar** si un campo de medición obligatorio (`value`, `timestamp`) es `undefined`, `NaN`, `Infinity` o `null` — una medición inválida no se silencia.
 
 ## Qué NO va aquí
 
@@ -60,4 +59,4 @@ export function isValidSignalRecord(record: unknown): record is SignalRecord {
 
 ## MVP 1
 
-El primer archivo que se implementará es `noaa.ts`, con la función `normalize()` para el endpoint `planetary_k_index_1m.json`.
+El primer archivo implementado es `noaa-swpc.ts`, con la función `normalize()` para el endpoint `planetary_k_index_1m.json`.

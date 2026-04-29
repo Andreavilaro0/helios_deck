@@ -120,7 +120,7 @@ Regla: nunca renombrar un valor una vez que hay datos en la DB — rompe todas l
 ## Reglas de campo
 
 - `timestamp`: siempre UTC, siempre ISO 8601 con sufijo Z. Tiempo de observación, no de ingestión.
-- `value`: cualquier `JsonValue` — escalar o estructura. Los normalizers deben descartar `undefined`, `NaN`, `Infinity` y `null` (una medición ausente no se almacena). Se serializa como JSON en la columna `TEXT` de SQLite.
+- `value`: cualquier `JsonValue` — escalar o estructura. Los normalizers deben lanzar un error si `value` resulta `NaN`, `Infinity` o `undefined` — una medición inválida no se almacena en silencio. `null` también debe rechazarse. Se serializa como JSON en la columna `TEXT` de SQLite.
 - `unit`: nunca cambiar la unidad de una señal existente — rompe comparaciones históricas.
 - `source`: nunca cambiar el identificador una vez que hay datos — rompe queries históricas.
 - `metadata`: opcional en input, siempre JSON-serializable. Nunca confiar en su estructura sin narrowing.
@@ -145,30 +145,31 @@ Los widgets deben comprobar la forma de `value` antes de renderizar. Un widget n
 Todo archivo en `app/services/normalizers/` debe exportar:
 
 ```ts
-export function normalize(raw: unknown): SignalRecord[] { ... }
+export function normalize(raw: unknown): SignalRecordInput[] { ... }
 ```
 
 El normalizer debe:
-1. Nunca lanzar excepciones — devolver `[]` si el input es inesperado.
-2. Nunca mutar el input.
-3. Nunca hacer peticiones de red.
-4. Filtrar registros donde `value` sea `null`, `NaN`, `undefined` o `Infinity`.
+1. **Lanzar un error claro** si el input no tiene la forma esperada. El mensaje debe nombrar el campo problemático cuando sea posible. No usar fallback silencioso ni devolver datos corruptos.
+2. **Devolver `[]`** únicamente si la API devuelve un array vacío válido — no como mecanismo de ocultación de errores.
+3. Nunca mutar el input — trabajar con copias o desestructuración.
+4. Nunca hacer peticiones de red — es una función pura de transformación.
+5. Lanzar error si un campo de medición obligatorio (`value`, `timestamp`) es `null`, `NaN`, `undefined` o `Infinity`.
 
 ---
 
 ## Ejemplo — registro Kp index de NOAA
 
 ```ts
-const record: SignalRecord = {
-  timestamp:  "2024-05-12T15:00:00Z",
+const record: SignalRecordInput = {
+  timestamp:  "2026-04-29T16:26:00Z",
   source:     "noaa-swpc",
   signal:     "kp-index",
-  value:      4.33,
+  value:      0.33,
   unit:       "index",
   confidence: 0.9,
   metadata: {
-    kp_letter:  "G1",
-    estimated:  false,
+    kp_index: 0,
+    kp_class: "0P",
   },
 };
 ```
