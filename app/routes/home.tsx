@@ -3,8 +3,8 @@ import { Welcome } from "../welcome/welcome";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
+    { title: "HELIOS_DECK — Space Weather Observatory" },
+    { name: "description", content: "A fullstack observatory for normalized heliophysical and geophysical data." },
   ];
 }
 
