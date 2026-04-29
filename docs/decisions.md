@@ -1,0 +1,136 @@
+# HELIOS_DECK — Technical Decision Log
+
+Format: each entry has a context, decision, alternatives considered, and rationale.
+Append new entries; never delete or modify existing ones.
+
+---
+
+## ADR-001 — Use React Router v7 SSR (not Next.js)
+
+**Date:** 2025-04-29
+**Status:** Accepted
+
+**Context:**
+The project requires server-side rendering so that data widgets arrive pre-populated (no loading flash, good for SEO, simpler data flow). Two obvious SSR options exist: Next.js and React Router v7 (formerly Remix).
+
+**Decision:** Use React Router v7 SSR.
+
+**Alternatives considered:**
+- **Next.js 14/15 App Router** — industry dominant, but App Router mental model (Server Components vs Client Components) adds significant cognitive overhead. Server Actions are powerful but obscure the data flow that needs to be visible and explainable for a technical evaluation.
+- **Astro** — excellent for content sites, but not suited for interactive real-time widgets.
+- **SvelteKit** — different language, out of scope.
+
+**Rationale:**
+React Router v7 loaders and actions make the data flow explicit: `loader()` runs on the server, returns data, component receives it. Every line is traceable. This is exactly what a technical evaluation rewards. The project also benefits from the Remix/React Router ecosystem without the complexity of Next.js App Router.
+
+---
+
+## ADR-002 — Use JavaScript, not TypeScript
+
+**Date:** 2025-04-29
+**Status:** Accepted (revisit in Phase 6)
+
+**Context:**
+TypeScript improves maintainability and catch errors at compile time. However, it adds tooling friction (tsconfig, type definitions, type errors blocking builds).
+
+**Decision:** Use JavaScript with JSDoc comments for critical types (specifically `SignalRecord`).
+
+**Rationale:**
+This is a class project with a defined deadline. The goal is a technically defensible, working system — not production-grade type safety. Adding TypeScript mid-project is straightforward if time permits (Phase 6).
+
+The `SignalRecord` shape is documented in `docs/data-contract.md` as the substitute for interface definitions.
+
+---
+
+## ADR-003 — Use SQLite via better-sqlite3
+
+**Date:** 2025-04-29
+**Status:** Accepted
+
+**Context:**
+The project ingests time-series signals and must store them for dashboard queries. Options: PostgreSQL, MySQL, SQLite, or in-memory only.
+
+**Decision:** SQLite with `better-sqlite3`.
+
+**Alternatives considered:**
+- **PostgreSQL** — more scalable, but requires a running server, connection pooling, and environment variables. Overkill for a single-server project.
+- **In-memory only** — data is lost on restart; breaks the "real observatory" narrative.
+- **Prisma ORM** — adds abstraction that makes queries harder to explain and inspect.
+
+**Rationale:**
+SQLite is a single file, zero configuration, and `better-sqlite3` is synchronous (fits React Router loaders naturally). For the expected data volume (a few signals, 1-minute resolution, days of history), SQLite is more than sufficient. The schema is simple enough to write raw SQL.
+
+---
+
+## ADR-004 — No Three.js in MVP 1
+
+**Date:** 2025-04-29
+**Status:** Accepted
+
+**Context:**
+HELIOS_DECK could feature a 3D solar system view (`/cosmic-view`) as a compelling visual.
+
+**Decision:** Three.js / React Three Fiber is deferred to Phase 5, isolated to the `/cosmic-view` route.
+
+**Rationale:**
+Three.js adds significant bundle weight and development time. Including it before the data pipeline is proven would make the project a visual demo with no substance — the opposite of what a technical evaluation rewards. Walking skeleton first.
+
+---
+
+## ADR-005 — No Magic UI until MVP 1 is working
+
+**Date:** 2025-04-29
+**Status:** Accepted
+
+**Context:**
+Magic UI provides premium animated React components that could make the project look professional quickly.
+
+**Decision:** Magic UI is not installed or used until a real signal is flowing end-to-end (Phase 1 complete).
+
+**Rationale:**
+Animated components on top of fake or missing data gives a false impression of completeness. The evaluator will look at data flow first, visuals second. Magic UI is the reward for completing Phase 1, not the starting point.
+
+---
+
+## ADR-006 — No Redux or global state manager
+
+**Date:** 2025-04-29
+**Status:** Accepted
+
+**Context:**
+React applications often reach for Redux, Zustand, or Jotai for state management.
+
+**Decision:** No global state library. Data flows from loaders to components via props. React `useState` for local UI state only.
+
+**Rationale:**
+React Router v7 loaders handle all server data. The only client-side state needed is transient UI state (open/closed panels, selected time range). A global store would add indirection with no benefit at this scale. WebSocket updates in Phase 3 will be managed by a custom hook, not a store.
+
+---
+
+## ADR-007 — Tailwind CSS v4 (not CSS Modules or CSS-in-JS)
+
+**Date:** 2025-04-29
+**Status:** Accepted
+
+**Context:**
+CSS strategy choice affects development speed, bundle size, and maintainability.
+
+**Decision:** Tailwind CSS v4.
+
+**Rationale:**
+Utility-first CSS eliminates context switching between files. Tailwind v4's new engine has zero runtime cost. shadcn components are built on Tailwind, making the integration seamless. CSS Modules would require naming every class; CSS-in-JS (styled-components, emotion) has runtime overhead.
+
+---
+
+## ADR-008 — shadcn for base UI components, Magic UI for premium layer
+
+**Date:** 2025-04-29
+**Status:** Accepted
+
+**Context:**
+The project needs accessible, composable UI primitives (Card, Badge, Skeleton, Dialog) and later premium visual components.
+
+**Decision:** shadcn installs component source directly into the project (not a dependency). Magic UI added on top in Phase 5.
+
+**Rationale:**
+shadcn components are owned — they can be modified without overriding a library. This is explicitly what a technical evaluation expects: code you understand and can explain. Magic UI extends shadcn's visual style, making the two layers composable.
