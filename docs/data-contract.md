@@ -1,146 +1,165 @@
 # HELIOS_DECK — Data Contract
 
-## Purpose
+## Fuente de verdad
 
-Every piece of data that enters HELIOS_DECK — regardless of which external API it comes from — must be normalized into a `SignalRecord` before it touches the database or any React component.
+El contrato de datos está implementado en TypeScript en:
 
-This contract is the single source of truth for data shape across the entire system.
+```
+app/types/signal.ts
+```
+
+Este documento es la especificación en lenguaje natural. El archivo TypeScript es la implementación autoritativa. Si hay discrepancia, el archivo TypeScript manda.
 
 ---
 
-## SignalRecord Shape
+## Propósito
 
-```js
-{
-  timestamp:  string,   // ISO 8601 UTC — "2024-05-12T14:30:00Z"
-  source:     string,   // API identifier — "noaa-swpc" | "nasa-donki" | "gfz"
-  signal:     string,   // Signal type — "kp-index" | "solar-wind-speed" | "xray-flux-long"
-  value:      number,   // Numeric measurement
-  unit:       string,   // SI or domain unit — "nT" | "km/s" | "W/m²" | "index"
-  confidence: number,   // 0.0–1.0 (1.0 = authoritative source, no estimation)
-  metadata:   object    // Source-specific extras, kept as JSON blob in DB
+Todo dato que entra en HELIOS_DECK — independientemente de qué API lo origina — debe ser normalizado a `SignalRecord` antes de tocar la base de datos o cualquier componente React.
+
+Este contrato es lo que hace el sistema independiente de la fuente: un widget que muestra el índice Kp no sabe ni le importa si el dato vino de NOAA o de GFZ.
+
+---
+
+## Tipos JSON base
+
+`SignalValue` y `SignalMetadata` se construyen sobre dos tipos auxiliares:
+
+```ts
+// Un valor hoja de JSON: los cuatro tipos que pueden ser el valor final
+export type JsonPrimitive = string | number | boolean | null;
+
+// Cualquier valor serializable a JSON sin pérdida
+export type JsonValue =
+  | JsonPrimitive
+  | JsonValue[]
+  | { [key: string]: JsonValue };
+```
+
+Esto excluye explícitamente: `undefined`, `bigint`, funciones, símbolos, `Infinity`, `NaN`.
+
+---
+
+## `SignalRecord` — el tipo central
+
+```ts
+// app/types/signal.ts
+
+export interface SignalRecord {
+  timestamp:  ISOTimestamp;   // "2024-05-12T14:30:00Z"
+  source:     SignalSource;   // "noaa-swpc" | "nasa-donki" | "gfz-potsdam" | ...
+  signal:     SignalName;     // "kp-index" | "solar-wind-speed" | ...
+  value:      SignalValue;    // JsonValue — escalar o estructura JSON
+  unit:       SignalUnit;     // "index" | "km/s" | "W/m²" | ...
+  confidence: number;         // 0.0–1.0
+  metadata:   SignalMetadata; // Record<string, JsonValue> — JSON blob en DB
+}
+```
+
+`SignalRecordInput` es idéntico pero con `metadata` opcional, para uso en normalizers:
+
+```ts
+export interface SignalRecordInput extends Omit<SignalRecord, "metadata"> {
+  metadata?: SignalMetadata;
 }
 ```
 
 ---
 
-## Field Rules
+## Tipos de apoyo
 
-### `timestamp`
-- Always UTC. Never local time.
-- Always ISO 8601 with Z suffix.
-- The observation time, not the ingestion time. Ingestion time is stored separately as `created_at` in the DB.
-
-### `source`
-- Kebab-case identifier of the originating API.
-- Never change a source ID once data is in the DB — it breaks historical queries.
-- Allowed values (extend as new sources are added):
-
-  | Value | API |
-  |-------|-----|
-  | `noaa-swpc` | NOAA Space Weather Prediction Center |
-  | `nasa-donki` | NASA DONKI |
-  | `gfz-potsdam` | GFZ Potsdam Kp index |
-
-### `signal`
-- Kebab-case descriptor of what is being measured.
-- Must be unique per source+timestamp combination.
-- Allowed values (extend as signals are added):
-
-  | Value | Description | Unit |
-  |-------|-------------|------|
-  | `kp-index` | Planetary K-index (geomagnetic activity) | `index` (0–9) |
-  | `solar-wind-speed` | Solar wind bulk speed | `km/s` |
-  | `solar-wind-density` | Solar wind proton density | `p/cm³` |
-  | `xray-flux-short` | X-ray flux 0.05–0.4 nm | `W/m²` |
-  | `xray-flux-long` | X-ray flux 0.1–0.8 nm | `W/m²` |
-  | `proton-flux-10mev` | Proton flux > 10 MeV | `pfu` |
-  | `dst-index` | Disturbance Storm Time index | `nT` |
-
-### `value`
-- Always a plain number. Never a string, never null.
-- If the source reports a range, store the midpoint and document the range in `metadata`.
-- If the source reports an estimate or upper limit, set `confidence < 1.0`.
-
-### `unit`
-- Use standard domain abbreviations. See signal table above.
-- Never change a unit for an existing signal — it breaks all historical comparisons.
-
-### `confidence`
-- `1.0` — directly measured, authoritative.
-- `0.9` — real-time provisional data (common for NOAA 1-minute data before final processing).
-- `0.7` — estimated or modeled value.
-- `0.0` — data quality flag from source indicates suspect reading.
-
-### `metadata`
-- Optional. Must be serializable to JSON.
-- Store source-specific fields here that do not fit the common contract.
-- Examples:
-
-  ```js
-  // NOAA Kp index
-  metadata: {
-    kp_letter: "G2",          // NOAA storm category
-    estimated: false,
-    forecast_period: null
-  }
-
-  // NOAA solar wind
-  metadata: {
-    proton_speed: 452.1,
-    bulk_speed: 451.8,
-    data_quality: "ok"
-  }
-  ```
+| Tipo | Definición | Propósito |
+|------|-----------|-----------|
+| `JsonPrimitive` | `string \| number \| boolean \| null` | Tipos hoja de JSON |
+| `JsonValue` | recursivo sobre `JsonPrimitive` | Cualquier valor JSON válido |
+| `ISOTimestamp` | `string` | Garantiza semántica — "este string es una fecha ISO" |
+| `SignalValue` | `JsonValue` | Valor medido — escalar o estructura |
+| `SignalMetadata` | `Record<string, JsonValue>` | Extras de la fuente, todos JSON-serializables |
+| `SignalSource` | union de strings | Fuentes de API registradas |
+| `SignalName` | union de strings | Señales físicas medidas |
+| `SignalUnit` | union de strings | Unidades de medida |
 
 ---
 
-## Normalizer Contract
+## Vocabularios controlados
 
-Every file in `app/services/normalizers/` must export:
+### `SignalSource` — fuentes de API
 
-```js
-/**
- * @param {object} rawApiResponse  — the raw JSON from the API
- * @returns {SignalRecord[]}       — array of normalized records
- */
-export function normalize(rawApiResponse) { ... }
+| Valor | API |
+|-------|-----|
+| `"noaa-swpc"` | NOAA Space Weather Prediction Center |
+| `"nasa-donki"` | NASA DONKI |
+| `"gfz-potsdam"` | GFZ Potsdam Kp index |
+| `"iss"` | ISS position tracker |
+| `"open-meteo"` | Open-Meteo atmospheric data |
+
+Regla: nunca renombrar un valor una vez que hay datos en la DB — rompe todas las queries históricas.
+
+### `SignalName` — señales medidas
+
+| Valor | Descripción | Unidad |
+|-------|-------------|--------|
+| `"kp-index"` | K-index planetario (actividad geomagnética) | `"index"` (0–9) |
+| `"solar-wind-speed"` | Velocidad del viento solar | `"km/s"` |
+| `"solar-wind-density"` | Densidad de protones del viento solar | `"p/cm³"` |
+| `"xray-flux-short"` | Flujo X 0.05–0.4 nm (indicador de flare) | `"W/m²"` |
+| `"xray-flux-long"` | Flujo X 0.1–0.8 nm (indicador de flare) | `"W/m²"` |
+| `"proton-flux-10mev"` | Flujo integral de protones > 10 MeV | `"pfu"` |
+| `"dst-index"` | Disturbance Storm Time (fuerza de tormenta) | `"nT"` |
+
+### `confidence` — fiabilidad del dato
+
+| Valor | Significado |
+|-------|-------------|
+| `1.0` | Dato medido directamente, definitivo |
+| `0.9` | Provisional en tiempo real (NOAA antes del procesado final) |
+| `0.7` | Estimado o modelado |
+| `0.0` | La fuente marcó esta lectura como sospechosa |
+
+---
+
+## Reglas de campo
+
+- `timestamp`: siempre UTC, siempre ISO 8601 con sufijo Z. Tiempo de observación, no de ingestión.
+- `value`: cualquier `JsonValue` — escalar o estructura. Los normalizers deben descartar `undefined`, `NaN`, `Infinity` y `null` (una medición ausente no se almacena). Se serializa como JSON en la columna `TEXT` de SQLite.
+- `unit`: nunca cambiar la unidad de una señal existente — rompe comparaciones históricas.
+- `source`: nunca cambiar el identificador una vez que hay datos — rompe queries históricas.
+- `metadata`: opcional en input, siempre JSON-serializable. Nunca confiar en su estructura sin narrowing.
+
+### Ejemplos de `value` por tipo de señal
+
+| Señal | Tipo de `value` | Ejemplo |
+|-------|-----------------|---------|
+| `kp-index` | `number` | `4.33` |
+| `solar-wind-speed` | `number` | `452.1` |
+| `xray-flux-long` | `number` | `3.2e-6` |
+| `iss-position` | `object` | `{ "latitude": 51.5, "longitude": -0.1, "altitude": 408 }` |
+| `solar-flare-event` | `object` | `{ "classType": "M2.3", "beginTime": "...", "peakTime": "..." }` |
+| `weather-summary` | `object` | `{ "temperature": 18.2, "windSpeed": 12.5, "cloudCover": 0.4 }` |
+
+Los widgets deben comprobar la forma de `value` antes de renderizar. Un widget numérico no debe asumir `typeof value === "number"` sin un type guard explícito.
+
+---
+
+## Contrato del normalizer
+
+Todo archivo en `app/services/normalizers/` debe exportar:
+
+```ts
+export function normalize(raw: unknown): SignalRecord[] { ... }
 ```
 
-The normalizer must:
-- Never throw. Return `[]` if the input is unexpected.
-- Never mutate the input.
-- Never make network calls.
-- Filter out records where `value` is `null`, `NaN`, or `undefined`.
+El normalizer debe:
+1. Nunca lanzar excepciones — devolver `[]` si el input es inesperado.
+2. Nunca mutar el input.
+3. Nunca hacer peticiones de red.
+4. Filtrar registros donde `value` sea `null`, `NaN`, `undefined` o `Infinity`.
 
 ---
 
-## Validation Helper (to be implemented in Phase 1)
+## Ejemplo — registro Kp index de NOAA
 
-```js
-// app/services/normalizers/validate.js
-
-export function isValidSignalRecord(record) {
-  return (
-    typeof record.timestamp === 'string' &&
-    typeof record.source    === 'string' &&
-    typeof record.signal    === 'string' &&
-    typeof record.value     === 'number' &&
-    !isNaN(record.value) &&
-    typeof record.unit      === 'string' &&
-    typeof record.confidence === 'number' &&
-    record.confidence >= 0 &&
-    record.confidence <= 1
-  );
-}
-```
-
----
-
-## Example: Kp Index Record
-
-```js
-{
+```ts
+const record: SignalRecord = {
   timestamp:  "2024-05-12T15:00:00Z",
   source:     "noaa-swpc",
   signal:     "kp-index",
@@ -148,8 +167,18 @@ export function isValidSignalRecord(record) {
   unit:       "index",
   confidence: 0.9,
   metadata: {
-    kp_letter: "G1",
-    estimated: false
-  }
-}
+    kp_letter:  "G1",
+    estimated:  false,
+  },
+};
 ```
+
+---
+
+## Nota sobre validación runtime
+
+Los tipos TypeScript solo existen en tiempo de compilación. Las respuestas HTTP son `unknown` en runtime.
+
+En Fase 1B se implementará `app/services/normalizers/validate.ts` con una función `isValidSignalRecord(record: unknown): record is SignalRecord` para validación runtime antes de insertar en la DB.
+
+`JsonValue` no reemplaza esa validación — solo garantiza que el valor es serializable a JSON. Un valor puede ser `JsonValue` válido y aun así no tener sentido para la señal que representa (p.ej. un objeto donde se esperaba un número). Los widgets deben hacer narrowing explícito.

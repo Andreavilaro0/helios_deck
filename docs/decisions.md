@@ -142,3 +142,47 @@ The project needs accessible, composable UI primitives (Card, Badge, Skeleton, D
 
 **Rationale:**
 shadcn components are owned — they can be modified without overriding a library. This is explicitly what a technical evaluation expects: code you understand and can explain. Magic UI extends shadcn's visual style, making the two layers composable.
+
+---
+
+## ADR-009 — Normalized Signal Contract (`SignalRecord`)
+
+**Date:** 2026-04-30
+**Status:** Accepted
+
+**Context:**
+HELIOS_DECK integrates data from multiple external APIs (NOAA SWPC, NASA DONKI, GFZ Potsdam, ISS, Open-Meteo). Each API returns data in its own format: NOAA Kp returns `[[timestamp, value], ...]`, NOAA solar wind returns a JSON object with dozens of named fields, NASA DONKI returns event arrays with nested impact lists. Without a normalization layer, every widget would need to know the format of every API it might ever display.
+
+**Decision:** All external API responses are converted to a single `SignalRecord` shape before touching the database or any component. The contract is defined in `app/types/signal.ts` and documented in `docs/data-contract.md`.
+
+**The shape:**
+```ts
+interface SignalRecord {
+  timestamp:  ISOTimestamp;   // observation time, always UTC ISO 8601
+  source:     SignalSource;   // originating API identifier
+  signal:     SignalName;     // physical quantity measured
+  value:      SignalValue;    // JsonValue — scalar or structured JSON
+  unit:       SignalUnit;     // measurement unit, stable per signal name
+  confidence: number;         // 0.0–1.0 reliability rating
+  metadata:   SignalMetadata; // Record<string, JsonValue> — source-specific extras
+}
+```
+
+**Why all APIs map to a common model:**
+A widget like `KpIndexWidget` should work regardless of whether the Kp data came from NOAA or GFZ. If widgets depended on the source format, swapping APIs would require rewriting UI code. With a normalized contract, swapping a source only requires a new normalizer — the widget, the loader, and the DB schema stay unchanged.
+
+**Why `value` is `JsonValue` (not `number`):**
+Most heliophysical signals are scalar numbers (Kp index, solar wind speed, X-ray flux), but HELIOS_DECK also needs to represent structured measurements: ISS position requires `{ latitude, longitude, altitude }`, solar flare events from NASA DONKI carry `{ classType, beginTime, peakTime }`, and atmospheric summaries from Open-Meteo bundle multiple fields together. Forcing all of these into a single number would either lose data or require a second field. `JsonValue` allows both scalar and structured signals to share the same `SignalRecord` shape without breaking the contract. The tradeoff: widgets consuming structured signals must use a type guard before rendering — they cannot assume `typeof value === "number"`. This is an explicit contract, not a hidden assumption.
+
+`value` is stored as `TEXT` (JSON-serialized) in SQLite. The DB helper does `JSON.stringify` on write and `JSON.parse` on read. Scalar values (`4.33`) serialize to their string representations (`"4.33"`) and parse back correctly.
+
+**Why `metadata` is `Record<string, JsonValue>` (flexible):**
+Different sources include different supplementary data (NOAA Kp includes a storm category letter; NOAA solar wind includes proton speed and bulk speed separately). Forcing all of these into the common contract would either bloat the schema or lose information. `metadata` stores source-specific context without polluting the core contract. Using `JsonValue` (instead of `unknown`) ensures all metadata values are JSON-serializable — this is required because metadata is stored as a JSON blob in SQLite.
+
+**Why TypeScript types help but don't replace runtime validation:**
+TypeScript types are erased at runtime. When a NOAA HTTP response arrives, it is `unknown` — the types in `app/types/signal.ts` do not protect against a malformed or changed API response. Runtime validation (to be implemented in `app/services/normalizers/validate.ts` in Phase 1B) is the actual safety net. TypeScript handles the internal contract; the validator handles the boundary.
+
+**Alternatives considered:**
+- **No normalization, each widget handles its own format** — rejected. Creates tight coupling between UI and API formats. Adding a new signal source would require changes across multiple component files.
+- **GraphQL or tRPC schema as the contract** — rejected for MVP. Adds a layer of abstraction before the pipeline is proven. The contract can be promoted to a formal schema in Phase 6 if needed.
+- **Use Zod for type definition and validation** — deferred to Phase 1B. Using Zod for the schema would give us both compile-time types and runtime validation from one definition. Decision: plain TypeScript interfaces first (simpler, fully explainable), Zod added in Phase 1B after the structure is stable.

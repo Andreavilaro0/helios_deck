@@ -45,12 +45,12 @@ The architecture is deliberately layered: each layer has a single responsibility
 ## Component Tree (Phase 2 target)
 
 ```
-app/routes/dashboard.jsx  (loader: reads DB → passes SignalRecord[])
-  └─ app/components/DashboardLayout.jsx
-       ├─ app/widgets/KpIndexWidget.jsx
-       ├─ app/widgets/SolarWindWidget.jsx
-       ├─ app/widgets/XRayFluxWidget.jsx
-       └─ app/widgets/ProtonFluxWidget.jsx
+app/routes/dashboard.tsx  (loader: reads DB → passes SignalRecord[])
+  └─ app/components/DashboardLayout.tsx
+       ├─ app/widgets/KpIndexWidget.tsx
+       ├─ app/widgets/SolarWindWidget.tsx
+       ├─ app/widgets/XRayFluxWidget.tsx
+       └─ app/widgets/ProtonFluxWidget.tsx
 ```
 
 Widgets receive normalized `SignalRecord` props. They do not fetch anything themselves.
@@ -98,14 +98,35 @@ This separation means the UI is never blocked by a slow external API.
 
 ---
 
+## Domain Contract
+
+`app/types/signal.ts` is the single source of truth for the `SignalRecord` shape.
+
+Every layer imports from there. Types are never redefined in fetchers, normalizers, DB helpers, loaders, or widgets. If a type needs to change, it changes in one place and TypeScript surfaces every affected call site.
+
+```
+app/types/signal.ts
+  exports: ISOTimestamp, SignalValue, SignalMetadata
+           SignalSource, SignalName, SignalUnit
+           SignalRecord, SignalRecordInput
+```
+
+See `docs/data-contract.md` for the full field-level specification.
+
+---
+
 ## File Naming Conventions
 
 | Pattern | Example | Purpose |
 |---------|---------|---------|
-| `fetchers/<source>.js` | `fetchers/noaa.js` | One file per API source |
-| `normalizers/<source>.js` | `normalizers/noaa.js` | One normalizer per source |
-| `widgets/<Signal>Widget.jsx` | `KpIndexWidget.jsx` | One widget per signal type |
-| `routes/<name>.jsx` | `routes/dashboard.jsx` | Route module (loader + component) |
+| `types/<domain>.ts` | `types/signal.ts` | Domain type definitions |
+| `services/fetchers/<source>.ts` | `fetchers/noaa.ts` | One file per API source |
+| `services/normalizers/<source>.ts` | `normalizers/noaa.ts` | One normalizer per source |
+| `services/signals.server.ts` | — | Server-only data access facade |
+| `db/schema.ts` | — | SQLite table and index definitions |
+| `db/signals.ts` | — | Signal INSERT / SELECT helpers |
+| `widgets/<Signal>Widget.tsx` | `KpIndexWidget.tsx` | One widget per signal type |
+| `routes/<name>.tsx` | `routes/dashboard.tsx` | Route module (loader + component) |
 
 ---
 
@@ -114,9 +135,9 @@ This separation means the UI is never blocked by a slow external API.
 See `docs/decisions.md` for full rationale. Short version:
 
 - **React Router v7 SSR** — loaders give us server-side data without Next.js overhead
+- **TypeScript (strict)** — domain types in `app/types/` make the pipeline self-documenting
 - **SQLite via better-sqlite3** — synchronous, zero-config, perfect for a single-server observatory
 - **Tailwind CSS v4** — utility-first, no runtime CSS-in-JS cost
-- **JavaScript (not TypeScript)** — reduces tooling friction for a class project; add TS in Phase 6 if time permits
 - **No Redux / Zustand** — loader data + React state is sufficient for this domain
 
 ---
@@ -124,8 +145,8 @@ See `docs/decisions.md` for full rationale. Short version:
 ## Phase 3 Addition: WebSocket Layer
 
 ```
-app/server/ws.js           (ws library, attached to the Vite dev server)
-app/hooks/useSignalStream.js  (client-side hook, updates widget state on message)
+app/server/ws.ts              (ws library, attached to the Vite dev server)
+app/hooks/useSignalStream.ts  (client-side hook, updates widget state on message)
 ```
 
 WebSocket messages carry the same `SignalRecord` shape. Widgets do not change — they just receive updates via hook instead of only from loader props.
