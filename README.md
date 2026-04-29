@@ -23,7 +23,7 @@ Signals tracked:
 | Layer | Technology |
 |-------|-----------|
 | Frontend + SSR | React Router v7 |
-| Language | JavaScript (ES modules) |
+| Language | TypeScript (strict) |
 | Database | SQLite via `better-sqlite3` |
 | Styling | Tailwind CSS v4 |
 | UI primitives | shadcn |
@@ -40,22 +40,46 @@ See [`docs/plan.md`](docs/plan.md) for the full roadmap.
 
 ---
 
-## Setup (Phase 1 onwards)
-
-> Phase 0 contains only documentation. The React app scaffold will be created at the start of Phase 1.
+## Setup
 
 ```bash
-# Install dependencies (Phase 1)
 npm install
+```
 
-# Run development server
-npm run dev
+### Development
 
-# Run database migrations
-npm run db:migrate
+```bash
+npm run dev        # Dev server with HMR — http://localhost:5173
+```
 
-# Ingest initial data
-npm run ingest
+### Production
+
+```bash
+npm run build      # Compile for production
+npm run start      # Serve the production build
+```
+
+### Type checking
+
+```bash
+npm run typecheck  # react-router typegen + tsc
+```
+
+> Run `typecheck` after adding routes or modifying loader return shapes.
+> React Router generates route types automatically — never write them by hand.
+
+### Database (Phase 1)
+
+```bash
+npm run db:migrate   # Run SQLite migrations
+npm run ingest       # Fetch and store initial signal data
+```
+
+### Docker
+
+```bash
+docker build -t helios-deck .
+docker run -p 3000:3000 helios-deck
 ```
 
 ---

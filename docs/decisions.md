@@ -25,20 +25,28 @@ React Router v7 loaders and actions make the data flow explicit: `loader()` runs
 
 ---
 
-## ADR-002 — Use JavaScript, not TypeScript
+## ADR-002 — Use TypeScript (pragmatic, domain-first)
 
 **Date:** 2025-04-29
-**Status:** Accepted (revisit in Phase 6)
+**Revised:** 2026-04-30
+**Status:** Accepted
 
 **Context:**
-TypeScript improves maintainability and catch errors at compile time. However, it adds tooling friction (tsconfig, type definitions, type errors blocking builds).
+The original decision was to use JavaScript to reduce tooling friction. However, when scaffolding with `create-react-router@latest`, the only official template is TypeScript. React Router v7 also ships first-class type inference for loaders, actions, and route params — types that directly describe the data domain.
 
-**Decision:** Use JavaScript with JSDoc comments for critical types (specifically `SignalRecord`).
+**Decision:** Use TypeScript with a pragmatic, domain-first discipline:
+- Types must describe the domain (e.g. `SignalRecord`, loader return shapes, route params). If a type does not help explain the data, it is not needed.
+- No complex generics, no utility type gymnastics, no `as unknown as X` escape hatches.
+- `any` is forbidden. Use `unknown` + narrowing when the shape is genuinely uncertain (e.g. raw API responses).
+- The `SignalRecord` interface in `docs/data-contract.md` is the canonical type — it replaces the JSDoc approach.
+- Keeping `strict: true` in `tsconfig.json` is non-negotiable.
+
+**Alternatives considered:**
+- **Eject to JavaScript** — manually rename `.tsx → .jsx`, remove `tsconfig.json`. Extra work with no benefit; loses React Router's route type inference entirely.
+- **TypeScript with heavy abstractions** — rejected. Every type must be explainable in one sentence.
 
 **Rationale:**
-This is a class project with a defined deadline. The goal is a technically defensible, working system — not production-grade type safety. Adding TypeScript mid-project is straightforward if time permits (Phase 6).
-
-The `SignalRecord` shape is documented in `docs/data-contract.md` as the substitute for interface definitions.
+React Router v7 generates types for loaders and actions via `react-router typegen`. This means route files get typed `params`, typed loader data, and typed `action` returns automatically — directly useful for this project's data pipeline. The tooling cost is zero because the scaffold already configures it. For a technical evaluation, TypeScript with domain-relevant types is a stronger signal than JavaScript with JSDoc comments.
 
 ---
 

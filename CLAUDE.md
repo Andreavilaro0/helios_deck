@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project
 
 HELIOS_DECK — fullstack web observatory for heliophysical and geophysical data.
-Stack: React Router v7 SSR · JavaScript · SQLite · Tailwind CSS v4 · shadcn
+Stack: React Router v7 SSR · **TypeScript** · SQLite · Tailwind CSS v4 · shadcn
 
 ---
 
@@ -29,6 +29,15 @@ Stack: React Router v7 SSR · JavaScript · SQLite · Tailwind CSS v4 · shadcn
 - Magic UI: only after MVP 1 is working end-to-end with real data.
 - Three.js / React Three Fiber: only inside `/cosmic-view`, never elsewhere.
 - No utility libraries (lodash, ramda, etc.) unless a native alternative does not exist.
+
+### TypeScript discipline
+- `strict: true` is non-negotiable. Never disable strict checks.
+- Every type must describe the domain. If a type does not help explain what data is flowing, it does not belong.
+- No complex generics. No utility type chains (`Partial<Omit<Pick<...>>>`). If a type needs more than one line to understand, simplify it.
+- `any` is forbidden. Use `unknown` + type narrowing for raw API responses.
+- Do not use `as X` casts unless there is a concrete reason stated in a comment.
+- React Router generates types via `npm run typecheck` (`react-router typegen`). Run it after adding routes or changing loader return shapes. Never hand-write route param types.
+- The `SignalRecord` interface in `docs/data-contract.md` is the canonical type. Implement it as a TypeScript `interface` in `app/types/signals.ts`.
 
 ### Code quality
 - No `console.log`, `alert`, or `debugger` in any committed file.
@@ -73,20 +82,31 @@ Stack: React Router v7 SSR · JavaScript · SQLite · Tailwind CSS v4 · shadcn
 
 ```
 External API
-  └─ app/services/fetchers/<source>.js     (raw HTTP call)
-       └─ app/services/normalizers/<source>.js  (→ SignalRecord shape)
-            └─ app/db/signals.js               (INSERT / SELECT)
-                 └─ app/routes/<page>.jsx       (loader reads DB)
-                      └─ app/widgets/<Widget>.jsx  (renders normalized data)
+  └─ app/services/fetchers/<source>.ts     (raw HTTP call)
+       └─ app/services/normalizers/<source>.ts  (→ SignalRecord shape)
+            └─ app/db/signals.ts               (INSERT / SELECT)
+                 └─ app/routes/<page>.tsx       (loader reads DB)
+                      └─ app/widgets/<Widget>.tsx  (renders normalized data)
 ```
 
 The `SignalRecord` shape is defined in `docs/data-contract.md`. Never deviate from it without updating that doc.
 
 ---
 
+## Commands
+
+```bash
+npm run dev          # Start dev server with HMR (http://localhost:5173)
+npm run build        # Production build
+npm run start        # Serve production build
+npm run typecheck    # react-router typegen + tsc (run after changing loaders/routes)
+```
+
+---
+
 ## Current Phase
 
-**Phase 0 — Documentation and architecture** (active)
+**Phase 1 — Walking skeleton** (active)
 
-Do not scaffold the React app until Phase 0 is complete and committed.
-Next command when ready: see "Próximo paso" in `docs/plan.md`.
+Scaffold is in place at root. Next: SQLite setup, NOAA fetcher, first normalizer, first widget.
+See `docs/plan.md` for full deliverables.
