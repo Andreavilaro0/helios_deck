@@ -32,11 +32,10 @@ The architecture is deliberately layered: each layer has a single responsibility
 ┌─────────▼───────────────────────────────────────────────┐
 │  Database Layer                                          │
 │  app/db/                                                 │
-│  ├─ schema.js     (table definitions, migrations)        │
-│  ├─ signals.js    (INSERT, SELECT helpers)               │
-│  └─ db.js         (better-sqlite3 singleton)             │
+│  ├─ schema.sql    (canonical table + index definitions)  │
+│  └─ db.server.ts  (openDb / getDb — better-sqlite3)      │
 │                                                          │
-│  SQLite file: data/helios.db                             │
+│  SQLite file: data/helios.sqlite                             │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -57,25 +56,28 @@ Widgets receive normalized `SignalRecord` props. They do not fetch anything them
 
 ---
 
-## Database Schema (target)
+## Database Schema (implemented in Phase 1C)
 
 ```sql
-CREATE TABLE signals (
-  id        INTEGER PRIMARY KEY AUTOINCREMENT,
-  timestamp TEXT    NOT NULL,
-  source    TEXT    NOT NULL,
-  signal    TEXT    NOT NULL,
-  value     REAL    NOT NULL,
-  unit      TEXT    NOT NULL,
-  confidence REAL,
-  metadata  TEXT,             -- JSON blob
-  created_at TEXT DEFAULT (datetime('now'))
+CREATE TABLE IF NOT EXISTS signals (
+  id            TEXT NOT NULL,
+  timestamp     TEXT NOT NULL CHECK(length(timestamp) > 0),
+  source        TEXT NOT NULL CHECK(length(source)    > 0),
+  signal        TEXT NOT NULL CHECK(length(signal)    > 0),
+  value_json    TEXT NOT NULL CHECK(length(value_json)    > 0),
+  unit          TEXT NOT NULL,
+  confidence    REAL NOT NULL CHECK(confidence >= 0.0 AND confidence <= 1.0),
+  metadata_json TEXT NOT NULL CHECK(length(metadata_json) > 0),
+  created_at    TEXT NOT NULL,
+  PRIMARY KEY (id)
 );
 
-CREATE INDEX idx_signals_timestamp ON signals(timestamp);
-CREATE INDEX idx_signals_signal    ON signals(signal);
-CREATE INDEX idx_signals_source    ON signals(source);
+CREATE INDEX IF NOT EXISTS idx_signals_signal_timestamp ON signals (signal, timestamp);
+CREATE INDEX IF NOT EXISTS idx_signals_source_timestamp ON signals (source, timestamp);
 ```
+
+`id` is a UUID v4 (TEXT). `value_json` and `metadata_json` are explicit JSON blobs —
+the column names make the serialization visible at every call site. See ADR-010.
 
 ---
 
@@ -120,11 +122,11 @@ See `docs/data-contract.md` for the full field-level specification.
 | Pattern | Example | Purpose |
 |---------|---------|---------|
 | `types/<domain>.ts` | `types/signal.ts` | Domain type definitions |
-| `services/fetchers/<source>.ts` | `fetchers/noaa.ts` | One file per API source |
-| `services/normalizers/<source>.ts` | `normalizers/noaa.ts` | One normalizer per source |
-| `services/signals.server.ts` | — | Server-only data access facade |
-| `db/schema.ts` | — | SQLite table and index definitions |
-| `db/signals.ts` | — | Signal INSERT / SELECT helpers |
+| `services/fetchers/<source>.server.ts` | `fetchers/noaa-swpc.server.ts` | One file per API source |
+| `services/normalizers/<source>.ts` | `normalizers/noaa-swpc.ts` | One normalizer per source |
+| `services/signals.server.ts` | — | Server-only data access facade (saveSignal, listSignals, …) |
+| `db/schema.sql` | — | Canonical SQLite table and index definitions |
+| `db/db.server.ts` | — | `openDb()` / `getDb()` — better-sqlite3 connection |
 | `widgets/<Signal>Widget.tsx` | `KpIndexWidget.tsx` | One widget per signal type |
 | `routes/<name>.tsx` | `routes/dashboard.tsx` | Route module (loader + component) |
 
