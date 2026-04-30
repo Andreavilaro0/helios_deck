@@ -8,6 +8,7 @@ import { openDb } from "~/db/db.server";
 import type Database from "better-sqlite3";
 import {
   getLatestSignalByName,
+  listRecentSignalsByName,
   listSignals,
   saveSignal,
   signalExists,
@@ -105,6 +106,46 @@ describe("getLatestSignalByName", () => {
   it("does not return records of a different signal name", () => {
     saveSignal({ ...VALID_INPUT, signal: "solar-wind-speed", unit: "km/s" }, db);
     expect(getLatestSignalByName("kp-index", db)).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// listRecentSignalsByName
+// ---------------------------------------------------------------------------
+
+describe("listRecentSignalsByName", () => {
+  it("returns an empty array when no matching signal exists", () => {
+    expect(listRecentSignalsByName("kp-index", 10, db)).toEqual([]);
+  });
+
+  it("returns only records matching the requested signal name", () => {
+    saveSignal(VALID_INPUT, db);
+    saveSignal({ ...VALID_INPUT, signal: "solar-wind-speed", unit: "km/s" }, db);
+    const results = listRecentSignalsByName("kp-index", 10, db);
+    expect(results).toHaveLength(1);
+    expect(results[0].signal).toBe("kp-index");
+  });
+
+  it("returns records ordered by timestamp descending (newest first)", () => {
+    saveSignal({ ...VALID_INPUT, timestamp: "2026-04-29T16:26:00Z" }, db);
+    saveSignal({ ...VALID_INPUT, timestamp: "2026-04-29T16:28:00Z" }, db);
+    saveSignal({ ...VALID_INPUT, timestamp: "2026-04-29T16:27:00Z" }, db);
+    const results = listRecentSignalsByName("kp-index", 10, db);
+    expect(results[0].timestamp).toBe("2026-04-29T16:28:00Z");
+    expect(results[1].timestamp).toBe("2026-04-29T16:27:00Z");
+    expect(results[2].timestamp).toBe("2026-04-29T16:26:00Z");
+  });
+
+  it("respects the limit parameter", () => {
+    for (let i = 0; i < 5; i++) {
+      saveSignal({ ...VALID_INPUT, timestamp: `2026-04-29T16:2${i}:00Z` }, db);
+    }
+    expect(listRecentSignalsByName("kp-index", 3, db)).toHaveLength(3);
+  });
+
+  it("clamps limit to 1 when a value below 1 is passed", () => {
+    saveSignal(VALID_INPUT, db);
+    expect(listRecentSignalsByName("kp-index", 0, db)).toHaveLength(1);
   });
 });
 

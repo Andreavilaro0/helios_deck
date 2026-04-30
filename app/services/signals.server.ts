@@ -158,6 +158,27 @@ export function signalExists(
 }
 
 /**
+ * Returns the N most recent records for a given signal name, newest first.
+ * `limit` is clamped to [1, 500] to prevent runaway queries.
+ */
+export function listRecentSignalsByName(
+  signalName: SignalName,
+  limit: number,
+  db: Database.Database = getDb()
+): SignalRecord[] {
+  const safeLimit = Math.max(1, Math.min(Math.floor(limit), 500));
+  const rows = db
+    .prepare(
+      `SELECT * FROM signals
+       WHERE signal = ?
+       ORDER BY timestamp DESC
+       LIMIT ?`
+    )
+    .all(signalName, safeLimit) as SignalRow[];
+  return rows.map(rowToRecord);
+}
+
+/**
  * Returns the most recent record for a given signal name, or null if none.
  * ISO 8601 timestamps sort correctly as strings, so ORDER BY timestamp DESC works.
  */

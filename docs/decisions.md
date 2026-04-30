@@ -225,6 +225,28 @@ Loaders should not import from `app/db/` directly. `signals.server.ts` is the si
 
 ---
 
+## ADR-012 — Loader does not auto-ingest; ingest is a separate manual step
+
+**Date:** 2026-04-30
+**Status:** Accepted
+
+**Context:**
+Phase 1E adds the first SSR loader for `/dashboard`. The loader reads from SQLite. A question arose: should the loader also trigger `ingestNoaaKpSignals()` if no data is found, or if data is stale?
+
+**Decision:** The loader never calls the ingest pipeline. It reads what is in SQLite and returns it as-is, including a `hasData: false` flag when the table is empty.
+
+**Why not auto-ingest in the loader?**
+1. **Every page load would call NOAA.** Even if rate-limited, this couples UI availability to external API availability. If NOAA is slow, the page is slow.
+2. **Loaders should be fast.** React Router loaders run on every navigation. A network call in a loader defeats the architecture decision recorded in ADR-001 (SSR data via loaders, not fetch-on-render).
+3. **Ingest is an operational concern.** Deciding when and how often to fetch NOAA data belongs to a scheduler (cron, Phase 3), not to the render path.
+4. **Graceful empty state is better.** The dashboard shows a clear message ("No data yet, run `npm run ingest:noaa-kp`") rather than silently blocking.
+
+**Alternatives considered:**
+- **Auto-ingest when `hasData === false`** — rejected. Makes the first page load slow and unpredictable.
+- **Auto-ingest on a background thread via `setImmediate`** — rejected. Node.js single-threaded model plus better-sqlite3 being sync makes this fragile and hard to reason about.
+
+---
+
 ## ADR-011 — Ingest coordinator as a separate service layer
 
 **Date:** 2026-04-30

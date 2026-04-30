@@ -34,7 +34,7 @@ Signals tracked:
 
 ## Project Status
 
-**Current phase: 1D — Full ingest pipeline (NOAA → SQLite)**
+**Current phase: 1E — First SSR loader and SignalCard UI**
 
 See [`docs/plan.md`](docs/plan.md) for the full roadmap.
 
@@ -100,6 +100,18 @@ See [`docs/architecture.md`](docs/architecture.md) for the full diagram.
 
 ---
 
+## Dashboard
+
+```bash
+npm run ingest:noaa-kp   # Populate the local database (first time or to refresh)
+npm run dev              # Start dev server
+# Open http://localhost:5173/dashboard
+```
+
+The dashboard shows the latest Kp index, a geomagnetic activity status
+(Quiet / Active / Storm), and a 60-reading CSS sparkline. The loader reads from
+the local SQLite file only — no external fetch on page load.
+
 ## Manual Ingestion
 
 ```bash
@@ -107,9 +119,8 @@ npm run ingest:noaa-kp
 ```
 
 Queries the NOAA SWPC real-time Kp index endpoint, normalizes each entry into
-a `SignalRecord`, and persists new records to the local SQLite database at
-`data/helios.sqlite`. Duplicate entries (same timestamp, source, and signal)
-are skipped automatically. Prints a summary of fetched / saved / skipped counts.
+a `SignalRecord`, and persists new records to `data/helios.sqlite`. Duplicate
+entries (same timestamp, source, and signal) are skipped automatically.
 
 ---
 

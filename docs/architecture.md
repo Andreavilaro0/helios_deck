@@ -41,10 +41,17 @@ The architecture is deliberately layered: each layer has a single responsibility
 
 ---
 
-## Component Tree (Phase 2 target)
+## Component Tree (Phase 1E — implemented)
 
 ```
-app/routes/dashboard.tsx  (loader: reads DB → passes SignalRecord[])
+app/routes/dashboard.tsx  (loader: reads SQLite → SignalRecord[])
+  ├─ app/components/widgets/SignalCard.tsx  (latest Kp, interpretation, confidence)
+  └─ KpHistoryBars (inline — CSS sparkline, no chart library)
+```
+
+Phase 2 target (once more signals are ingested):
+```
+app/routes/dashboard.tsx
   └─ app/components/DashboardLayout.tsx
        ├─ app/widgets/KpIndexWidget.tsx
        ├─ app/widgets/SolarWindWidget.tsx
@@ -93,9 +100,10 @@ Ingest trigger (npm run ingest:noaa-kp, or future cron route)
                  └─ signalExists() — skip if (timestamp, source, signal) already stored
                       └─ saveSignal() → data/helios.sqlite
 
-Page load
-  └─ loader: listSignals() / getLatestSignalByName('kp-index')
-       └─ component receives clean SignalRecord[]
+Page load (SSR)
+  └─ loader: getLatestSignalByName('kp-index') + listRecentSignalsByName('kp-index', 60)
+       └─ component receives { latestSignal, recentSignals, hasData }
+            └─ SignalCard + KpHistoryBars render server-side, hydrate on client
 ```
 
 This separation means the UI is never blocked by a slow external API.
