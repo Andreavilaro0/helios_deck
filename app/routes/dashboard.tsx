@@ -28,13 +28,18 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
     <main className="min-h-screen bg-gray-50 dark:bg-gray-950 p-6">
       <div className="max-w-2xl mx-auto space-y-6">
 
-        <header className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-white tracking-tight">
-            HELIOS_DECK
-          </h1>
+        <header className="flex items-start justify-between">
+          <div>
+            <h1 className="text-xl font-semibold text-gray-900 dark:text-white tracking-tight font-mono">
+              HELIOS_DECK
+            </h1>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+              Planetary Geomagnetic Activity Monitor
+            </p>
+          </div>
           <Link
             to="/"
-            className="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            className="text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 mt-1"
           >
             ← Home
           </Link>
@@ -110,7 +115,7 @@ function KpHistoryBars({ signals }: KpHistoryBarsProps) {
         <span className="text-xs text-gray-400">scale 0 – 9</span>
       </div>
 
-      <div className="flex items-end gap-px h-16" role="img" aria-label="Kp index history chart">
+      <div className="flex items-end gap-px h-24" role="img" aria-label="Kp index history chart">
         {bars.map((s) => {
           const kp = typeof s.value === "number" ? s.value : 0;
           const heightPct = Math.round((kp / 9) * 100);
