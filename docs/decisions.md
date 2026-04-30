@@ -408,3 +408,46 @@ The data flow is unchanged: `loader → SignalCard → Card/Badge`. Card and Bad
 - **Keep raw Tailwind only** — valid, but ad-hoc class strings in SignalCard for the border color, status text color, and outer container styling are harder to maintain as the dashboard grows. A typed variant system (`cva`) is safer than free-form string concatenation.
 - **Use shadcn's full Card component (with `data-slot`, `group/card`, `size` variants)** — rejected. The CLI generates a 100-line Card with container queries and slot-based layout. For SignalCard's flat single-block layout, this complexity adds no value. A 19-line simplified Card is the right scope.
 - **Use Radix UI Badge directly** — not needed. The shadcn Badge is a plain `<span>` with `cva` variants. No accessibility semantics require a Radix primitive for a color-coded status label.
+
+---
+
+## ADR-016 — Solar Instrument Console layout (Phase 2E)
+
+**Date:** 2026-04-30
+**Status:** Accepted
+
+**Context:**
+Phase 2B attempted a cosmic/glassmorphism dashboard redesign (dark-card grid, `rounded-xl`, `border-white/10`, gradient overlays). The user rejected it: "no nos ha gustado el dashboard." The aesthetic was closer to a SaaS product landing page than to a scientific instrument. It was discarded completely.
+
+**Decision:** Replace the Phase 2B design with a Solar Instrument Console aesthetic inspired by NOAA SWPC mission control interfaces and the Atlas26 visual reference. All four instrument panels (KpTelemetryPanel, KpScaleInstrument, MissionStatusPanel, KpHistoryStrip) are built from scratch with a consistent scientific instrument language.
+
+**Design language:**
+- Shell background: `#030712` (near-black, applied via `.instrument-shell` CSS class)
+- Panel background: `#070d1a` (dark navy)
+- Panel border: `border-cyan-900/30` — 1px, very low opacity cyan. Not decorative, structural.
+- `rounded-sm` only. No `rounded-xl`, no `rounded-lg`.
+- Typography: `font-mono` throughout, `uppercase tracking-widest` for section labels, tabular-nums for data values.
+- Status colors: sky-400 (QUIET), yellow-400 (ACTIVE), red-400 (STORM). Same Kp thresholds as before (4, 5).
+- Active data indicators: `bg-emerald-400 animate-pulse` dots. Used only where data is genuinely flowing (InstrumentHeader feed status, MissionStatusPanel pipeline steps).
+
+**New components:**
+- `InstrumentShell` — `<main>` wrapper applying `.instrument-shell` class
+- `InstrumentHeader` — title bar with feed status, source attribution, responsive status row
+- `KpScaleInstrument` — visual zone track (quiet/active/storm regions) with position marker, threshold lines at Kp 4 and Kp 5, scale ticks 0–9, zone key
+- `MissionStatusPanel` — data pipeline visualization (NOAA SWPC → HELIOS_DECK → SQLite → SSR) plus session stats (max, min, avg Kp)
+- `KpTelemetryPanel` — large Kp readout with left accent border, status, source, timestamp, confidence
+- `KpHistoryStrip` — bar chart of last N readings with threshold reference lines, newest-right orientation
+- `EmptyDashboardState` — instrument-styled empty state with ingest instructions
+
+**Architecture: zero changes to data layer.** All data still flows through the `dashboard.tsx` loader. The loader now computes `stats` (count, max, min, avg) from `recentSignals` before returning — this is valid loader logic, not business logic in a component.
+
+**Why `.instrument-shell` as a CSS class (not Tailwind utilities):**
+The shell color `#030712` is not a Tailwind color token. Using an arbitrary value `bg-[#030712]` directly on a root element that renders inside the React Router document would work, but a named CSS class makes it clear this is a system-level concern (the entire UI shell) not a one-off utility. One class, one place to change.
+
+**Why discard Phase 2B completely:**
+Partial reverting would leave inconsistent aesthetics. The Phase 2B components and the Phase 2E components use incompatible visual vocabularies (glassmorphism vs instrument console). A partial merge would be visually incoherent.
+
+**Alternatives considered:**
+- **Keep Phase 2B with adjustments** — rejected. The user's feedback was "no nos ha gustado" (we didn't like it). Incremental adjustment of a rejected design is not the right response.
+- **Use Magic UI animated components** — deferred. CLAUDE.md rule: Magic UI only after MVP 1 is working end-to-end. The console aesthetic using plain Tailwind achieves the visual goal without new dependencies.
+- **Three.js planet in the header** — explicitly deferred to `/cosmic-view` route (ADR-004). No Three.js outside that route.

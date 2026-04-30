@@ -129,3 +129,9 @@
     @apply font-sans;
   }
 }
+
+/* ── Instrument shell — always-dark scientific console ─────────────────────── */
+.instrument-shell {
+  background-color: #030712;
+  color: #cbd5e1;
+}
