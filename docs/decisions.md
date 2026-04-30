@@ -317,3 +317,48 @@ All three CI commands operate on the codebase itself. No API keys, no environmen
 - **Run ingest in CI with a mock server** — rejected. Adds complexity (mock HTTP server setup) with no benefit; the normalizer and ingest service are already tested with injected fakes.
 - **Cache the SQLite file between runs** — rejected. The file is gitignored and runtime-generated; caching it in CI creates a hidden dependency on previous run state.
 - **Add deploy step (Vercel, Netlify)** — deferred. Deployment automation belongs to Phase 2 after the MVP is stable. CI verifies quality; deployment is a separate concern.
+
+---
+
+## ADR-014 — Deployment strategy deferred after local walking skeleton
+
+**Date:** 2026-04-30
+**Status:** Accepted
+
+**Context:**
+Phase 1 is complete. The walking skeleton works end-to-end with real NOAA data, CI is green, and the first question that naturally follows is "where does this run in production?" The answer is not obvious because `better-sqlite3` is a native addon and SQLite is a local file — both are constraints that rule out the most common hosting choices.
+
+**Decision:** No deployment target is chosen at the end of Phase 1. The deploy decision is deferred to Phase 6 (Production, Testing, and Deploy). The constraints and options are fully documented in `docs/architecture.md` § Deployment Considerations.
+
+**Why not deploy immediately after Phase 1:**
+
+1. **The stack has real constraints that must be understood before committing to a platform.** `better-sqlite3` uses a native C++ addon compiled for a specific OS/Node/architecture. Serverless platforms (Vercel Edge, Netlify Edge Functions) run V8 Isolates, not Node.js — they cannot load native addons at all. Choosing one of these platforms without understanding this would require an emergency migration mid-project.
+
+2. **SQLite is a local file.** A platform without persistent disk storage (most serverless environments) would lose all data between requests. The dashboard would always show the empty state. This makes the application meaningless as a deployed product until the storage question is resolved.
+
+3. **CI already guarantees correctness on clean machines.** GitHub Actions runs typecheck + build + test on every push with `npm ci` from scratch. The quality gate is already in place. A rushed deploy adds risk without adding verification.
+
+4. **Deployment decisions affect future architecture choices.** If Phase 3 adds WebSockets, the host must support long-lived connections. If Phase 4 adds auth, session storage must be persistent. Choosing a host after Phase 1 risks being locked into a platform that cannot support later phases.
+
+**Conditions that must be true before deploying:**
+
+- The storage question is resolved: either a persistent volume (Fly.io, Railway, Render) or a migration to a hosted database (Turso, Supabase, Neon).
+- The WebSocket strategy for Phase 3 is compatible with the chosen host.
+- `npm run build` produces a deployable artifact that passes on the target platform's Node version.
+- CI includes a smoke test or health check that confirms the deployed instance is serving data.
+
+**Options documented for Phase 6 (in `docs/architecture.md`):**
+
+| Option | Approach | Code changes |
+|--------|----------|-------------|
+| A | Local demo only | None |
+| B | Fly.io or Railway with persistent disk | None (Docker + volume config) |
+| C | Turso / libSQL or Supabase | Rewrite `db.server.ts` |
+| D | Defer until Phase 6 | None now |
+
+**Current recommendation:** Option B (Node.js server with persistent disk) if a public URL is required for evaluation. Option D (defer) if the evaluation is internal. The choice depends on the course requirement — not on technical preference.
+
+**Alternatives considered:**
+- **Deploy to Vercel immediately** — rejected. Vercel's Edge Runtime does not support native Node.js addons. The serverless functions runtime supports Node.js but has no persistent filesystem. Both break `better-sqlite3` in different ways.
+- **Switch to Turso now** — deferred. Migrating the DB layer before Phase 2 is premature optimization. The `SignalRecord` contract and service layer are stable; the DB transport is not load-bearing yet.
+- **Use a Docker container on a VPS** — valid, subsumed by Option B. Fly.io and Railway are Docker-based platforms with a simpler UX than managing a raw VPS.

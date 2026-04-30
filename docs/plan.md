@@ -9,7 +9,7 @@ Each phase must be committed and verifiable before the next begins.
 
 ## Phases
 
-### Phase 0 — Documentation and Architecture
+### Phase 0 — Documentation and Architecture ✅ COMPLETE
 **Goal:** Establish shared understanding before writing a single line of application code.
 
 Deliverables:
@@ -28,21 +28,22 @@ Done when: all docs committed, no app code exists.
 
 ---
 
-### Phase 1 — Walking Skeleton (one real signal end-to-end)
+### Phase 1 — Walking Skeleton (one real signal end-to-end) ✅ COMPLETE
 **Goal:** Prove the full data pipeline works with a single real API, a single signal, and a single widget.
 
-Deliverables:
-- React Router v7 SSR scaffold (`npx create-react-router@latest`)
-- Tailwind CSS v4 configured
-- SQLite connected (`better-sqlite3`)
-- `app/db/schema.js` — `signals` table with indexes
-- `app/services/fetchers/noaa.js` — fetches Kp index from NOAA SWPC
-- `app/services/normalizers/noaa.js` — maps raw response to `SignalRecord`
-- `app/routes/index.jsx` — loader reads from DB, component renders one widget
-- `app/widgets/KpIndexWidget.jsx` — displays current Kp value and trend
-- A cron-style script or route action to ingest data periodically
+Completed sub-phases:
+- **1A** — React Router v7 + TypeScript scaffold, Tailwind CSS v4, project structure
+- **1B** — `SignalRecord` type contract, NOAA fetcher, normalizer with unit tests
+- **1C** — SQLite schema (`signals` table + composite indices), `openDb`/`getDb`, DB tests
+- **1D** — Ingest coordinator (`noaa-kp.server.ts`), `saveSignal`, dedup, `IngestResult`
+- **1E** — SSR loader for `/dashboard`, `SignalCard` widget, `KpHistoryBars` sparkline
+- **1F** — Visual polish (Kp accent border, `text-5xl`, `<time dateTime>`), 7 component tests
+- **1G** — GitHub Actions CI (typecheck + build + test on push/PR, green in 37s)
+- **1H** — Checkpoint documentation, deploy strategy analysis (this phase)
 
-Done when: visiting `/` shows a real Kp value fetched from NOAA, stored in SQLite, and rendered server-side.
+Done when: visiting `/dashboard` shows a real Kp value fetched from NOAA, stored in SQLite, rendered server-side, with CI passing. ✅
+
+See [`docs/checkpoint-1.md`](checkpoint-1.md) for the full milestone summary.
 
 ---
 
@@ -53,7 +54,7 @@ Deliverables:
 - Solar wind speed (NOAA SWPC)
 - X-ray flux (NOAA SWPC)
 - Proton flux (NOAA SWPC)
-- `app/routes/dashboard.jsx` — multi-widget layout
+- `app/routes/dashboard.tsx` — multi-widget layout
 - shadcn Card, Badge, Skeleton components installed and used
 - Responsive grid layout with Tailwind
 - Error boundaries per widget (one widget failing must not break the page)
@@ -68,7 +69,7 @@ Done when: dashboard shows 4+ real signals with proper loading and error states.
 
 Deliverables:
 - Server-side WebSocket handler
-- Client-side WebSocket hook (`app/hooks/useSignalStream.js`)
+- Client-side WebSocket hook (`app/hooks/useSignalStream.ts`)
 - Widgets update in-place on new data
 - Graceful fallback to polling if WebSocket connection fails
 
@@ -111,19 +112,10 @@ Deliverables:
 - Vitest unit tests for all normalizers and DB helpers
 - Playwright e2e test for the main dashboard flow
 - Lighthouse score ≥ 90 on Performance, Accessibility, Best Practices
-- Deploy to Fly.io or Railway (SSR-compatible)
+- Deploy to a Node-compatible host with persistent disk (Fly.io, Railway, or Render)
 - `docs/rubric-checklist.md` fully checked
 - Final `docs/ai-usage.md` entry
 
 Done when: deployed URL is live and all checklist items are green.
 
----
-
-## Next Step (from Phase 0)
-
-```bash
-npx create-react-router@latest helios-app --template remix
-```
-
-Run this from `helios_web/`, then move contents up or work inside `helios-app/`.
-Confirm with the user before running this command.
+See `docs/architecture.md` § Deployment Considerations for the deploy strategy analysis.

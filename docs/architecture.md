@@ -177,3 +177,56 @@ WebSocket messages carry the same `SignalRecord` shape. Widgets do not change �
 - OAuth / social login (Phase 4 uses session auth)
 - Multi-region / edge deployment
 - Service Worker / offline mode
+
+---
+
+## Deployment Considerations
+
+This section documents the constraints introduced by the current stack and the realistic options for Phase 6 deployment. No option has been chosen yet — the decision is recorded in ADR-014.
+
+### What works well locally
+
+`better-sqlite3` with a file-based SQLite database (`data/helios.sqlite`) is the simplest possible setup: zero configuration, zero external services, synchronous reads inside loaders. For development and local evaluation this is ideal.
+
+### Why serverless platforms are problematic for this stack
+
+Serverless functions (Vercel Edge, Netlify Functions, AWS Lambda) run in ephemeral containers that do not have a persistent local filesystem. Any file written to disk during one invocation is gone by the next. This has two direct consequences for HELIOS_DECK:
+
+1. `data/helios.sqlite` cannot persist between requests — the dashboard would show no data.
+2. `better-sqlite3` is a native C++ addon compiled for a specific OS/Node/architecture combination. Serverless environments with non-standard runtimes (e.g. Vercel's Edge Runtime, which is V8 Isolates, not Node.js) cannot load native addons at all.
+
+### Deployment options for Phase 6
+
+**Option A — Defend locally (no public deploy)**
+Run the project on a laptop or local server for the evaluation demo. No infrastructure changes required. The evaluator runs `npm run ingest:noaa-kp && npm run dev` and sees the dashboard live.
+
+- Pros: zero infra cost, works today, no migration risk.
+- Cons: no public URL, harder to share, does not demonstrate production readiness.
+- Suitable for: internal academic evaluation where a live URL is not required.
+
+**Option B — Node.js server with persistent disk (Fly.io, Railway, Render)**
+Deploy as a long-running Node.js process on a platform that mounts a persistent volume. `data/helios.sqlite` lives on the volume. `better-sqlite3` compiles normally on standard Linux/Node.
+
+- Pros: no code changes required, full parity with local development, persistent data.
+- Cons: requires volume configuration, slightly more devops complexity.
+- Suitable for: production-quality deploy without changing the database layer.
+- Recommended platform: **Fly.io** (free tier with 3 GB volume, supports custom Dockerfiles) or **Railway** (simpler setup, similar constraints).
+
+**Option C — Migrate persistence to a hosted database**
+Replace `better-sqlite3` with a hosted SQLite-compatible service (Turso / libSQL) or a hosted Postgres (Supabase, Neon). The `SignalRecord` contract and all service layer code remain unchanged — only `app/db/db.server.ts` is rewritten.
+
+- Pros: works on any platform including serverless, no persistent volume needed.
+- Cons: requires rewriting the DB layer, introduces external service dependency, adds latency to synchronous reads (loaders become async).
+- Suitable for: Phase 6 if Fly.io/Railway is not available or if multi-region access is needed.
+- Best candidate: **Turso** (libSQL, SQLite-compatible wire protocol, free tier).
+
+**Option D — Keep SQLite for evaluation only, migrate in Phase 6**
+Ship Phase 2–5 features with the current SQLite setup, then evaluate the deploy target when the feature set is finalized. Avoids premature migration that might constrain Phase 3 (WebSockets) or Phase 4 (auth).
+
+- Pros: no migration risk during active development.
+- Cons: defers a real infrastructure decision, could require a larger migration later.
+- Suitable for: university project where the evaluation is the deadline.
+
+### Current recommendation
+
+Option B (Fly.io or Railway with persistent disk) is the lowest-risk path for a production deploy without code changes. Option D is the right choice if deployment is not evaluated until Phase 6. The decision is documented in ADR-014.
