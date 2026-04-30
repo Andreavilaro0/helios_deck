@@ -276,3 +276,44 @@ Route actions run per HTTP request. Ingest is a background operation triggered o
 **Alternatives considered:**
 - **Inline in a `+server` route** — couples pipeline logic to an HTTP handler; harder to test.
 - **Throw on first error instead of collecting** — rejected. NOAA returns up to 500 entries per call; a single bad entry would silently discard valid data. Collecting errors and continuing is safer for bulk ingestion.
+
+---
+
+## ADR-013 — Continuous Integration with GitHub Actions
+
+**Date:** 2026-04-30
+**Status:** Accepted
+
+**Context:**
+Phase 1G closes the walking skeleton. The pipeline is end-to-end: fetcher → normalizer → SQLite → loader → dashboard → component tests. Without CI, every push could silently break any of these layers — TypeScript errors, a build that fails, or a test regression.
+
+**Decision:** Add a minimal GitHub Actions workflow (`.github/workflows/ci.yml`) that runs on every push and pull request.
+
+**What CI protects:**
+1. `npm run typecheck` — runs `react-router typegen` then `tsc --noEmit`. Catches type errors across loaders, routes, and components. React Router's typegen must run first because route types are generated, not hand-written.
+2. `npm run build` — full production build (client bundle + SSR bundle). Catches import errors, missing modules, and Rollup issues that TypeScript alone does not detect.
+3. `npm test` — Vitest runs all unit tests (normalizer, DB helpers, signal service) and component tests (SignalCard). Catches regressions in the data pipeline and UI contract.
+
+**Why CI at Phase 1, not later:**
+The earlier CI is introduced, the cheaper it is. A project with 49 tests and 3 verification commands takes under 2 minutes to check. Delaying CI until Phase 3 or 4 would mean accepting weeks of unverified pushes and then retrofitting green builds — which is harder than starting green.
+
+**Why the ingest script is never called in CI:**
+`npm run ingest:noaa-kp` makes a real HTTP request to `https://services.swpc.noaa.gov`. Running it in CI would:
+- Create a dependency on an external API being available.
+- Make CI flaky if NOAA is slow or rate-limits GitHub's IP range.
+- Store real signal data in the runner's filesystem, which is discarded after every run anyway.
+CI only verifies that the code compiles and tests pass — it does not need data.
+
+**Why tests use SQLite in memory (`openDb(':memory:')`), not `data/helios.sqlite`:**
+`data/helios.sqlite` is a local operational file, gitignored, and absent on a fresh runner. Tests that depend on it would always fail in CI. Using `:memory:` ensures every test run starts from a clean, schema-correct database regardless of local state. This is also why `data/` is in `.gitignore` — committing the SQLite file would couple the test environment to whatever data was present at commit time.
+
+**Why no secrets are needed:**
+All three CI commands operate on the codebase itself. No API keys, no environment variables beyond what `npm ci` provides. A zero-secret CI pipeline is simpler to audit and cannot leak credentials.
+
+**Environment: ubuntu-latest, Node 20:**
+`ubuntu-latest` matches typical production Linux environments and is the cheapest GitHub Actions runner. Node 20 is the current LTS. `better-sqlite3` ships prebuilt binaries for linux-x64-node-20, so `npm ci` installs without needing a C++ compiler in most cases (falls back to compilation if no prebuilt matches).
+
+**Alternatives considered:**
+- **Run ingest in CI with a mock server** — rejected. Adds complexity (mock HTTP server setup) with no benefit; the normalizer and ingest service are already tested with injected fakes.
+- **Cache the SQLite file between runs** — rejected. The file is gitignored and runtime-generated; caching it in CI creates a hidden dependency on previous run state.
+- **Add deploy step (Vercel, Netlify)** — deferred. Deployment automation belongs to Phase 2 after the MVP is stable. CI verifies quality; deployment is a separate concern.

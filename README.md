@@ -34,7 +34,7 @@ Signals tracked:
 
 ## Project Status
 
-**Current phase: 1E — First SSR loader and SignalCard UI**
+**Current phase: 1G — CI with GitHub Actions**
 
 See [`docs/plan.md`](docs/plan.md) for the full roadmap.
 
@@ -135,6 +135,18 @@ entries (same timestamp, source, and signal) are skipped automatically.
 | [`docs/decisions.md`](docs/decisions.md) | Technical decision log (ADRs) |
 | [`docs/ai-usage.md`](docs/ai-usage.md) | AI tool usage policy and session log |
 | [`docs/rubric-checklist.md`](docs/rubric-checklist.md) | Quality checklist for evaluation |
+
+---
+
+## Quality Checks
+
+```bash
+npm run typecheck   # react-router typegen + tsc (strict mode)
+npm run build       # production build (client + SSR)
+npm test            # Vitest — unit and component tests
+```
+
+GitHub Actions runs these three checks automatically on every push and pull request. No secrets or external APIs are required — tests use an in-memory SQLite database and the ingest script is never executed in CI.
 
 ---
 

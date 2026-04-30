@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  quality:
+    name: Typecheck · Build · Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # Compiles better-sqlite3 native addon from source if no prebuilt binary
+      # matches the runner's Node/OS/arch — npm ci handles this automatically.
+      - run: npm ci
+
+      - run: npm run typecheck
+
+      - run: npm run build
+
+      # Tests use openDb(':memory:') — no data/helios.sqlite required.
+      # The ingest script is never called here.
+      - run: npm test
