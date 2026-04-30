@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import type { Route } from "./+types/dashboard";
 import { SignalCard } from "~/components/widgets/SignalCard";
+import { Card } from "~/components/ui/card";
 import {
   getLatestSignalByName,
   listRecentSignalsByName,
@@ -78,17 +79,17 @@ function DashboardBody({ latestSignal, recentSignals }: DashboardBodyProps) {
 
 function EmptyState() {
   return (
-    <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 p-10 text-center space-y-3">
-      <p className="text-gray-500 dark:text-gray-400 font-medium">
+    <Card className="border-dashed p-10 text-center space-y-3">
+      <p className="text-muted-foreground font-medium">
         No NOAA Kp data available yet.
       </p>
-      <p className="text-sm text-gray-400 dark:text-gray-500">
+      <p className="text-sm text-muted-foreground/70">
         Run the ingestion script to populate the database:
       </p>
-      <code className="block text-sm bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded px-4 py-2 font-mono">
+      <code className="block text-sm bg-muted text-muted-foreground rounded px-4 py-2 font-mono">
         npm run ingest:noaa-kp
       </code>
-    </div>
+    </Card>
   );
 }
 

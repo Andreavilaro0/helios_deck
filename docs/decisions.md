@@ -362,3 +362,49 @@ Phase 1 is complete. The walking skeleton works end-to-end with real NOAA data, 
 - **Deploy to Vercel immediately** — rejected. Vercel's Edge Runtime does not support native Node.js addons. The serverless functions runtime supports Node.js but has no persistent filesystem. Both break `better-sqlite3` in different ways.
 - **Switch to Turso now** — deferred. Migrating the DB layer before Phase 2 is premature optimization. The `SignalRecord` contract and service layer are stable; the DB transport is not load-bearing yet.
 - **Use a Docker container on a VPS** — valid, subsumed by Option B. Fly.io and Railway are Docker-based platforms with a simpler UX than managing a raw VPS.
+
+---
+
+## ADR-015 — Minimal shadcn UI primitives (Phase 2A)
+
+**Date:** 2026-04-30
+**Status:** Accepted
+
+**Context:**
+Phase 1 is complete with raw Tailwind CSS. The dashboard is functional but uses ad-hoc styling for every element: the SignalCard outer div, the empty state container, and the Kp status badge are all hand-crafted with inline class strings. Phase 2A introduces a UI system to establish visual consistency without changing the data architecture.
+
+**Decision:** Add shadcn UI with the minimal component set needed for the current dashboard: `Card`, `CardContent`, and `Badge`. No other components are added in this phase.
+
+**Why shadcn now and not earlier:**
+Phase 1's goal was to prove the data pipeline — every line was about getting real data from NOAA to the screen via SQLite. Adding a UI library before the pipeline was proven would have introduced risk without benefit. The CLAUDE.md rule "Magic UI: only after MVP 1 is working end-to-end with real data" captures the same principle for shadcn: UI polish comes after substance. Phase 1 is now committed and CI is green.
+
+**Why only Card and Badge (not the full component set):**
+YAGNI. The dashboard at Phase 2A has: one data card (SignalCard), one status indicator (Kp badge), one empty state, and a CSS sparkline. Card + Badge covers all three presentational primitives. Adding Button, Alert, Skeleton, Tabs, or Dialog now would mean installing and maintaining components that serve no current purpose. They will be added in later phases as the dashboard expands.
+
+**Why not Magic UI yet:**
+Magic UI provides animated premium components built on top of shadcn. Using it before the base shadcn layer is stable would add both animation complexity and a dependency on library-specific APIs before the component structure is settled. CLAUDE.md explicitly defers Magic UI to Phase 5.
+
+**Architecture impact (none):**
+The data flow is unchanged: `loader → SignalCard → Card/Badge`. Card and Badge are purely presentational — they receive no data, call no services, and have no side effects. They are exactly what the architecture requires: components that render.
+
+**Implementation details:**
+- `app/lib/utils.ts` — `cn()` helper via `clsx` + `tailwind-merge`. Replaces ad-hoc string concatenation for className merging.
+- `app/components/ui/card.tsx` — simplified shadcn Card using CSS variables (`bg-card`, `border-border`). The `CardContent` sub-component provides consistent padding.
+- `app/components/ui/badge.tsx` — `cva`-based Badge with four domain-specific variants: `quiet` (green), `active` (yellow), `storm` (red), `default` (gray). Variants directly map to the Kp status interpretation. Removes the `kpStatusColor()` function from SignalCard — color is now part of the Badge contract.
+- `app/app.css` — CSS variables added by shadcn init (nova preset). Dark mode configured via `@media (prefers-color-scheme: dark)` to preserve the existing system-preference-based dark mode without a JavaScript toggle.
+
+**New dependencies and justification:**
+| Package | Replaces | Why |
+|---------|----------|-----|
+| `clsx` | Template literals for conditional classes | Type-safe conditional className construction |
+| `tailwind-merge` | No equivalent | Deduplicates conflicting Tailwind utilities when merging className props |
+| `class-variance-authority` | Manual variant objects | Typed variant API for Badge; eliminates `if/else` chains for color variants |
+| `radix-ui` | none | Required by shadcn registry; not directly used in Card or Badge |
+| `@fontsource-variable/geist` | System fonts | Professional typography; Geist is optimized for code-heavy UIs |
+| `tw-animate-css` | none | Installed by shadcn init for future animation utilities |
+| `lucide-react` | none | Icon library used by shadcn components; not yet used in the dashboard |
+
+**Alternatives considered:**
+- **Keep raw Tailwind only** — valid, but ad-hoc class strings in SignalCard for the border color, status text color, and outer container styling are harder to maintain as the dashboard grows. A typed variant system (`cva`) is safer than free-form string concatenation.
+- **Use shadcn's full Card component (with `data-slot`, `group/card`, `size` variants)** — rejected. The CLI generates a 100-line Card with container queries and slot-based layout. For SignalCard's flat single-block layout, this complexity adds no value. A 19-line simplified Card is the right scope.
+- **Use Radix UI Badge directly** — not needed. The shadcn Badge is a plain `<span>` with `cva` variants. No accessibility semantics require a Radix primitive for a color-coded status label.
