@@ -15,17 +15,18 @@ export function meta(_: Route.MetaArgs) {
 export function loader(_: Route.LoaderArgs) {
   const latestSignal = getLatestSignalByName("kp-index");
   const latestSolarWind = getLatestSignalByName("solar-wind-speed");
-  return { latestSignal, latestSolarWind };
+  const latestXRayFlux = getLatestSignalByName("xray-flux-long");
+  return { latestSignal, latestSolarWind, latestXRayFlux };
 }
 
 export default function CosmicViewRoute({ loaderData }: Route.ComponentProps) {
-  const { latestSignal, latestSolarWind } = loaderData;
+  const { latestSignal, latestSolarWind, latestXRayFlux } = loaderData;
 
   if (!latestSignal) {
     return <CosmicEmptyState />;
   }
 
-  return <CosmicScene signal={latestSignal} solarWind={latestSolarWind} />;
+  return <CosmicScene signal={latestSignal} solarWind={latestSolarWind} xrayFlux={latestXRayFlux} />;
 }
 
 // ---------------------------------------------------------------------------
@@ -36,20 +37,22 @@ export default function CosmicViewRoute({ loaderData }: Route.ComponentProps) {
 interface CosmicClientProps {
   signal: SignalRecord;
   solarWind: SignalRecord | null;
+  xrayFlux: SignalRecord | null;
 }
 
 interface CosmicSceneProps {
   signal: SignalRecord;
   solarWind: SignalRecord | null;
+  xrayFlux: SignalRecord | null;
 }
 
-function CosmicScene({ signal, solarWind }: CosmicSceneProps) {
+function CosmicScene({ signal, solarWind, xrayFlux }: CosmicSceneProps) {
   const [Client, setClient] = useState<ComponentType<CosmicClientProps> | null>(null);
 
   useEffect(() => {
-    import("~/components/cosmic/CosmicViewClient").then((m) => {
-      setClient(() => m.default);
-    });
+    import("~/components/cosmic/CosmicViewClient")
+      .then((m) => { setClient(() => m.default); })
+      .catch(() => { /* chunk load failed — loading fallback remains visible */ });
   }, []);
 
   if (!Client) {
@@ -62,5 +65,5 @@ function CosmicScene({ signal, solarWind }: CosmicSceneProps) {
     );
   }
 
-  return <Client signal={signal} solarWind={solarWind} />;
+  return <Client signal={signal} solarWind={solarWind} xrayFlux={xrayFlux} />;
 }

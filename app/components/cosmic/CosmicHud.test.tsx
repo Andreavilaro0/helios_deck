@@ -97,3 +97,43 @@ describe("CosmicHud — solar wind secondary readout", () => {
     expect(screen.queryByTestId("hud-wind-readout")).not.toBeInTheDocument();
   });
 });
+
+// ---------------------------------------------------------------------------
+// X-ray flux secondary readout
+// ---------------------------------------------------------------------------
+
+const MOCK_XRAY: SignalRecord = {
+  timestamp: "2026-05-01T16:11:00Z",
+  source: "noaa-swpc",
+  signal: "xray-flux-long",
+  value: 1.316572362242141e-8,
+  unit: "W/m²",
+  confidence: 0.9,
+  metadata: {},
+};
+
+describe("CosmicHud — X-ray flux secondary readout", () => {
+  it("does not render xray readout when xrayFlux is not provided", () => {
+    render(<MemoryRouter><CosmicHud signal={MOCK_SIGNAL} kp={2.33} /></MemoryRouter>);
+    expect(screen.queryByTestId("hud-xray-readout")).not.toBeInTheDocument();
+  });
+
+  it("renders xray value and class when xrayFlux is provided", () => {
+    render(<MemoryRouter><CosmicHud signal={MOCK_SIGNAL} kp={2.33} xrayFlux={MOCK_XRAY} /></MemoryRouter>);
+    const readout = screen.getByTestId("hud-xray-readout");
+    expect(readout).toBeInTheDocument();
+    expect(readout.textContent).toMatch(/1\.32e-8 W\/m²/);
+    expect(readout.textContent).toMatch(/A — QUIET/);
+  });
+
+  it("does not render xray readout when xrayFlux is null", () => {
+    render(<MemoryRouter><CosmicHud signal={MOCK_SIGNAL} kp={2.33} xrayFlux={null} /></MemoryRouter>);
+    expect(screen.queryByTestId("hud-xray-readout")).not.toBeInTheDocument();
+  });
+
+  it("shows X — EXTREME for X-class flux", () => {
+    const extremeXray = { ...MOCK_XRAY, value: 1e-3 };
+    render(<MemoryRouter><CosmicHud signal={MOCK_SIGNAL} kp={2.33} xrayFlux={extremeXray} /></MemoryRouter>);
+    expect(screen.getByTestId("hud-xray-readout").textContent).toMatch(/X — EXTREME/);
+  });
+});

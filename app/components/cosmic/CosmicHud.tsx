@@ -1,11 +1,13 @@
 import { Link } from "react-router";
 import type { SignalRecord } from "~/types/signal";
 import { interpretWindSpeed } from "~/components/widgets/SolarWindPanel";
+import { interpretXRayFlux } from "~/components/widgets/XRayFluxTelemetryPanel";
 
 interface Props {
   signal: SignalRecord;
   kp: number;
   solarWind?: SignalRecord | null;
+  xrayFlux?: SignalRecord | null;
 }
 
 function kpStatus(kp: number): string {
@@ -32,9 +34,11 @@ function formatTimestampUTC(iso: string): string {
   });
 }
 
-export function CosmicHud({ signal, kp, solarWind }: Props) {
+export function CosmicHud({ signal, kp, solarWind, xrayFlux }: Props) {
   const status = kpStatus(kp);
   const statusColor = kpStatusColor(kp);
+  const xrayFluxValue =
+    xrayFlux && typeof xrayFlux.value === "number" ? xrayFlux.value : null;
   const windSpeed =
     solarWind && typeof solarWind.value === "number" ? solarWind.value : null;
 
@@ -84,6 +88,14 @@ export function CosmicHud({ signal, kp, solarWind }: Props) {
                   {formatTimestampUTC(signal.timestamp)}
                 </time>
               </div>
+              {xrayFluxValue !== null && (
+                <div data-testid="hud-xray-readout">
+                  <span className="text-slate-700">XRAY </span>
+                  <span className="text-slate-400">
+                    {xrayFluxValue.toExponential(2)} W/m² · {interpretXRayFlux(xrayFluxValue)}
+                  </span>
+                </div>
+              )}
               {windSpeed !== null && (
                 <div data-testid="hud-wind-readout">
                   <span className="text-slate-700">WIND </span>

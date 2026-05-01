@@ -8,9 +8,10 @@ import { CosmicHud } from "./CosmicHud";
 interface Props {
   signal: SignalRecord;
   solarWind: SignalRecord | null;
+  xrayFlux: SignalRecord | null;
 }
 
-export default function CosmicViewClient({ signal, solarWind }: Props) {
+export default function CosmicViewClient({ signal, solarWind, xrayFlux }: Props) {
   const kp = typeof signal.value === "number" ? signal.value : 0;
 
   return (
@@ -27,7 +28,7 @@ export default function CosmicViewClient({ signal, solarWind }: Props) {
         <EarthInstrument kp={kp} />
         <KpFieldOverlay kp={kp} />
       </Canvas>
-      <CosmicHud signal={signal} kp={kp} solarWind={solarWind} />
+      <CosmicHud signal={signal} kp={kp} solarWind={solarWind} xrayFlux={xrayFlux} />
     </div>
   );
 }
