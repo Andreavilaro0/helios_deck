@@ -4,8 +4,8 @@
  * Kp entry shape verified against live API on 2026-04-29:
  * { time_tag: "2026-04-29T16:26:00", kp_index: 0, estimated_kp: 0.33, kp: "0P" }
  *
- * Solar wind entry shape from rtsw_wind.json:
- * { time_tag: "2026-05-01 12:00:00.000", proton_speed: 452.1, proton_density: 5.2, ... }
+ * Solar wind entry shape from plasma-7-day.json (verified 2026-05-01):
+ * [["time_tag","density","speed","temperature"], ["2026-05-01 12:00:00.000","5.2","452.1","87523"], ...]
  */
 
 import { describe, expect, it } from "vitest";

@@ -22,6 +22,7 @@ function toSignalRecord(entry: unknown, index: number): SignalRecordInput {
     throw new Error(`NOAA Kp entry[${index}]: expected an object`);
   }
 
+  // Safe: we've already verified entry is a non-null object above
   const e = entry as Record<string, unknown>;
   const time_tag = e.time_tag;
   const estimated_kp = e.estimated_kp;

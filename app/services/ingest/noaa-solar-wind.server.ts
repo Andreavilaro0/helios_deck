@@ -15,16 +15,9 @@ import { fetchSolarWindSpeed } from "~/services/fetchers/noaa-swpc.server";
 import { normalizeSolarWindSpeed } from "~/services/normalizers/noaa-swpc";
 import { saveSignal, signalExists } from "~/services/signals.server";
 import { getDb } from "~/db/db.server";
-import type { SignalName, SignalRecordInput, SignalSource } from "~/types/signal";
-
-export interface IngestResult {
-  source: SignalSource;
-  signal: SignalName;
-  fetched: number;
-  saved: number;
-  skipped: number;
-  errors: string[];
-}
+import type { SignalRecordInput } from "~/types/signal";
+import type { IngestResult } from "./noaa-kp.server";
+export type { IngestResult } from "./noaa-kp.server";
 
 export async function ingestNoaaSolarWindSignals(options?: {
   fetcher?: () => Promise<unknown>;
