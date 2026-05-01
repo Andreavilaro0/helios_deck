@@ -512,3 +512,45 @@ Atlas26 by Abdul Wasay Khan (MIT 2026) was used as conceptual inspiration only. 
 - **@react-three/drei Stars component** — rejected. Adds ~200KB for a helper we can replace with 30 lines of Three.js `Points` geometry.
 - **External texture maps** — deferred. Would require asset hosting strategy and increase bundle/network cost. Procedural materials are sufficient for the current data-driven instrument concept.
 - **Copy Atlas26 Earth.tsx under MIT** — rejected. Atlas26's Earth depends on 5 texture files, a custom day/night shader, TimeManager orbital mechanics, and Framer Motion — all incompatible with HELIOS_DECK's architecture. Rewriting from scratch was faster and produces a cleaner, simpler component.
+
+---
+
+## ADR-018 — NOAA Solar Wind Speed as second normalized signal (Phase 2A)
+
+**Date:** 2026-05-01
+**Status:** Accepted
+
+**Context:**
+Phase 1 is complete. The walking skeleton proves the full pipeline (NOAA SWPC → fetcher → normalizer → SQLite → SSR loader → dashboard → tests → CI) with one signal: Kp index. Phase 2A must add a second real signal to prove that `SignalRecord` scales beyond Kp — that the contract works for any space weather measurement, not just the first one.
+
+**Decision:** Add solar wind speed (`solar-wind-speed`, `km/s`) from NOAA SWPC `rtsw_wind.json` as the second normalized signal. The pipeline is implemented in full (fetcher, normalizer, ingest coordinator, tests, ingest script) without adding any dashboard UI in this phase.
+
+**Why solar wind speed after Kp:**
+
+1. **Same source, no new auth.** `rtsw_wind.json` is served by the same NOAA SWPC infrastructure as `planetary_k_index_1m.json`. No new API key, no new base URL, no new network configuration. The fetcher extension is a single function and a single constant.
+
+2. **Proves the contract generalizes.** Kp index is dimensionless (unit: `"index"`), updated every minute, and comes as an array of simple objects. Solar wind speed is measured in km/s, has a different timestamp format (space-separated with milliseconds instead of T-separated without), and frequently contains `null` values for data gaps. If `SignalRecord` handles both, it handles most time-series signals.
+
+3. **Different normalization challenge.** The Kp normalizer's single challenge is rounding (`estimated_kp` vs `kp_index`). The solar wind normalizer has two new problems: timestamp format conversion and nullable values. Solving both without changing the contract or the DB schema proves the architecture is not brittle.
+
+4. **Contextually related to Kp.** Solar wind speed is a direct physical driver of geomagnetic activity: a fast, dense solar wind compresses Earth's magnetosphere and raises the Kp index. Displaying both signals side by side in Phase 2B will be scientifically coherent, not arbitrary.
+
+5. **Feeds future `/cosmic-view` enhancement.** The `/cosmic-view` route currently drives planet visuals from Kp alone. Solar wind speed adds a second channel — e.g. orbit ring speed, atmosphere density overlay — when Phase 5 enhances the 3D view.
+
+**Why no dashboard UI in Phase 2A:**
+Phase 2A is strictly a data layer milestone. Adding a `SolarWindSpeedWidget` now would conflate pipeline correctness with UI decisions. The dashboard currently shows Kp across four instrument panels; adding a fifth panel requires a layout decision. That decision belongs to Phase 2B after the data is confirmed to be flowing correctly.
+
+**Null handling decision:**
+NOAA's `rtsw_wind.json` sends `proton_speed: null` for minutes when the DSCOVR spacecraft has no valid measurement. These gaps are normal and expected. The normalizer filters them silently (returns `[]` for that entry) rather than throwing. The data contract says "null must not be stored" — filtering is the correct implementation of that rule for a nullable measurement field. Storing nulls would pollute the DB; throwing would abort the entire batch on the first gap.
+
+**Confidence: 0.9 (same as Kp):**
+Both signals are real-time provisional NOAA data before final QC processing. The same confidence value is correct and consistent.
+
+**Timestamp normalization:**
+`rtsw_wind.json` uses `"2026-05-01 12:00:00.000"` (space, milliseconds, no Z). The normalizer converts this to `"2026-05-01T12:00:00Z"` via `.replace(" ", "T").replace(/\.\d+$/, "")`. The same `parseTimeTag()` helper is also applied retroactively to the Kp normalizer, which already used ISO format — making the helper a single shared utility in `noaa-swpc.ts`.
+
+**Alternatives considered:**
+- **X-ray flux as second signal** — valid candidate, but uses a different endpoint (`xray-fluxes-6-hour.json`) with 6-hour resolution instead of real-time. Lower value for demonstrating that the pipeline handles different update cadences. Deferred to Phase 2B.
+- **Proton flux as second signal** — similar argument; same GOES endpoint family. Deferred.
+- **Show solar wind speed in the dashboard immediately** — rejected for Phase 2A. The task's explicit constraint is "data + tests + persistence first, no UI redesign."
+- **Separate fetcher file for solar wind** — rejected. The fetcher function is identical in structure to `fetchKpIndex()` — one URL constant, one `fetch()` call, one `response.ok` check. Splitting into a second file would add a module boundary with no benefit. Both functions live in `noaa-swpc.server.ts`.

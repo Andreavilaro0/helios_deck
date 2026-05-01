@@ -155,9 +155,62 @@ Fields per entry:
 
 All reuse the same fetcher infrastructure:
 
-| Signal | Endpoint |
-|--------|----------|
-| Solar wind speed | `/json/rtsw/rtsw_wind.json` |
-| X-ray flux (long) | `/json/goes/secondary/xray-fluxes-6-hour.json` |
-| Proton flux | `/json/goes/secondary/integral-proton-fluxes-6-hour.json` |
-| Geomagnetic storm level | `/json/noaa_scales.json` |
+| Signal | Endpoint | Status |
+|--------|----------|--------|
+| Solar wind speed | `/json/rtsw/rtsw_wind.json` | ✅ Phase 2A — implemented |
+| X-ray flux (long) | `/json/goes/secondary/xray-fluxes-6-hour.json` | planned |
+| Proton flux | `/json/goes/secondary/integral-proton-fluxes-6-hour.json` | planned |
+| Geomagnetic storm level | `/json/noaa_scales.json` | planned |
+
+---
+
+## NOAA Solar Wind Speed Endpoint (Phase 2A — implemented ✓)
+
+```
+GET https://services.swpc.noaa.gov/json/rtsw/rtsw_wind.json
+```
+
+**Response shape (real-time solar wind plasma data):**
+```json
+[
+  {
+    "time_tag": "2026-05-01 12:00:00.000",
+    "proton_speed": 452.1,
+    "proton_density": 5.2,
+    "proton_temperature": 87523.0,
+    "bx_gsm": -2.3,
+    "by_gsm": 4.1,
+    "bz_gsm": -1.8,
+    "bt": 4.9,
+    "lat_gsm": -9.3,
+    "lon_gsm": 171.2
+  },
+  ...
+]
+```
+
+Fields per entry:
+- `time_tag` — UTC timestamp with space separator and milliseconds, e.g. `"2026-05-01 12:00:00.000"`. Normalizer converts to ISO 8601: `"2026-05-01T12:00:00Z"`.
+- `proton_speed` — solar wind bulk speed in km/s. Can be `null` when the measurement is unavailable (data gap); these entries are filtered silently by the normalizer, not stored.
+- `proton_density` — proton density in p/cm³ (stored in metadata).
+- `proton_temperature` — proton temperature in K (stored in metadata).
+- `bt` — total interplanetary magnetic field magnitude in nT (stored in metadata).
+- `bz_gsm` — southward B-field component in GSM coordinates — key indicator of geomagnetic storm onset (stored in metadata).
+
+**Normalizer target:**
+```ts
+{
+  timestamp:  "2026-05-01T12:00:00Z",
+  source:     "noaa-swpc",
+  signal:     "solar-wind-speed",
+  value:      452.1,
+  unit:       "km/s",
+  confidence: 0.9,
+  metadata: {
+    proton_density:      5.2,
+    proton_temperature:  87523.0,
+    bt:                  4.9,
+    bz_gsm:              -1.8,
+  }
+}
+```

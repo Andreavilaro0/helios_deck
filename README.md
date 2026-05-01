@@ -14,9 +14,8 @@ HELIOS_DECK ingests live data from space weather APIs (starting with NOAA SWPC),
 
 Signals tracked:
 - Kp index (planetary geomagnetic activity)
-- Solar wind speed and density _(Phase 2)_
-- X-ray flux (solar flare indicator) _(Phase 2)_
-- Proton flux _(Phase 2)_
+- Solar wind speed _(Phase 2A — pipeline complete, UI pending)_
+- Solar wind density, X-ray flux, proton flux _(Phase 2 — planned)_
 
 ---
 
@@ -36,9 +35,9 @@ Signals tracked:
 
 ## Project Status
 
-**Current phase: 1H — Checkpoint and deploy strategy**
+**Current phase: 2A — Solar wind speed pipeline**
 
-Walking skeleton complete: NOAA SWPC real data flows end-to-end through fetcher → normalizer → SQLite → SSR loader → dashboard → component tests → CI.
+Phase 1 complete. Phase 2A adds the solar wind speed signal: full pipeline (fetcher → normalizer → SQLite → ingest script) is implemented and tested. Dashboard UI for this signal comes in Phase 2B.
 
 See [`docs/plan.md`](docs/plan.md) for the full roadmap and [`docs/checkpoint-1.md`](docs/checkpoint-1.md) for the Phase 1 milestone summary.
 
@@ -82,12 +81,13 @@ GitHub Actions runs these three checks automatically on every push and pull requ
 ## Manual Ingestion
 
 ```bash
-npm run ingest:noaa-kp
+npm run ingest:noaa-kp           # NOAA SWPC real-time Kp index
+npm run ingest:noaa-solar-wind   # NOAA SWPC real-time solar wind speed
 ```
 
-Queries the NOAA SWPC real-time Kp index endpoint, normalizes each entry into a `SignalRecord`, and persists new records to `data/helios.sqlite`. Duplicate entries (same timestamp, source, and signal) are skipped automatically.
+Each command queries the corresponding NOAA SWPC endpoint, normalizes every entry into a `SignalRecord`, and persists new records to `data/helios.sqlite`. Duplicate entries (same timestamp, source, and signal) are skipped automatically.
 
-Run this once before `npm run dev` to populate the dashboard, then re-run whenever you want fresh data.
+Run at least `ingest:noaa-kp` once before `npm run dev` to populate the dashboard.
 
 ---
 
