@@ -2,8 +2,8 @@ import * as React from "react";
 
 export function InstrumentShell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="instrument-shell min-h-screen">
+    <div className="min-h-screen bg-[#eef1fb]">
       {children}
-    </main>
+    </div>
   );
 }

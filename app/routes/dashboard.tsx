@@ -3,6 +3,8 @@ import { InstrumentShell } from "~/components/dashboard/InstrumentShell";
 import { InstrumentHeader } from "~/components/dashboard/InstrumentHeader";
 import { MissionStatusPanel } from "~/components/dashboard/MissionStatusPanel";
 import { KpScaleInstrument } from "~/components/dashboard/KpScaleInstrument";
+import { CenterMetricsBar } from "~/components/dashboard/CenterMetricsBar";
+import { PlanetPanel } from "~/components/dashboard/PlanetPanel";
 import { KpTelemetryPanel } from "~/components/widgets/KpTelemetryPanel";
 import { KpHistoryStrip } from "~/components/widgets/KpHistoryStrip";
 import { SolarWindTelemetryPanel } from "~/components/widgets/SolarWindTelemetryPanel";
@@ -47,7 +49,7 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
   return (
     <InstrumentShell>
       <InstrumentHeader />
-      <div className="max-w-screen-2xl mx-auto px-4 py-4 space-y-px">
+      <div className="p-3 max-w-screen-2xl mx-auto">
         {latestSignal ? (
           <InstrumentGrid
             latestSignal={latestSignal}
@@ -66,31 +68,24 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
 }
 
 // ---------------------------------------------------------------------------
-// Instrument grid — only rendered when Kp data is present
+// 3-column spaceweather-style grid
 // ---------------------------------------------------------------------------
 
 interface InstrumentGridProps {
   latestSignal: SignalRecord;
   recentSignals: SignalRecord[];
   latestSolarWind: SignalRecord | null;
-  stats: {
-    count: number;
-    max: number;
-    min: number;
-    avg: number;
-  };
+  stats: { count: number; max: number; min: number; avg: number };
 }
 
 function InstrumentGrid({ latestSignal, recentSignals, latestSolarWind, stats }: InstrumentGridProps) {
-  const currentKp =
-    typeof latestSignal.value === "number" ? latestSignal.value : 0;
+  const currentKp = typeof latestSignal.value === "number" ? latestSignal.value : 0;
 
   return (
-    <div className="space-y-px">
-      {/* Top row — always 4 panels: Kp telemetry | Solar wind | Kp scale | Mission status */}
-      <div className="grid grid-cols-1 gap-px sm:grid-cols-2 lg:grid-cols-4">
-        <KpTelemetryPanel signal={latestSignal} />
-        <SolarWindTelemetryPanel signal={latestSolarWind} />
+    <div className="grid grid-cols-1 gap-3 lg:grid-cols-[260px_1fr_260px] lg:items-start">
+
+      {/* LEFT — scale + pipeline */}
+      <div className="flex flex-col gap-3">
         <KpScaleInstrument currentKp={currentKp} />
         <MissionStatusPanel
           source={latestSignal.source}
@@ -101,8 +96,21 @@ function InstrumentGrid({ latestSignal, recentSignals, latestSolarWind, stats }:
         />
       </div>
 
-      {/* Bottom — full-width history strip */}
-      <KpHistoryStrip signals={recentSignals} />
+      {/* CENTER — metrics bar + planet + history */}
+      <div className="flex flex-col gap-3">
+        <CenterMetricsBar signal={latestSignal} solarWind={latestSolarWind} />
+        <div className="h-[480px] lg:h-[520px]">
+          <PlanetPanel signal={latestSignal} solarWind={latestSolarWind} />
+        </div>
+        <KpHistoryStrip signals={recentSignals} />
+      </div>
+
+      {/* RIGHT — Kp readout + solar wind */}
+      <div className="flex flex-col gap-3">
+        <KpTelemetryPanel signal={latestSignal} />
+        <SolarWindTelemetryPanel signal={latestSolarWind} />
+      </div>
+
     </div>
   );
 }

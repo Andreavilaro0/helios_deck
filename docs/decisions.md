@@ -607,3 +607,54 @@ These thresholds are approximate operational heuristics used by space weather fo
 - **Show solar wind in its own dashboard route** — rejected. Two signals on one console is the scientific point. Separating them would fragment the causal narrative.
 - **Use solar wind speed to drive the Cosmic View planet** — deferred to Phase 5. Premature visual complexity before the data relationship is clearly established in the text-based HUD.
 - **Add a "solar wind → Kp" arrow or annotation** — deferred. A visual annotation connecting the two panels would require layout work beyond the current phase scope. The side-by-side placement already implies the relationship; explicit annotation can follow in Phase 3/4.
+
+---
+
+## ADR-020 — Live cloud texture overlay via Live Cloud Maps / EUMETSAT (Phase 2C)
+
+**Date:** 2026-05-01
+**Status:** Reverted 2026-05-01
+
+**Context:**
+The planet in `/cosmic-view` renders a photorealistic Earth using static local textures (day map, night map, specular, normal). The cloud layer was previously a static `04_earthcloudmap.jpg` baked into the build. Phase 2C replaces it with a near-real-time overlay sourced from a free public CDN that composites EUMETSAT Meteosat satellite imagery into a single texture updated approximately every 3 hours.
+
+**Decision:** Use `https://clouds.matteason.co.uk/images/2048x1024/clouds.jpg` and `clouds-alpha.png` as a live `THREE.TextureLoader` fetch in a dedicated `LiveCloudLayer.tsx` component. If the fetch fails for any reason (network, CDN outage), the component returns `null` and the planet renders without clouds — no crash, no error UI.
+
+**Why Live Cloud Maps (matteason) specifically:**
+
+1. **Free and CORS-enabled.** Direct browser `TextureLoader` calls are permitted. No API key, no proxy, no server-side involvement.
+2. **No SQLite involvement.** Cloud position data changes on a sub-hour cadence and is not a signal we need to persist, query, or audit. Storing it in SQLite would add schema complexity for no analytical benefit. This is pure visual enrichment, not observatory data.
+3. **Single responsibility.** The component only knows how to fetch and render a cloud texture. It does not import from services, db, or loaders. It has one fallback path: return null.
+4. **Update cadence matches visual purpose.** 3-hour granularity is imperceptible in a real-time 3D animation. The texture is cached by the browser; subsequent page loads hit the CDN cache. This is efficient.
+5. **EUMETSAT provenance.** The data source (EUMETSAT Meteosat) is a recognized European meteorological satellite agency. This is scientifically credible provenance for a heliophysics observatory, even if the layer is visual rather than analytical.
+
+**Why not NASA GIBS (Global Imagery Browse Services):**
+- GIBS provides high-resolution imagery but requires constructing tile URLs with date parameters, combining multiple tiles into a spherical projection, and handling the tile coordinate system. This is significant engineering work for a visual layer.
+- GIBS tiles are not single textures — they require a tile server or pre-compositing step.
+- No CORS guarantee for direct browser use without a proxy.
+
+**Why not a server-side fetch through a loader:**
+- Cloud texture data is not a `SignalRecord`. It has no timestamp, no unit, no confidence value. Running it through the loader/normalizer/SQLite pipeline would violate the data contract and add schema complexity for non-signal data.
+- The data is consumed purely by a Three.js material — it never needs to be queried, aggregated, or displayed as a number. The direct client-side `TextureLoader.loadAsync()` is the correct tool.
+
+**Fallback strategy:**
+`LiveCloudLayer` uses `Promise.all([...]).catch(() => {})`. On any failure, `matRef.current` remains null and the component returns null. The `EarthInstrument` parent renders correctly without it. The `CosmicHud` only shows the "CLOUDS · near-real-time" attribution row when `cloudOverlayAvailable={true}`, which only becomes true after a successful load — so the attribution is never shown for a failed fetch.
+
+**Performance:**
+- Two 2048×1024 textures: ~200–400 KB each, fetched once per session.
+- `LinearMipmapLinearFilter` + mipmaps ensure quality at any zoom level.
+- `depthWrite: false` + `AdditiveBlending` — no overdraw cost, no depth buffer pollution.
+- The layer adds one draw call (one sphere, one material). Negligible on any GPU that can render the rest of the scene.
+
+**Scope isolation — `/cosmic-view` only:**
+`EarthInstrument` accepts a `liveClouds?: boolean` prop that defaults to `false`. `LiveCloudLayer` is only mounted when `liveClouds={true}`. `CosmicViewClient` passes `liveClouds` explicitly; `PlanetPanelClient` (dashboard embed) does not — so the dashboard planet never triggers a fetch to `clouds.matteason.co.uk`. This protects dashboard performance: `/dashboard` is the primary landing page and must not incur optional network requests from a decoration layer intended only for the full-screen observatory view.
+
+**Alternatives considered:**
+- **Keep static cloud texture** — no scientific value, static clouds look wrong against a rotating real Earth.
+- **NASA GIBS** — correct provenance but requires tile compositing, rejected for scope reasons.
+- **Copernicus / ESA APIs** — require registration, API key, and server-side proxy. Over-engineered for a visual layer.
+- **No clouds at all** — the planet looks flat and unrealistic without an atmospheric cloud layer. Clouds are a standard component of any photorealistic Earth render.
+- **Always-on in both routes** — rejected. The dashboard is the primary landing page; optional CDN fetches belong only in dedicated views where the user has already navigated for the full experience.
+
+**Revert rationale (2026-05-01):**
+The live cloud overlay was removed after evaluation. Reasons: (1) the layer is not connected to Kp or solar wind — it is purely decorative and not driven by any observatory signal; (2) it introduces an external CDN dependency that is not part of the data contract; (3) it shifts `/cosmic-view` from a scientific instrument toward a decorative globe, which conflicts with the project goal of keeping the planet as a Kp + solar wind instrument. `LiveCloudLayer.tsx` was deleted. `EarthInstrument`, `CosmicViewClient`, `CosmicHud` were reverted to their pre-Phase-2C state. Camera was adjusted slightly (z: 2.8 → 3.2, y: 0.6 → 0.4, fov: 42 → 45) to give more breathing room around the planet.

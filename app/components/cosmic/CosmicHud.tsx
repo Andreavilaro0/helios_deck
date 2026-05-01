@@ -60,47 +60,50 @@ export function CosmicHud({ signal, kp, solarWind }: Props) {
         </Link>
       </div>
 
-      {/* Bottom instrument readout */}
-      <div className="mt-auto">
-        <div className="px-4 pb-6">
-          <div className="bg-[#070d1a]/85 border border-cyan-900/30 rounded-sm px-5 py-4 inline-block">
-            <div className="flex items-baseline gap-3 mb-2">
-              <span className="text-5xl font-bold font-mono tabular-nums text-slate-100 leading-none">
-                {kp.toFixed(2)}
+      {/* Bottom — split: big Kp left, telemetry rows right */}
+      <div className="mt-auto px-4 pb-6 flex items-end gap-6">
+        {/* Left: big Kp readout */}
+        <div className="bg-[#070d1a]/80 border border-cyan-900/30 rounded-xl px-5 py-4">
+          <div className="text-[9px] font-mono text-slate-600 uppercase tracking-widest mb-1">
+            Kp index
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-6xl font-bold font-mono tabular-nums text-slate-100 leading-none">
+              {kp.toFixed(2)}
+            </span>
+          </div>
+          <div className={`mt-2 text-xs font-mono font-semibold tracking-widest ${statusColor}`}>
+            {status}
+          </div>
+        </div>
+
+        {/* Right: telemetry rows */}
+        <div className="bg-[#070d1a]/80 border border-cyan-900/30 rounded-xl px-4 py-4 space-y-1.5 text-[10px] font-mono">
+          <div>
+            <span className="text-slate-700">SOURCE </span>
+            <span className="text-slate-400">{signal.source}</span>
+          </div>
+          <div>
+            <span className="text-slate-700">OBSERVED </span>
+            <time dateTime={signal.timestamp} className="text-slate-400">
+              {formatTimestampUTC(signal.timestamp)}
+            </time>
+          </div>
+          <div data-testid="hud-wind-readout">
+            <span className="text-slate-700">WIND </span>
+            {windSpeed !== null ? (
+              <span className="text-slate-400">
+                {windSpeed.toFixed(1)} km/s · {interpretWindSpeed(windSpeed)}
               </span>
-              <span className="text-xs font-mono text-slate-600">index</span>
-              <span className={`text-sm font-mono font-semibold tracking-widest ${statusColor}`}>
-                {status}
+            ) : (
+              <span className="text-slate-600" data-testid="hud-wind-pending">
+                Solar wind channel pending
               </span>
-            </div>
-            <div className="space-y-0.5 text-[10px] font-mono">
-              <div>
-                <span className="text-slate-700">SOURCE </span>
-                <span className="text-slate-400">{signal.source}</span>
-              </div>
-              <div>
-                <span className="text-slate-700">OBSERVED </span>
-                <time dateTime={signal.timestamp} className="text-slate-400">
-                  {formatTimestampUTC(signal.timestamp)}
-                </time>
-              </div>
-              <div data-testid="hud-wind-readout">
-                <span className="text-slate-700">WIND </span>
-                {windSpeed !== null ? (
-                  <span className="text-slate-400">
-                    {windSpeed.toFixed(1)} km/s · {interpretWindSpeed(windSpeed)}
-                  </span>
-                ) : (
-                  <span className="text-slate-600" data-testid="hud-wind-pending">
-                    Solar wind channel pending
-                  </span>
-                )}
-              </div>
-              <div>
-                <span className="text-slate-700">PIPELINE </span>
-                <span className="text-slate-400">SQLite → SSR</span>
-              </div>
-            </div>
+            )}
+          </div>
+          <div>
+            <span className="text-slate-700">PIPELINE </span>
+            <span className="text-slate-400">SQLite → SSR</span>
           </div>
         </div>
       </div>

@@ -2,35 +2,32 @@ import { Link } from "react-router";
 
 export function InstrumentHeader() {
   return (
-    <header className="border-b border-cyan-900/30 px-4 py-2.5 flex items-center justify-between">
+    <header className="bg-white border-b border-slate-100 px-6 py-3 flex items-center justify-between">
       <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2">
-          <span
-            className="size-1.5 rounded-full bg-emerald-400 animate-pulse"
-            aria-hidden="true"
-          />
-          <span className="text-sm font-bold font-mono tracking-tight text-slate-100">
-            HELIOS_DECK
-          </span>
+        <div className="size-7 rounded-lg bg-slate-900 flex items-center justify-center">
+          <span className="text-white text-[10px] font-bold font-mono">H</span>
         </div>
-        <span className="text-slate-700 select-none">/</span>
-        <span className="text-xs font-mono text-slate-500 uppercase tracking-widest hidden sm:block">
-          Planetary Geomagnetic Monitor
+        <span className="text-sm font-bold text-slate-900 font-mono tracking-tight">
+          HELIOS_DECK
+        </span>
+        <span className="text-slate-200 select-none" aria-hidden="true">/</span>
+        <span className="text-xs text-slate-400 hidden sm:block">
+          Geomagnetic Monitor
         </span>
       </div>
 
-      <div className="flex items-center gap-4 text-[10px] font-mono uppercase tracking-wide">
-        <span className="text-emerald-400/70 flex items-center gap-1.5">
-          <span className="size-1 rounded-full bg-emerald-400" aria-hidden="true" />
-          Feed active
-        </span>
-        <span className="text-slate-600 hidden md:block">NOAA SWPC</span>
-        <span className="text-slate-600 hidden md:block">1-min cadence</span>
-        <span className="text-slate-600 hidden lg:block">UTC</span>
+      <div className="flex items-center gap-4">
         <Link
-          to="/"
-          className="text-slate-600 hover:text-slate-300 transition-colors normal-case tracking-normal text-xs font-sans"
+          to="/cosmic-view"
+          className="text-xs text-slate-500 hover:text-slate-800 transition-colors"
         >
+          Cosmic View →
+        </Link>
+        <span className="flex items-center gap-1.5 text-xs text-emerald-600">
+          <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" aria-hidden="true" />
+          Live
+        </span>
+        <Link to="/" className="text-xs text-slate-400 hover:text-slate-700 transition-colors">
           ← home
         </Link>
       </div>
