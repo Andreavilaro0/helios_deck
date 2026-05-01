@@ -596,3 +596,32 @@ X-ray flux from GOES is real-time provisional data before NOAA's final QC proces
 - **DST index as third signal** — valid candidate for storm strength. Deferred. Requires a different data source (Kyoto World Data Center or NOAA geomagnetic products) and does not fit on the solar-source side of the causal chain.
 - **Store only `xray-flux-long`** — rejected. Since the endpoint always provides both channels, discarding short-channel data permanently would waste information with no benefit. The `SignalName` vocabulary already defines both.
 - **Derive flare class (A/B/C/M/X) from flux value** — rejected. Deriving derived values from raw measurements inside a normalizer violates the "normalizer is a pure shape transformer" contract. Classification belongs in a higher-level service or future enrichment pipeline.
+
+---
+
+## ADR-020 — X-Ray Flux UI integration: dashboard panel + CosmicHud readout (Phase 2D)
+
+**Date:** 2026-05-02
+**Status:** Accepted
+
+**Context:**
+Phase 2C delivered the full X-ray flux data pipeline (fetcher → normalizer → SQLite → ingest script). Phase 2D integrates that data into the two existing UI surfaces: the dashboard instrument console and the 3D CosmicHud overlay.
+
+**Decision:**
+
+1. **`xray-flux-long` as the primary display channel.** The long-wavelength channel (0.1–0.8 nm) is the standard GOES channel used for operational flare classification and NWS/NOAA alerts. `xray-flux-short` is retained in the database but not surfaced in UI.
+
+2. **`XRayFluxTelemetryPanel` handles its own pending state.** Rather than hiding the panel when no data is ingested, it renders a pending state ("X-ray channel awaiting ingest"). This makes the causal chain visible from first load and signals to the user that ingestion is needed — a better affordance than a silently missing panel.
+
+3. **`interpretXRayFlux` is exported from the panel module.** The classification function (`A–X` thresholds) is pure and exported so `CosmicHud` can reuse it without creating a shared utility file. Keeps the dependency simple: HUD imports a named export from the widget that owns the classification logic.
+
+4. **Causal chain display order: XRay → SolarWind → Kp.** The physical causal chain (X-ray flare → solar wind enhancement → geomagnetic Kp response) dictates left-to-right panel order on the dashboard and top-to-bottom readout order in CosmicHud. Both surfaces follow this order consistently.
+
+5. **Scientific notation for flux values.** X-ray flux spans roughly five orders of magnitude (1e-9 to 1e-3 W/m²). Fixed-point formatting (`1.0000003e-7`) is unreadable. `toExponential(2)` produces compact, human-readable values (`1.00e-7`) that match the convention used in NOAA bulletins.
+
+6. **Flux class thresholds follow the standard GOES classification:** A < 1×10⁻⁷, B < 1×10⁻⁶, C < 1×10⁻⁵, M < 1×10⁻⁴, X ≥ 1×10⁻⁴ W/m². Labels include a descriptive suffix (e.g., `"A — QUIET"`) to be self-explanatory without requiring domain knowledge.
+
+**Alternatives considered:**
+- **Show only xray-flux-short in UI** — rejected. `xray-flux-long` is the standard operational channel for flare classification; short-channel is supplementary.
+- **Shared `interpretXRayFlux` utility module** — deferred. At two call sites (panel + HUD) a shared module adds structural overhead without clarity benefit. Re-evaluate if a third call site appears.
+- **Hide XRayFluxTelemetryPanel when data is absent** — rejected. A visible pending state shows the full causal chain and is clearer than a panel that silently disappears.

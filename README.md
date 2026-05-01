@@ -13,9 +13,9 @@ Real signals. Real pipeline. No decorative demos.
 HELIOS_DECK ingests live data from space weather APIs (starting with NOAA SWPC), stores it in a local SQLite database, and presents it as a server-side-rendered dashboard. Every value on screen is a real measurement from a real instrument.
 
 Signals tracked:
-- Kp index (planetary geomagnetic activity)
-- Solar wind speed _(Phase 2A — pipeline complete, UI pending)_
-- Solar wind density, X-ray flux, proton flux _(Phase 2 — planned)_
+- **Kp index** — planetary geomagnetic activity (NOAA SWPC)
+- **Solar wind speed** — bulk solar wind velocity (NOAA SWPC)
+- **X-ray flux (long channel)** — GOES 0.1–0.8 nm, A/B/C/M/X flare classification (NOAA SWPC)
 
 ---
 
@@ -35,9 +35,9 @@ Signals tracked:
 
 ## Project Status
 
-**Current phase: 2A — Solar wind speed pipeline**
+**Current phase: 2D — X-ray flux UI integration complete**
 
-Phase 1 complete. Phase 2A adds the solar wind speed signal: full pipeline (fetcher → normalizer → SQLite → ingest script) is implemented and tested. Dashboard UI for this signal comes in Phase 2B.
+Phases 1–2D complete. Three real NOAA signals are live end-to-end: Kp index, solar wind speed, and X-ray flux. Dashboard shows the full causal chain (XRay → Wind → Kp). CosmicHud overlays all three readouts in the 3D view.
 
 See [`docs/plan.md`](docs/plan.md) for the full roadmap and [`docs/checkpoint-1.md`](docs/checkpoint-1.md) for the Phase 1 milestone summary.
 
@@ -47,13 +47,15 @@ See [`docs/plan.md`](docs/plan.md) for the full roadmap and [`docs/checkpoint-1.
 
 ```bash
 npm install
-npm run ingest:noaa-kp   # Fetch and store real NOAA Kp data
-npm run dev              # Start dev server with HMR
+npm run ingest:noaa-kp           # Fetch and store real NOAA Kp data
+npm run ingest:noaa-solar-wind   # Fetch and store real solar wind speed
+npm run ingest:noaa-xray-flux    # Fetch and store GOES X-ray flux (both channels)
+npm run dev                      # Start dev server with HMR
 ```
 
 Then open: **http://localhost:5173/dashboard**
 
-The dashboard shows the latest Kp index, a geomagnetic activity status (Quiet / Active / Storm), confidence rating, and a 60-reading CSS sparkline — all rendered server-side from SQLite.
+The dashboard shows the causal chain from X-ray flux → solar wind speed → Kp index, all rendered server-side from SQLite. Run at least `ingest:noaa-kp` to populate the Kp panel; the X-ray panel shows a pending state if no flux data has been ingested yet.
 
 ---
 
