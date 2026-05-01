@@ -10,7 +10,8 @@
     "test:watch": "vitest",
     "typecheck": "react-router typegen && tsc",
     "ingest:noaa-kp": "tsx scripts/ingest-noaa-kp.ts",
-    "ingest:noaa-solar-wind": "tsx scripts/ingest-noaa-solar-wind.ts"
+    "ingest:noaa-solar-wind": "tsx scripts/ingest-noaa-solar-wind.ts",
+    "ingest:noaa-xray-flux": "tsx scripts/ingest-noaa-xray-flux.ts"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.8",

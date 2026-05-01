@@ -554,3 +554,45 @@ Both signals are real-time provisional NOAA data before final QC processing. The
 - **Proton flux as second signal** — similar argument; same GOES endpoint family. Deferred.
 - **Show solar wind speed in the dashboard immediately** — rejected for Phase 2A. The task's explicit constraint is "data + tests + persistence first, no UI redesign."
 - **Separate fetcher file for solar wind** — rejected. The fetcher function is identical in structure to `fetchKpIndex()` — one URL constant, one `fetch()` call, one `response.ok` check. Splitting into a second file would add a module boundary with no benefit. Both functions live in `noaa-swpc.server.ts`.
+
+---
+
+## ADR-019 — NOAA X-Ray Flux as third normalized signal (Phase 2C)
+
+**Date:** 2026-05-02
+**Status:** Accepted
+
+**Context:**
+Phase 2A+2B proved that `SignalRecord` scales beyond Kp index — solar wind speed was integrated using the same contract and a different normalizer. Phase 2C must add a third real signal that completes the heliophysical narrative: solar source → interplanetary medium → geomagnetic response.
+
+**Decision:** Add X-ray flux (`xray-flux-short` and `xray-flux-long`, unit: `"W/m²"`) from NOAA SWPC GOES `xrays-6-hour.json` as the third normalized signal pair. Both channels are ingested by a single coordinator (`ingestNoaaXRayFluxSignals`). The pipeline is implemented in full (fetcher, normalizer, ingest coordinator, tests, ingest script) without any dashboard UI changes in this phase.
+
+**Why X-ray flux after solar wind:**
+
+1. **Completes the physical chain.** The three signals now model a complete causal sequence: X-ray flux (solar eruption) → solar wind speed (interplanetary transit, ~1–4 days) → Kp index (geomagnetic response at Earth). This is the core scientific narrative of HELIOS_DECK.
+
+2. **Same source, no new auth.** `xrays-6-hour.json` is served by the same NOAA SWPC infrastructure. No new API key, no new base URL. The fetcher is a third function in the same file.
+
+3. **Proves the normalizer handles multi-channel responses.** Unlike Kp (single value per minute) and solar wind (single measurement per row), the X-ray endpoint returns two entries per timestamp — one per energy channel. The normalizer uses an `energyToSignalName()` helper to map them to `"xray-flux-short"` and `"xray-flux-long"`. This proves the `SignalRecord` contract handles channel-multiplexed responses without schema changes.
+
+4. **`flux` vs `observed_flux` distinction.** NOAA applies an electron contamination correction before publishing `flux`. Using the corrected value (`flux`, not `observed_flux`) is the scientifically correct choice and is consistent with how other GOES data consumers handle it.
+
+5. **No flare class invented.** The `xrays-6-hour.json` endpoint does not include a flare class string (A/B/C/M/X). The normalizer does not derive or infer it. Solar flare classification belongs to a future phase using a dedicated events API (e.g., NASA DONKI FLR endpoint). Keeping the normalizer to raw numeric flux avoids inventing domain knowledge.
+
+**Why data first, UI second:**
+Phase 2C is strictly a data layer milestone, following the same discipline as Phase 2A. Adding X-ray flux display to the dashboard requires a layout decision (a third panel, a combined panel, or a historical chart). That decision belongs to a later phase after the data pipeline is confirmed correct and the current dashboard architecture is reviewed. Mixing data integration with UI redesign would complicate debugging and inflate the scope of a single commit.
+
+**Why both channels:**
+`xray-flux-long` (0.1–0.8 nm) is the NOAA standard for solar flare classification (all published flare classes A through X use this channel). `xray-flux-short` (0.05–0.4 nm) provides additional context for flare sub-classification and is used in some eruption detection algorithms. Since both come from the same API response at no extra cost, storing both is the correct choice. The `energyToSignalName()` helper explicitly throws on any unknown energy string, so if NOAA ever adds a third channel the pipeline fails loudly rather than silently dropping data.
+
+**`electron_contaminaton` typo:**
+NOAA's `xrays-6-hour.json` uses `electron_contaminaton` (missing one "i"). The normalizer preserves this spelling verbatim as the metadata key. A comment in the code explains the intentional typo. Correcting it would silently break any consumer that reads the stored metadata by key.
+
+**Confidence: 0.9 (same as Kp and solar wind):**
+X-ray flux from GOES is real-time provisional data before NOAA's final QC processing. The same confidence value is correct and consistent across all three signals.
+
+**Alternatives considered:**
+- **Proton flux as third signal** — valid candidate from the same endpoint family (`integral-proton-fluxes-6-hour.json`). Deferred. Proton flux is most relevant during SEP (solar energetic particle) events, which are relatively rare. X-ray flux changes continuously with solar activity and is more useful for real-time dashboards.
+- **DST index as third signal** — valid candidate for storm strength. Deferred. Requires a different data source (Kyoto World Data Center or NOAA geomagnetic products) and does not fit on the solar-source side of the causal chain.
+- **Store only `xray-flux-long`** — rejected. Since the endpoint always provides both channels, discarding short-channel data permanently would waste information with no benefit. The `SignalName` vocabulary already defines both.
+- **Derive flare class (A/B/C/M/X) from flux value** — rejected. Deriving derived values from raw measurements inside a normalizer violates the "normalizer is a pure shape transformer" contract. Classification belongs in a higher-level service or future enrichment pipeline.

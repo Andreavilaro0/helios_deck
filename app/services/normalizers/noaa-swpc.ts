@@ -1,4 +1,4 @@
-import type { SignalMetadata, SignalRecordInput } from "~/types/signal";
+import type { SignalMetadata, SignalName, SignalRecordInput } from "~/types/signal";
 
 // ---------------------------------------------------------------------------
 // Shared helpers
@@ -159,6 +159,134 @@ export function normalizeSolarWindSpeed(raw: unknown): SignalRecordInput[] {
       signal: "solar-wind-speed",
       value: speed,
       unit: "km/s",
+      confidence: 0.9,
+      metadata,
+    });
+  }
+
+  return results;
+}
+
+// ---------------------------------------------------------------------------
+// X-ray flux normalizer
+// ---------------------------------------------------------------------------
+
+/**
+ * Maps the NOAA energy band string to the canonical SignalName.
+ *
+ * The NOAA xrays-6-hour.json endpoint uses exactly two energy strings:
+ *   "0.05-0.4nm" — short-wavelength channel (GOES channel A)
+ *   "0.1-0.8nm"  — long-wavelength channel  (GOES channel B)
+ *
+ * Any other string is an unexpected API change and must throw so the caller
+ * is not silently missing a channel.
+ */
+function energyToSignalName(energy: string, entryIndex: number): SignalName {
+  if (energy === "0.05-0.4nm") return "xray-flux-short";
+  if (energy === "0.1-0.8nm") return "xray-flux-long";
+  throw new Error(
+    `NOAA X-ray flux normalizer: entry[${entryIndex}] unknown energy string "${energy}"`
+  );
+}
+
+/**
+ * Normalizes NOAA xrays-6-hour.json to SignalRecordInput[].
+ *
+ * Response shape (verified 2026-05-01, GOES secondary satellite):
+ *   [
+ *     { time_tag, satellite, flux, observed_flux, electron_correction,
+ *       electron_contaminaton, energy },
+ *     ...
+ *   ]
+ *
+ * Two entries share each timestamp — one per energy channel:
+ *   "0.05-0.4nm" → signal: "xray-flux-short"
+ *   "0.1-0.8nm"  → signal: "xray-flux-long"
+ *
+ * `flux` is the electron-corrected value and is used as the signal value.
+ * `electron_contaminaton` preserves the NOAA API's spelling verbatim.
+ * The field is intentionally misspelled (missing the second "i" in "contamination").
+ * Null flux is not a valid data gap for this endpoint — always numeric; throws.
+ */
+export function normalizeXRayFlux(raw: unknown): SignalRecordInput[] {
+  if (!Array.isArray(raw)) {
+    throw new Error(
+      `NOAA X-ray flux normalizer: expected array, got ${typeof raw}`
+    );
+  }
+
+  if (raw.length === 0) return [];
+
+  const results: SignalRecordInput[] = [];
+
+  for (let i = 0; i < raw.length; i++) {
+    const entry = raw[i];
+
+    if (typeof entry !== "object" || entry === null) {
+      throw new Error(
+        `NOAA X-ray flux normalizer: entry[${i}] must be a non-null object`
+      );
+    }
+
+    // Safe: we verified entry is a non-null object above
+    const e = entry as Record<string, unknown>;
+
+    if (typeof e.time_tag !== "string") {
+      throw new Error(
+        `NOAA X-ray flux normalizer: entry[${i}] time_tag must be a string, got ${typeof e.time_tag}`
+      );
+    }
+
+    if (typeof e.energy !== "string") {
+      throw new Error(
+        `NOAA X-ray flux normalizer: entry[${i}] energy must be a string, got ${typeof e.energy}`
+      );
+    }
+
+    // energyToSignalName throws for unknown energy strings
+    const signalName = energyToSignalName(e.energy, i);
+
+    if (typeof e.flux !== "number" || !isFinite(e.flux)) {
+      throw new Error(
+        `NOAA X-ray flux normalizer: entry[${i}] flux must be a finite number, got ${String(e.flux)}`
+      );
+    }
+
+    if (typeof e.satellite !== "number") {
+      throw new Error(
+        `NOAA X-ray flux normalizer: entry[${i}] satellite must be a number, got ${typeof e.satellite}`
+      );
+    }
+
+    const metadata: SignalMetadata = {
+      satellite: e.satellite,
+      energy: e.energy,
+    };
+
+    // Include observed_flux if it is a finite number
+    if (typeof e.observed_flux === "number" && isFinite(e.observed_flux)) {
+      metadata.observed_flux = e.observed_flux;
+    }
+
+    // Include electron_correction if it is a finite number
+    if (
+      typeof e.electron_correction === "number" &&
+      isFinite(e.electron_correction)
+    ) {
+      metadata.electron_correction = e.electron_correction;
+    }
+
+    // Preserve the boolean flag including the API's typo ("contaminaton")
+    if (typeof e.electron_contaminaton === "boolean") {
+      metadata.electron_contaminaton = e.electron_contaminaton;
+    }
+
+    results.push({
+      timestamp: parseTimeTag(e.time_tag),
+      source: "noaa-swpc",
+      signal: signalName,
+      value: e.flux,
+      unit: "W/m²",
       confidence: 0.9,
       metadata,
     });

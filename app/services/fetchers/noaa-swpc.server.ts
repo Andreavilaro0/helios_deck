@@ -4,6 +4,9 @@ const KP_INDEX_URL =
 const SOLAR_WIND_URL =
   "https://services.swpc.noaa.gov/products/solar-wind/plasma-7-day.json";
 
+const XRAY_FLUX_URL =
+  "https://services.swpc.noaa.gov/json/goes/secondary/xrays-6-hour.json";
+
 export async function fetchKpIndex(): Promise<unknown> {
   const response = await fetch(KP_INDEX_URL);
   if (!response.ok) {
@@ -20,6 +23,17 @@ export async function fetchSolarWindSpeed(): Promise<unknown> {
   if (!response.ok) {
     throw new Error(
       `NOAA SWPC solar wind request failed: ${response.status} ${response.statusText}`
+    );
+  }
+  const data: unknown = await response.json();
+  return data;
+}
+
+export async function fetchXRayFlux(): Promise<unknown> {
+  const response = await fetch(XRAY_FLUX_URL);
+  if (!response.ok) {
+    throw new Error(
+      `NOAA SWPC X-ray flux request failed: ${response.status} ${response.statusText}`
     );
   }
   const data: unknown = await response.json();
