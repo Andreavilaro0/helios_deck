@@ -281,3 +281,58 @@ Normalizer target (xray-flux-long example):
   }
 }
 ```
+
+---
+
+## NOAA Proton Flux Endpoint (Phase 2E — implemented ✓)
+
+**URL:**
+```
+https://services.swpc.noaa.gov/json/goes/primary/integral-protons-6-hour.json
+```
+
+**Status:** Implemented as fourth signal. Pipeline: `fetchProtonFlux` → `normalizeProtonFlux` → SQLite.
+
+**Response shape** (verified 2026-05-02, GOES primary satellite, GOES-18):
+```json
+[
+  { "time_tag": "2026-05-01T17:30:00Z", "satellite": 18, "flux": 1.077927589416504, "energy": ">=1 MeV" },
+  { "time_tag": "2026-05-01T17:30:00Z", "satellite": 18, "flux": 0.234, "energy": ">=5 MeV" },
+  { "time_tag": "2026-05-01T17:30:00Z", "satellite": 18, "flux": 0.089, "energy": ">=10 MeV" },
+  { "time_tag": "2026-05-01T17:30:00Z", "satellite": 18, "flux": 0.023, "energy": ">=30 MeV" },
+  { "time_tag": "2026-05-01T17:30:00Z", "satellite": 18, "flux": 0.008, "energy": ">=50 MeV" },
+  { "time_tag": "2026-05-01T17:30:00Z", "satellite": 18, "flux": 0.001, "energy": ">=100 MeV" },
+  { "time_tag": "2026-05-01T17:30:00Z", "satellite": 18, "flux": 0.0001, "energy": ">=500 MeV" }
+]
+```
+
+7 entries per timestamp (one per energy channel). `flux` is already a number (unlike solar wind which uses strings).
+Update frequency: ~1 minute. 6-hour window per file.
+
+**Field descriptions:**
+| Field | Type | Description |
+|-------|------|-------------|
+| `time_tag` | string | ISO 8601 UTC observation time |
+| `satellite` | number | GOES satellite number (18 = primary, 19 = secondary) |
+| `flux` | number | Integral proton flux in pfu (particles/cm²/s/sr) |
+| `energy` | string | Energy channel (>=1, >=5, >=10, >=30, >=50, >=100, >=500 MeV) |
+
+**Channel ingested:** `">=10 MeV"` only → `signal: "proton-flux-10mev"`. Other channels skipped silently.
+
+**Rationale:** >=10 MeV is the NOAA operational threshold for the S-scale (Solar Radiation Storm) classification. It is the most widely cited channel in space weather alerts and is already defined in `SignalName`.
+
+**Normalizer target example:**
+```ts
+{
+  timestamp:  "2026-05-01T17:30:00Z",
+  source:     "noaa-swpc",
+  signal:     "proton-flux-10mev",
+  value:      0.089,
+  unit:       "pfu",
+  confidence: 0.9,
+  metadata: {
+    satellite: 18,
+    energy:    ">=10 MeV",
+  }
+}
+```
