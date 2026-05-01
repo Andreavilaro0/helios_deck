@@ -5,6 +5,7 @@ import { MissionStatusPanel } from "~/components/dashboard/MissionStatusPanel";
 import { KpScaleInstrument } from "~/components/dashboard/KpScaleInstrument";
 import { KpTelemetryPanel } from "~/components/widgets/KpTelemetryPanel";
 import { KpHistoryStrip } from "~/components/widgets/KpHistoryStrip";
+import { SolarWindPanel } from "~/components/widgets/SolarWindPanel";
 import { EmptyDashboardState } from "~/components/widgets/EmptyDashboardState";
 import {
   getLatestSignalByName,
@@ -22,6 +23,7 @@ export function meta(_: Route.MetaArgs) {
 export function loader(_: Route.LoaderArgs) {
   const latestSignal = getLatestSignalByName("kp-index");
   const recentSignals = listRecentSignalsByName("kp-index", 60);
+  const latestSolarWind = getLatestSignalByName("solar-wind-speed");
 
   const kpValues = recentSignals
     .map((s) => (typeof s.value === "number" ? s.value : null))
@@ -36,11 +38,11 @@ export function loader(_: Route.LoaderArgs) {
       : 0,
   };
 
-  return { latestSignal, recentSignals, stats };
+  return { latestSignal, recentSignals, latestSolarWind, stats };
 }
 
 export default function Dashboard({ loaderData }: Route.ComponentProps) {
-  const { latestSignal, recentSignals, stats } = loaderData;
+  const { latestSignal, recentSignals, latestSolarWind, stats } = loaderData;
 
   return (
     <InstrumentShell>
@@ -50,6 +52,7 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
           <InstrumentGrid
             latestSignal={latestSignal}
             recentSignals={recentSignals}
+            latestSolarWind={latestSolarWind}
             stats={stats}
           />
         ) : (
@@ -63,12 +66,13 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
 }
 
 // ---------------------------------------------------------------------------
-// Instrument grid — only rendered when data is present
+// Instrument grid — only rendered when Kp data is present
 // ---------------------------------------------------------------------------
 
 interface InstrumentGridProps {
   latestSignal: SignalRecord;
   recentSignals: SignalRecord[];
+  latestSolarWind: SignalRecord | null;
   stats: {
     count: number;
     max: number;
@@ -77,15 +81,20 @@ interface InstrumentGridProps {
   };
 }
 
-function InstrumentGrid({ latestSignal, recentSignals, stats }: InstrumentGridProps) {
+function InstrumentGrid({ latestSignal, recentSignals, latestSolarWind, stats }: InstrumentGridProps) {
   const currentKp =
     typeof latestSignal.value === "number" ? latestSignal.value : 0;
 
+  const topGridCols = latestSolarWind
+    ? "grid-cols-1 gap-px sm:grid-cols-2 lg:grid-cols-4"
+    : "grid-cols-1 gap-px lg:grid-cols-3";
+
   return (
     <div className="space-y-px">
-      {/* Top row — 3 instrument panels */}
-      <div className="grid grid-cols-1 gap-px lg:grid-cols-3">
+      {/* Top row — instrument panels (4 when solar wind data is available) */}
+      <div className={`grid ${topGridCols}`}>
         <KpTelemetryPanel signal={latestSignal} />
+        {latestSolarWind && <SolarWindPanel signal={latestSolarWind} />}
         <KpScaleInstrument currentKp={currentKp} />
         <MissionStatusPanel
           source={latestSignal.source}

@@ -14,17 +14,18 @@ export function meta(_: Route.MetaArgs) {
 
 export function loader(_: Route.LoaderArgs) {
   const latestSignal = getLatestSignalByName("kp-index");
-  return { latestSignal };
+  const latestSolarWind = getLatestSignalByName("solar-wind-speed");
+  return { latestSignal, latestSolarWind };
 }
 
 export default function CosmicViewRoute({ loaderData }: Route.ComponentProps) {
-  const { latestSignal } = loaderData;
+  const { latestSignal, latestSolarWind } = loaderData;
 
   if (!latestSignal) {
     return <CosmicEmptyState />;
   }
 
-  return <CosmicScene signal={latestSignal} />;
+  return <CosmicScene signal={latestSignal} solarWind={latestSolarWind} />;
 }
 
 // ---------------------------------------------------------------------------
@@ -32,12 +33,18 @@ export default function CosmicViewRoute({ loaderData }: Route.ComponentProps) {
 // Server renders a static fallback; after hydration the 3D canvas mounts.
 // ---------------------------------------------------------------------------
 
-interface CosmicSceneProps {
+interface CosmicClientProps {
   signal: SignalRecord;
+  solarWind: SignalRecord | null;
 }
 
-function CosmicScene({ signal }: CosmicSceneProps) {
-  const [Client, setClient] = useState<ComponentType<{ signal: SignalRecord }> | null>(null);
+interface CosmicSceneProps {
+  signal: SignalRecord;
+  solarWind: SignalRecord | null;
+}
+
+function CosmicScene({ signal, solarWind }: CosmicSceneProps) {
+  const [Client, setClient] = useState<ComponentType<CosmicClientProps> | null>(null);
 
   useEffect(() => {
     import("~/components/cosmic/CosmicViewClient").then((m) => {
@@ -55,5 +62,5 @@ function CosmicScene({ signal }: CosmicSceneProps) {
     );
   }
 
-  return <Client signal={signal} />;
+  return <Client signal={signal} solarWind={solarWind} />;
 }
