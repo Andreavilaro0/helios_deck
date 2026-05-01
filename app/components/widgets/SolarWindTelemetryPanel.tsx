@@ -1,7 +1,7 @@
 import type { SignalRecord } from "~/types/signal";
 
 interface Props {
-  signal: SignalRecord;
+  signal: SignalRecord | null;
 }
 
 export function interpretWindSpeed(value: unknown): string {
@@ -42,7 +42,38 @@ function formatValue(value: unknown): string {
   return JSON.stringify(value);
 }
 
-export function SolarWindPanel({ signal }: Props) {
+export function SolarWindTelemetryPanel({ signal }: Props) {
+  if (!signal) {
+    return (
+      <div
+        className="bg-[#070d1a] border border-dashed border-cyan-900/30 border-l-2 border-l-slate-700 rounded-sm p-4 space-y-3 flex flex-col justify-center"
+        data-testid="solar-wind-pending"
+      >
+        <div className="text-[10px] font-mono uppercase tracking-widest text-cyan-500/70 border-b border-cyan-900/20 pb-2">
+          Solar Wind · Speed
+        </div>
+        <div className="space-y-2 py-4 text-center">
+          <p className="text-xs font-mono text-slate-500">
+            Solar wind channel awaiting ingest
+          </p>
+          <code className="inline-block text-[10px] bg-black/40 text-slate-400 rounded-sm border border-cyan-900/30 px-3 py-1 font-mono">
+            npm run ingest:noaa-solar-wind
+          </code>
+        </div>
+        <div className="border-t border-cyan-900/20 pt-2 text-[10px] font-mono">
+          <div className="flex justify-between">
+            <span className="text-slate-700">SOURCE</span>
+            <span className="text-slate-600">noaa-swpc</span>
+          </div>
+          <div className="flex justify-between mt-1">
+            <span className="text-slate-700">SIGNAL</span>
+            <span className="text-slate-600">solar-wind-speed</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const accentBorder = windAccentBorder(signal.value);
 
   return (

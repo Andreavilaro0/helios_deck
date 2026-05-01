@@ -554,3 +554,56 @@ Both signals are real-time provisional NOAA data before final QC processing. The
 - **Proton flux as second signal** — similar argument; same GOES endpoint family. Deferred.
 - **Show solar wind speed in the dashboard immediately** — rejected for Phase 2A. The task's explicit constraint is "data + tests + persistence first, no UI redesign."
 - **Separate fetcher file for solar wind** — rejected. The fetcher function is identical in structure to `fetchKpIndex()` — one URL constant, one `fetch()` call, one `response.ok` check. Splitting into a second file would add a module boundary with no benefit. Both functions live in `noaa-swpc.server.ts`.
+
+---
+
+## ADR-019 — Solar Wind Speed as incoming solar driver signal in the UI (Phase 2B)
+
+**Date:** 2026-05-01
+**Status:** Accepted
+
+**Context:**
+Phase 2A added the full `solar-wind-speed` pipeline (fetcher → normalizer → SQLite → ingest script). Phase 2B integrates both real signals into the dashboard and the Cosmic View HUD. This ADR documents the UI-level decisions.
+
+**Why show solar wind speed alongside Kp:**
+
+The two signals have a direct physical relationship:
+- **Solar wind speed** is the incoming solar driver — fast solar wind from coronal holes compresses Earth's magnetosphere, injecting energy into the system.
+- **Kp index** is Earth's geomagnetic response — the planetary K-index measures how disturbed the geomagnetic field is as a result of that solar input.
+
+Displaying both on the same dashboard makes the causal chain visible: *solar wind arrives → geomagnetic activity rises*. A student or scientist reading the dashboard can compare the two values in real time. This is not cosmetic — it is the core scientific purpose of the observatory.
+
+**Why solar wind does not yet modify the planet in Cosmic View:**
+
+The `/cosmic-view` planet is a direct Kp instrument: its color, atmosphere opacity, and field rings are all driven by `signal.value` (the Kp index). Making the planet also respond to solar wind speed would require either (a) combining two signals into a single visual output — which obscures which signal is responsible for what visual change — or (b) adding a separate visual element (e.g. orbit ring speed, particle stream). Option (b) is valid but belongs to Phase 5 where the 3D view is enhanced systematically. For Phase 2B, solar wind appears only in the HUD as a secondary datum. The causal relationship is communicated through text, not animation.
+
+**Why the panel always renders (with a pending state instead of hiding):**
+
+When `solar-wind-speed` has not been ingested yet, the `SolarWindTelemetryPanel` shows "Solar wind channel awaiting ingest" with the command `npm run ingest:noaa-solar-wind`. This is intentional:
+
+1. **It communicates the architecture.** A slot that appears empty teaches the user that the dashboard expects real data and explains exactly how to provide it. A panel that disappears when data is absent teaches nothing.
+2. **It prevents layout shift.** A 4-column grid that collapses to 3 columns when one signal is absent would cause jarring reflow. Stable layout requires stable slot count.
+3. **It avoids invented data.** The alternative — showing a fake "demo" value or a hardcoded 450 km/s — violates the project's core constraint: no decorative data.
+
+**How data/UI separation is maintained:**
+
+- `SolarWindTelemetryPanel` accepts `signal: SignalRecord | null` (props only, no imports from services or db)
+- The dashboard loader (`app/routes/dashboard.tsx`) is the only place that reads `getLatestSignalByName("solar-wind-speed")`
+- The component is purely presentational: it receives a `SignalRecord` or `null`, renders accordingly, and has no side effects
+- Tests for `SolarWindTelemetryPanel` use inline fixture objects — no database, no network
+
+**Interpretation thresholds:**
+
+| Range | Status | Scientific basis |
+|-------|--------|-----------------|
+| < 400 km/s | CALM | Slow/nominal solar wind, magnetosphere undisturbed |
+| 400–600 km/s | ELEVATED | Moderate solar wind, possible minor activity |
+| > 600 km/s | HIGH SPEED STREAM | Fast stream from coronal hole, elevated Kp likely |
+
+These thresholds are approximate operational heuristics used by space weather forecasters. They are not official NOAA alert levels. The Kp index (displayed separately) is the authoritative geomagnetic activity measure.
+
+**Alternatives considered:**
+- **Hide solar wind panel when no data** — rejected. See "pending state" rationale above.
+- **Show solar wind in its own dashboard route** — rejected. Two signals on one console is the scientific point. Separating them would fragment the causal narrative.
+- **Use solar wind speed to drive the Cosmic View planet** — deferred to Phase 5. Premature visual complexity before the data relationship is clearly established in the text-based HUD.
+- **Add a "solar wind → Kp" arrow or annotation** — deferred. A visual annotation connecting the two panels would require layout work beyond the current phase scope. The side-by-side placement already implies the relationship; explicit annotation can follow in Phase 3/4.

@@ -15,7 +15,21 @@ const MOCK_SIGNAL: SignalRecord = {
   metadata: {},
 };
 
-describe("CosmicHud", () => {
+const MOCK_WIND: SignalRecord = {
+  timestamp: "2026-05-01T12:00:00Z",
+  source: "noaa-swpc",
+  signal: "solar-wind-speed",
+  value: 452.1,
+  unit: "km/s",
+  confidence: 0.9,
+  metadata: {},
+};
+
+// ---------------------------------------------------------------------------
+// Kp readout
+// ---------------------------------------------------------------------------
+
+describe("CosmicHud — Kp readout", () => {
   it("shows HELIOS_DECK title", () => {
     render(<MemoryRouter><CosmicHud signal={MOCK_SIGNAL} kp={2.33} /></MemoryRouter>);
     expect(screen.getByText("HELIOS_DECK")).toBeInTheDocument();
@@ -56,26 +70,21 @@ describe("CosmicHud", () => {
 // Solar wind secondary readout
 // ---------------------------------------------------------------------------
 
-const MOCK_WIND: SignalRecord = {
-  timestamp: "2026-05-01T12:00:00Z",
-  source: "noaa-swpc",
-  signal: "solar-wind-speed",
-  value: 452.1,
-  unit: "km/s",
-  confidence: 0.9,
-  metadata: {},
-};
-
-describe("CosmicHud — solar wind secondary readout", () => {
-  it("does not render wind readout when solarWind is not provided", () => {
+describe("CosmicHud — solar wind readout", () => {
+  it("shows pending message when solarWind is not provided", () => {
     render(<MemoryRouter><CosmicHud signal={MOCK_SIGNAL} kp={2.33} /></MemoryRouter>);
-    expect(screen.queryByTestId("hud-wind-readout")).not.toBeInTheDocument();
+    expect(screen.getByTestId("hud-wind-pending")).toBeInTheDocument();
+    expect(screen.getByText(/Solar wind channel pending/i)).toBeInTheDocument();
   });
 
-  it("renders wind speed and status when solarWind is provided", () => {
+  it("shows pending message when solarWind is null", () => {
+    render(<MemoryRouter><CosmicHud signal={MOCK_SIGNAL} kp={2.33} solarWind={null} /></MemoryRouter>);
+    expect(screen.getByTestId("hud-wind-pending")).toBeInTheDocument();
+  });
+
+  it("shows speed and ELEVATED status when solarWind is provided", () => {
     render(<MemoryRouter><CosmicHud signal={MOCK_SIGNAL} kp={2.33} solarWind={MOCK_WIND} /></MemoryRouter>);
     const readout = screen.getByTestId("hud-wind-readout");
-    expect(readout).toBeInTheDocument();
     expect(readout.textContent).toMatch(/452\.1 km\/s/);
     expect(readout.textContent).toMatch(/ELEVATED/);
   });
@@ -92,8 +101,8 @@ describe("CosmicHud — solar wind secondary readout", () => {
     expect(screen.getByTestId("hud-wind-readout").textContent).toMatch(/HIGH SPEED STREAM/);
   });
 
-  it("does not render wind readout when solarWind is null", () => {
-    render(<MemoryRouter><CosmicHud signal={MOCK_SIGNAL} kp={2.33} solarWind={null} /></MemoryRouter>);
-    expect(screen.queryByTestId("hud-wind-readout")).not.toBeInTheDocument();
+  it("does not show pending message when solarWind data is present", () => {
+    render(<MemoryRouter><CosmicHud signal={MOCK_SIGNAL} kp={2.33} solarWind={MOCK_WIND} /></MemoryRouter>);
+    expect(screen.queryByTestId("hud-wind-pending")).not.toBeInTheDocument();
   });
 });
