@@ -451,3 +451,64 @@ Partial reverting would leave inconsistent aesthetics. The Phase 2B components a
 - **Keep Phase 2B with adjustments** — rejected. The user's feedback was "no nos ha gustado" (we didn't like it). Incremental adjustment of a rejected design is not the right response.
 - **Use Magic UI animated components** — deferred. CLAUDE.md rule: Magic UI only after MVP 1 is working end-to-end. The console aesthetic using plain Tailwind achieves the visual goal without new dependencies.
 - **Three.js planet in the header** — explicitly deferred to `/cosmic-view` route (ADR-004). No Three.js outside that route.
+
+---
+
+## ADR-017 — Experimental planet-centered Cosmic View (Phase 2F)
+
+**Date:** 2026-04-30
+**Status:** Accepted (experimental route)
+
+**Context:**
+Phase 2E established `/dashboard` as a scientific instrument console. Phase 2F adds a second, optional route (`/cosmic-view`) that presents the same real Kp data through a 3D immersive visualization. The reference for the visual concept is Atlas26 (MIT © Abdul Wasay Khan 2026), a Next.js spatial observatory. No code or assets were copied from Atlas26.
+
+**Why the planet is the central instrument:**
+In HELIOS_DECK, the Kp index measures Earth's geomagnetic field disturbance. A planet sphere that visually responds to Kp — changing color, atmosphere opacity, and field ring intensity — is not decoration: it IS the instrument. The user reads the field state from the visual, not from a table. This is the same data as `/dashboard` but encoded spatially.
+
+**Why `/cosmic-view` is separate from `/dashboard`:**
+The two routes serve different purposes and different rendering constraints. `/dashboard` is an SSR-first data console, optimized for fast load, accessibility, and reliable data readout. `/cosmic-view` is a client-only WebGL experience that requires a modern GPU. Merging them would force `/dashboard` to load Three.js (~170KB gzip) on every page visit, which violates the performance guarantee in CLAUDE.md. Separate routes = separate bundles.
+
+**Why Three.js is isolated to `/cosmic-view`:**
+`CosmicViewClient.tsx` (and its 3D sub-components: `EarthInstrument`, `KpFieldOverlay`, `StarField`) are only loaded via a dynamic `import()` inside a `useEffect`. This import runs only in the browser, after hydration. Vite splits this into a separate chunk. No file outside `app/components/cosmic/` and `app/routes/cosmic-view.tsx` imports Three.js or `@react-three/fiber`. The CI build confirms this isolation.
+
+**SSR strategy — `useState + useEffect` lazy import:**
+React Router v7 renders all routes on the server by default. Three.js references browser APIs (`window`, WebGL context) that do not exist in Node.js. The chosen pattern:
+1. On the server, `useState` initializes `Client` to `null` → fallback loading screen is rendered.
+2. Client receives the same loading screen during hydration → no mismatch.
+3. After hydration, `useEffect` fires → `import("~/components/cosmic/CosmicViewClient")` resolves → `Client` is set → Canvas mounts.
+
+This is simpler and more reliable than `React.lazy + Suspense` for SSR contexts because it guarantees the server never executes the dynamic import.
+
+**Why @react-three/drei was not installed:**
+Drei is a large helper library (~200KB additional). Our needs are covered by raw R3F + Three.js primitives: `<sphereGeometry>`, `<torusGeometry>`, `<meshStandardMaterial>`, `<ambientLight>`, `<directionalLight>`, `<pointLight>`, `<points>`. Installing Drei for conveniences we don't need violates the YAGNI principle and the library discipline rule in CLAUDE.md.
+
+**How the planet represents real Kp data:**
+All visual parameters are derived exclusively from `latestSignal.value` (the Kp index from SQLite):
+- Sphere emissive color and intensity: dark/neutral at low Kp → red/bright at storm
+- Atmosphere layer color: cyan (QUIET) → amber (ACTIVE) → red (STORM)
+- Atmosphere opacity: increases with Kp
+- Field ring color and opacity: increases with Kp
+- Extra storm ring: only renders when Kp ≥ 5
+
+No mock data. No invented signals. One `getLatestSignalByName("kp-index")` call in the loader. If the database is empty, `CosmicEmptyState` is shown.
+
+**How invented data is prevented:**
+The loader has a single data source: `getLatestSignalByName("kp-index")`. There is no fallback Kp value, no hardcoded demo signal, and no call to the NOAA API. If the database is empty, the route shows `CosmicEmptyState` with the ingest instructions.
+
+**How performance is protected:**
+- No textures: procedural geometry only (no HTTP requests for assets)
+- No postprocessing: no bloom, no depth of field, no SSAO
+- No Framer Motion
+- Star field: 1500 points via `THREE.Points`, not individual meshes
+- Planet sphere: 64×64 segments (not 128×128)
+- Three.js chunk is only fetched when the user navigates to `/cosmic-view`
+
+**Attribution:**
+Atlas26 by Abdul Wasay Khan (MIT 2026) was used as conceptual inspiration only. No code, textures, assets, or components were copied. See `docs/credits.md`.
+
+**Alternatives considered:**
+- **Embedded Three.js in `/dashboard`** — rejected. Violates bundle isolation; Three.js would load on every dashboard visit.
+- **React.lazy + Suspense instead of useEffect** — viable but risks SSR execution of the lazy factory in streaming SSR contexts. The `useEffect` pattern is more explicit and guaranteed.
+- **@react-three/drei Stars component** — rejected. Adds ~200KB for a helper we can replace with 30 lines of Three.js `Points` geometry.
+- **External texture maps** — deferred. Would require asset hosting strategy and increase bundle/network cost. Procedural materials are sufficient for the current data-driven instrument concept.
+- **Copy Atlas26 Earth.tsx under MIT** — rejected. Atlas26's Earth depends on 5 texture files, a custom day/night shader, TimeManager orbital mechanics, and Framer Motion — all incompatible with HELIOS_DECK's architecture. Rewriting from scratch was faster and produces a cleaner, simpler component.
