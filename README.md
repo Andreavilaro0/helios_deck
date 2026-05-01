@@ -83,11 +83,12 @@ GitHub Actions runs these three checks automatically on every push and pull requ
 ```bash
 npm run ingest:noaa-kp           # NOAA SWPC real-time Kp index
 npm run ingest:noaa-solar-wind   # NOAA SWPC real-time solar wind speed
+npm run ingest:noaa-xray-flux    # NOAA SWPC GOES X-ray flux (both channels)
 ```
 
 Each command queries the corresponding NOAA SWPC endpoint, normalizes every entry into a `SignalRecord`, and persists new records to `data/helios.sqlite`. Duplicate entries (same timestamp, source, and signal) are skipped automatically.
 
-Run at least `ingest:noaa-kp` once before `npm run dev` to populate the dashboard.
+Run at least `ingest:noaa-kp` once before `npm run dev` to populate the dashboard. `ingest:noaa-xray-flux` populates both `xray-flux-short` and `xray-flux-long` signals in a single run.
 
 ---
 

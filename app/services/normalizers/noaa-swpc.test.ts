@@ -1,5 +1,5 @@
 /**
- * Tests for NOAA SWPC normalizers: Kp index and solar wind speed.
+ * Tests for NOAA SWPC normalizers: Kp index, solar wind speed, and X-ray flux.
  *
  * Kp entry shape verified against live API on 2026-04-29:
  * { time_tag: "2026-04-29T16:26:00", kp_index: 0, estimated_kp: 0.33, kp: "0P" }
@@ -9,7 +9,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { normalize, normalizeSolarWindSpeed } from "./noaa-swpc";
+import { normalize, normalizeSolarWindSpeed, normalizeXRayFlux } from "./noaa-swpc";
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -263,5 +263,184 @@ describe("normalizeSolarWindSpeed — invalid input throws", () => {
     expect(() =>
       normalizeSolarWindSpeed([HEADER_ROW, ["2026-05-01 12:00:00.000", "5.2", "Infinity", "87523"]])
     ).toThrow(/speed/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// normalizeXRayFlux — fixtures
+//
+// Entry shapes verified against live NOAA xrays-6-hour.json (2026-05-01).
+// Two entries share each timestamp: one per energy channel.
+// ---------------------------------------------------------------------------
+
+const XRAY_SHORT_ENTRY = {
+  time_tag: "2026-05-01T16:11:00Z",
+  satellite: 19,
+  flux: 1.316572362242141e-8,
+  observed_flux: 3.840084161765844e-8,
+  electron_correction: 2.5235118883415453e-8,
+  electron_contaminaton: true,
+  energy: "0.05-0.4nm",
+};
+
+const XRAY_LONG_ENTRY = {
+  time_tag: "2026-05-01T16:11:00Z",
+  satellite: 19,
+  flux: 1.0128478606930003e-6,
+  observed_flux: 1.062917590388679e-6,
+  electron_correction: 5.006974745924708e-8,
+  electron_contaminaton: false,
+  energy: "0.1-0.8nm",
+};
+
+// ---------------------------------------------------------------------------
+// normalizeXRayFlux — valid input
+// ---------------------------------------------------------------------------
+
+describe("normalizeXRayFlux — valid input", () => {
+  it("maps short-channel entry to signal='xray-flux-short'", () => {
+    const [record] = normalizeXRayFlux([XRAY_SHORT_ENTRY]);
+    expect(record.signal).toBe("xray-flux-short");
+  });
+
+  it("maps long-channel entry to signal='xray-flux-long'", () => {
+    const [record] = normalizeXRayFlux([XRAY_LONG_ENTRY]);
+    expect(record.signal).toBe("xray-flux-long");
+  });
+
+  it("sets source='noaa-swpc' and unit='W/m²' for both channels", () => {
+    const [short] = normalizeXRayFlux([XRAY_SHORT_ENTRY]);
+    const [long] = normalizeXRayFlux([XRAY_LONG_ENTRY]);
+    expect(short.source).toBe("noaa-swpc");
+    expect(short.unit).toBe("W/m²");
+    expect(long.source).toBe("noaa-swpc");
+    expect(long.unit).toBe("W/m²");
+  });
+
+  it("returns 2 records when both channels are in one batch", () => {
+    const records = normalizeXRayFlux([XRAY_SHORT_ENTRY, XRAY_LONG_ENTRY]);
+    expect(records).toHaveLength(2);
+    expect(records[0].signal).toBe("xray-flux-short");
+    expect(records[1].signal).toBe("xray-flux-long");
+  });
+
+  it("preserves Z suffix on time_tag without modification", () => {
+    const [record] = normalizeXRayFlux([XRAY_SHORT_ENTRY]);
+    expect(record.timestamp).toBe("2026-05-01T16:11:00Z");
+  });
+
+  it("uses flux (electron-corrected) as the signal value, not observed_flux", () => {
+    const [record] = normalizeXRayFlux([XRAY_SHORT_ENTRY]);
+    expect(record.value).toBe(XRAY_SHORT_ENTRY.flux);
+    expect(record.value).not.toBe(XRAY_SHORT_ENTRY.observed_flux);
+  });
+
+  it("sets confidence to 0.9 for real-time provisional data", () => {
+    const [record] = normalizeXRayFlux([XRAY_SHORT_ENTRY]);
+    expect(record.confidence).toBe(0.9);
+  });
+
+  it("includes satellite number in metadata", () => {
+    const [record] = normalizeXRayFlux([XRAY_SHORT_ENTRY]);
+    expect(typeof record.metadata?.satellite).toBe("number");
+    expect(record.metadata?.satellite).toBe(19);
+  });
+
+  it("includes observed_flux, electron_correction, electron_contaminaton, energy in metadata", () => {
+    const [record] = normalizeXRayFlux([XRAY_SHORT_ENTRY]);
+    expect(record.metadata?.observed_flux).toBe(XRAY_SHORT_ENTRY.observed_flux);
+    expect(record.metadata?.electron_correction).toBe(
+      XRAY_SHORT_ENTRY.electron_correction
+    );
+    // Preserves the API's typo in the key name ("contaminaton" not "contamination")
+    expect(record.metadata?.electron_contaminaton).toBe(true);
+    expect(record.metadata?.energy).toBe("0.05-0.4nm");
+  });
+
+  it("processes 4 entries (2 short + 2 long) and returns 4 records in order", () => {
+    const XRAY_SHORT_ENTRY_2 = { ...XRAY_SHORT_ENTRY, time_tag: "2026-05-01T16:12:00Z" };
+    const XRAY_LONG_ENTRY_2 = { ...XRAY_LONG_ENTRY, time_tag: "2026-05-01T16:12:00Z" };
+    const records = normalizeXRayFlux([
+      XRAY_SHORT_ENTRY,
+      XRAY_LONG_ENTRY,
+      XRAY_SHORT_ENTRY_2,
+      XRAY_LONG_ENTRY_2,
+    ]);
+    expect(records).toHaveLength(4);
+    expect(records[0].signal).toBe("xray-flux-short");
+    expect(records[1].signal).toBe("xray-flux-long");
+    expect(records[2].signal).toBe("xray-flux-short");
+    expect(records[3].signal).toBe("xray-flux-long");
+  });
+
+  it("returns empty array for an empty input array", () => {
+    expect(normalizeXRayFlux([])).toHaveLength(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// normalizeXRayFlux — invalid input throws
+// ---------------------------------------------------------------------------
+
+describe("normalizeXRayFlux — invalid input throws", () => {
+  it("throws when input is not an array", () => {
+    expect(() => normalizeXRayFlux({ not: "an array" })).toThrow(
+      /expected array/
+    );
+  });
+
+  it("throws when entry is missing time_tag", () => {
+    const { time_tag: _omitted, ...noTimeTag } = XRAY_SHORT_ENTRY;
+    expect(() => normalizeXRayFlux([noTimeTag])).toThrow(/time_tag/);
+  });
+
+  it("throws when entry has non-string time_tag", () => {
+    expect(() =>
+      normalizeXRayFlux([{ ...XRAY_SHORT_ENTRY, time_tag: 20260501 }])
+    ).toThrow(/time_tag/);
+  });
+
+  it("throws when energy string is unrecognised", () => {
+    expect(() =>
+      normalizeXRayFlux([{ ...XRAY_SHORT_ENTRY, energy: "0.1-0.3nm" }])
+    ).toThrow(/energy/);
+  });
+
+  it("throws when flux is not a number", () => {
+    expect(() =>
+      normalizeXRayFlux([{ ...XRAY_SHORT_ENTRY, flux: "1.3e-8" }])
+    ).toThrow(/flux/);
+  });
+
+  it("throws when flux is NaN", () => {
+    expect(() =>
+      normalizeXRayFlux([{ ...XRAY_SHORT_ENTRY, flux: NaN }])
+    ).toThrow(/flux/);
+  });
+
+  it("throws when flux is Infinity", () => {
+    expect(() =>
+      normalizeXRayFlux([{ ...XRAY_SHORT_ENTRY, flux: Infinity }])
+    ).toThrow(/flux/);
+  });
+
+  it("throws when flux field is missing entirely", () => {
+    const { flux: _omitted, ...noFlux } = XRAY_SHORT_ENTRY;
+    expect(() => normalizeXRayFlux([noFlux])).toThrow(/flux/);
+  });
+
+  it("throws when top-level input is null", () => {
+    expect(() => normalizeXRayFlux(null)).toThrow(/expected array/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// normalizeXRayFlux — metadata edge cases
+// ---------------------------------------------------------------------------
+
+describe("normalizeXRayFlux — metadata edge cases", () => {
+  it("preserves electron_contaminaton: false (not dropped as falsy)", () => {
+    const [record] = normalizeXRayFlux([XRAY_LONG_ENTRY]);
+    expect(record.metadata?.electron_contaminaton).toBe(false);
   });
 });

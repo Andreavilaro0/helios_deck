@@ -158,7 +158,7 @@ All reuse the same fetcher infrastructure:
 | Signal | Endpoint | Status |
 |--------|----------|--------|
 | Solar wind speed | `/json/rtsw/rtsw_wind.json` | ✅ Phase 2A — implemented |
-| X-ray flux (long) | `/json/goes/secondary/xray-fluxes-6-hour.json` | planned |
+| X-ray flux (short + long) | `/json/goes/secondary/xrays-6-hour.json` | ✅ Phase 2C — implemented |
 | Proton flux | `/json/goes/secondary/integral-proton-fluxes-6-hour.json` | planned |
 | Geomagnetic storm level | `/json/noaa_scales.json` | planned |
 
@@ -211,6 +211,73 @@ Fields per entry:
     proton_temperature:  87523.0,
     bt:                  4.9,
     bz_gsm:              -1.8,
+  }
+}
+```
+
+---
+
+## NOAA X-Ray Flux Endpoint (Phase 2C — implemented ✓)
+
+```
+GET https://services.swpc.noaa.gov/json/goes/secondary/xrays-6-hour.json
+```
+
+Response shape verified 2026-05-02:
+```json
+[
+  {
+    "time_tag": "2026-05-01T16:11:00Z",
+    "satellite": 19,
+    "flux": 1.316572362242141e-08,
+    "observed_flux": 3.840084161765844e-08,
+    "electron_correction": 2.5235118883415453e-08,
+    "electron_contaminaton": true,
+    "energy": "0.05-0.4nm"
+  },
+  {
+    "time_tag": "2026-05-01T16:11:00Z",
+    "satellite": 19,
+    "flux": 1.0128478606930003e-06,
+    "observed_flux": 1.062917590388679e-06,
+    "electron_correction": 5.006974745924708e-08,
+    "electron_contaminaton": false,
+    "energy": "0.1-0.8nm"
+  }
+]
+```
+
+Fields per entry:
+- `time_tag` — ISO 8601 UTC with Z suffix. No conversion needed.
+- `satellite` — GOES satellite number (int).
+- `flux` — electron-corrected X-ray flux in W/m². Used as `value`. This is the scientifically preferred value.
+- `observed_flux` — raw measured flux before electron correction (stored in metadata).
+- `electron_correction` — the correction amount applied (stored in metadata).
+- `electron_contaminaton` — boolean flag. Note: API typo preserved verbatim (missing "i" in "contamination").
+- `energy` — channel identifier: `"0.05-0.4nm"` (short) or `"0.1-0.8nm"` (long).
+
+The endpoint returns two entries per minute: one per energy channel. The normalizer maps each to a separate `SignalRecord`:
+
+| `energy` | `signal` | Notes |
+|----------|----------|-------|
+| `"0.05-0.4nm"` | `"xray-flux-short"` | GOES channel A; used for some flare sub-classifications |
+| `"0.1-0.8nm"` | `"xray-flux-long"` | GOES channel B; standard NOAA flare classification (A/B/C/M/X) |
+
+Normalizer target (xray-flux-long example):
+```ts
+{
+  timestamp:  "2026-05-01T16:11:00Z",
+  source:     "noaa-swpc",
+  signal:     "xray-flux-long",
+  value:      1.0128478606930003e-06,
+  unit:       "W/m²",
+  confidence: 0.9,
+  metadata: {
+    satellite:            19,
+    energy:               "0.1-0.8nm",
+    observed_flux:        1.062917590388679e-06,
+    electron_correction:  5.006974745924708e-08,
+    electron_contaminaton: false,
   }
 }
 ```
