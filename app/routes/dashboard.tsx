@@ -5,7 +5,7 @@ import { MissionStatusPanel } from "~/components/dashboard/MissionStatusPanel";
 import { KpScaleInstrument } from "~/components/dashboard/KpScaleInstrument";
 import { KpTelemetryPanel } from "~/components/widgets/KpTelemetryPanel";
 import { KpHistoryStrip } from "~/components/widgets/KpHistoryStrip";
-import { SolarWindPanel } from "~/components/widgets/SolarWindPanel";
+import { SolarWindTelemetryPanel } from "~/components/widgets/SolarWindTelemetryPanel";
 import { EmptyDashboardState } from "~/components/widgets/EmptyDashboardState";
 import {
   getLatestSignalByName,
@@ -85,16 +85,12 @@ function InstrumentGrid({ latestSignal, recentSignals, latestSolarWind, stats }:
   const currentKp =
     typeof latestSignal.value === "number" ? latestSignal.value : 0;
 
-  const topGridCols = latestSolarWind
-    ? "grid-cols-1 gap-px sm:grid-cols-2 lg:grid-cols-4"
-    : "grid-cols-1 gap-px lg:grid-cols-3";
-
   return (
     <div className="space-y-px">
-      {/* Top row — instrument panels (4 when solar wind data is available) */}
-      <div className={`grid ${topGridCols}`}>
+      {/* Top row — always 4 panels: Kp telemetry | Solar wind | Kp scale | Mission status */}
+      <div className="grid grid-cols-1 gap-px sm:grid-cols-2 lg:grid-cols-4">
         <KpTelemetryPanel signal={latestSignal} />
-        {latestSolarWind && <SolarWindPanel signal={latestSolarWind} />}
+        <SolarWindTelemetryPanel signal={latestSolarWind} />
         <KpScaleInstrument currentKp={currentKp} />
         <MissionStatusPanel
           source={latestSignal.source}

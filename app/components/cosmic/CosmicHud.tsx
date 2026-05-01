@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 import type { SignalRecord } from "~/types/signal";
-import { interpretWindSpeed } from "~/components/widgets/SolarWindPanel";
+import { interpretWindSpeed } from "~/components/widgets/SolarWindTelemetryPanel";
 
 interface Props {
   signal: SignalRecord;
@@ -84,14 +84,18 @@ export function CosmicHud({ signal, kp, solarWind }: Props) {
                   {formatTimestampUTC(signal.timestamp)}
                 </time>
               </div>
-              {windSpeed !== null && (
-                <div data-testid="hud-wind-readout">
-                  <span className="text-slate-700">WIND </span>
+              <div data-testid="hud-wind-readout">
+                <span className="text-slate-700">WIND </span>
+                {windSpeed !== null ? (
                   <span className="text-slate-400">
                     {windSpeed.toFixed(1)} km/s · {interpretWindSpeed(windSpeed)}
                   </span>
-                </div>
-              )}
+                ) : (
+                  <span className="text-slate-600" data-testid="hud-wind-pending">
+                    Solar wind channel pending
+                  </span>
+                )}
+              </div>
               <div>
                 <span className="text-slate-700">PIPELINE </span>
                 <span className="text-slate-400">SQLite → SSR</span>
