@@ -698,3 +698,72 @@ Phase 2E established the proton flux data pipeline (fetcher → normalizer → S
 - **Use "Radiation Storm" as the >= 10 pfu label** — rejected. "Radiation storm" is the official NOAA S-scale designation and requires the full operational criteria. Using it as a UI label without those criteria would be misleading.
 - **Drive planet glow with proton flux** — deferred. Proton flux is scientifically distinct from Kp. Mixing both into the same visual would confuse what the planet represents. Separate visualization (e.g., a particle halo) belongs in a future phase.
 - **Render PROTON conditionally (like XRAY/WIND)** — rejected for the HUD specifically. Proton flux is a new signal; always showing the line (with "channel pending") ensures users know it exists and can ingest it.
+
+---
+
+## ADR-023 — Unified ingest command `npm run ingest:all` (Phase 2G)
+
+**Date:** 2026-05-02
+**Status:** Accepted
+
+**Context:**
+Four independent ingest scripts exist (`ingest:noaa-kp`, `ingest:noaa-solar-wind`, `ingest:noaa-xray-flux`, `ingest:noaa-proton-flux`). Running them individually for a full refresh is error-prone and repetitive, especially during demos or after a data gap.
+
+**Decision:**
+
+1. **Single `npm run ingest:all` entry point** via `scripts/ingest-all.ts`. The script calls all four ingest service functions directly — no subprocess spawning (`child_process`, `execa`, `npm-run-all`). Each signal's ingestion function is imported and called sequentially.
+
+2. **Sequential execution, not parallel.** NOAA SWPC rate limits are not documented explicitly, but all four fetchers target SWPC endpoints. Parallel requests risk triggering rate-limiting; sequential requests are safe. Total wall-clock overhead (~4 s for four network calls) is negligible for a manual command.
+
+3. **Continue on error.** Each signal is ingested independently. A failure in one (e.g., NOAA endpoint down) must not abort the others. The script collects all errors and exits with code 1 if any signal failed, code 0 if all succeeded.
+
+4. **Human-readable summary table.** The script prints a fixed-width table line per signal:
+   ```
+     ✓  kp-index               fetched=N  saved=N  skipped=N  errors=0
+     ✗  xray-flux-long         fetched=0  saved=0  skipped=0  errors=1
+   ```
+   Error messages from the `IngestResult.errors[]` array are printed below the table.
+
+5. **`IngestResult` interface is the contract.** All ingest service functions already return `IngestResult`. The coordinator depends only on that interface — no coupling to internal fetcher or normalizer details.
+
+**Alternatives considered:**
+- **Shell script calling `npm run ingest:*`** — rejected. Requires bash, breaks on Windows, harder to test, cannot import TypeScript types.
+- **Parallel execution with `Promise.all`** — rejected. NOAA rate-limit risk. No measurable benefit for a manual command.
+- **npm-run-all package** — rejected. External dependency for a use case fully covered by a 90-line TypeScript file.
+
+---
+
+## ADR-024 — Signal freshness indicators (Phase 2I)
+
+**Date:** 2026-05-02
+**Status:** Accepted
+
+**Context:**
+The dashboard and CosmicHud display real-time space weather data ingested from NOAA SWPC. There is currently no visual indication of how current the data is. An observation from three hours ago is displayed the same as one from five minutes ago. Users (and demo evaluators) cannot tell whether they are seeing live data or a stale snapshot.
+
+**Decision:**
+
+1. **`getSignalFreshness(signal, now?)` as a pure helper in `app/utils/signal-freshness.ts`.** Returns `{ status: "fresh" | "stale" | "missing", ageMinutes: number | null, label: string }`. The `now` parameter enables deterministic testing without mocking `Date`.
+
+2. **Per-signal thresholds based on NOAA publication cadence:**
+   - `kp-index` — 180 min (Kp is published in 3-hour intervals by definition)
+   - `solar-wind-speed` — 60 min (ACE/DSCOVR real-time, ~1 min cadence, but data gaps are common)
+   - `xray-flux-long` — 30 min (GOES XRS publishes 1-min averages; 30 min allows for brief network gaps)
+   - `proton-flux-10mev` — 60 min (same rationale as solar wind)
+   - All other signal names fall back to 60 min.
+
+3. **`missing` when signal is null or timestamp is unparseable.** No attempt to infer age from `null` — that would be fabricated information.
+
+4. **`fresh` at the boundary (age == threshold).** Strict `>` for stale. A 180-minute-old Kp reading is not yet stale.
+
+5. **Panel badge: `DATA AGE` footer row with `data-testid="freshness-badge"`.** The badge text is "FRESH" (emerald), "STALE" (amber), or "NO DATA" (slate). Added to all four telemetry panels in the footer section after CONFIDENCE.
+
+6. **CosmicHud readouts: freshness appended after signal interpretation label.** Example: `WIND  412.3 km/s · ELEVATED · STALE`. This uses the same compact inline format as existing readouts without adding new lines.
+
+7. **No server-side freshness check.** Freshness is computed client-side in the component from `signal.timestamp` vs `Date.now()`. The loader does not filter or flag stale signals — that would discard real data. The component decides what to display.
+
+**Alternatives considered:**
+- **Server-side freshness flag in loader** — rejected. The loader would have to embed `new Date()` at load time and mark records as stale. This conflates data access with display logic, and a stale signal is still valid data — the UI should present it with context, not hide it.
+- **Single global threshold for all signals** — rejected. Kp is published every 3 hours by definition; treating it as stale after 30 min would produce false alarms. Per-signal thresholds reflect the actual publication cadence of each source.
+- **Color-coded panel border when stale** — rejected. The border color is already used to indicate signal intensity level (Kp storm/quiet, wind speed class, etc.). Overloading the border color with freshness would destroy that meaning.
+- **Auto-refresh via polling** — deferred. This is an SSR application; adding client-side polling would require converting loaders to API routes or adding a WebSocket. Out of scope for Phase 2I.

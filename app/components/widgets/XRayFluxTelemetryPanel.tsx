@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { SignalRecord } from "~/types/signal";
+import { getSignalFreshness } from "~/utils/signal-freshness";
 
 interface Props {
   signal: SignalRecord | null;
@@ -164,7 +165,25 @@ export function XRayFluxTelemetryPanel({ signal }: Props) {
             {String(signal.metadata.satellite)}
           </FooterRow>
         )}
+        <FreshnessRow signal={signal} />
       </div>
     </div>
+  );
+}
+
+function freshnessColor(status: string): string {
+  if (status === "fresh") return "text-emerald-400";
+  if (status === "stale") return "text-amber-400";
+  return "text-slate-600";
+}
+
+function FreshnessRow({ signal }: { signal: SignalRecord }) {
+  const freshness = getSignalFreshness(signal);
+  return (
+    <FooterRow label="DATA AGE">
+      <span className={freshnessColor(freshness.status)} data-testid="freshness-badge">
+        {freshness.label}
+      </span>
+    </FooterRow>
   );
 }
