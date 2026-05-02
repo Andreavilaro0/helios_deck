@@ -6,7 +6,7 @@
     "build": "react-router build",
     "dev": "react-router dev",
     "start": "react-router-serve ./build/server/index.js",
-    "test": "vitest run",
+    "test": "vitest run --pool=threads --maxWorkers=2",
     "test:watch": "vitest",
     "typecheck": "react-router typegen && tsc",
     "ingest:noaa-kp": "tsx scripts/ingest-noaa-kp.ts",

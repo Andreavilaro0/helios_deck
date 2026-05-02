@@ -2,12 +2,14 @@ import { Link } from "react-router";
 import type { SignalRecord } from "~/types/signal";
 import { interpretWindSpeed } from "~/components/widgets/SolarWindPanel";
 import { interpretXRayFlux } from "~/components/widgets/XRayFluxTelemetryPanel";
+import { interpretProtonFlux } from "~/components/widgets/ProtonFluxTelemetryPanel";
 
 interface Props {
   signal: SignalRecord;
   kp: number;
   solarWind?: SignalRecord | null;
   xrayFlux?: SignalRecord | null;
+  protonFlux?: SignalRecord | null;
 }
 
 function kpStatus(kp: number): string {
@@ -34,13 +36,15 @@ function formatTimestampUTC(iso: string): string {
   });
 }
 
-export function CosmicHud({ signal, kp, solarWind, xrayFlux }: Props) {
+export function CosmicHud({ signal, kp, solarWind, xrayFlux, protonFlux }: Props) {
   const status = kpStatus(kp);
   const statusColor = kpStatusColor(kp);
   const xrayFluxValue =
     xrayFlux && typeof xrayFlux.value === "number" ? xrayFlux.value : null;
   const windSpeed =
     solarWind && typeof solarWind.value === "number" ? solarWind.value : null;
+  const protonValue =
+    protonFlux && typeof protonFlux.value === "number" ? protonFlux.value : null;
 
   return (
     <div className="absolute inset-0 pointer-events-none flex flex-col">
@@ -96,6 +100,16 @@ export function CosmicHud({ signal, kp, solarWind, xrayFlux }: Props) {
                   </span>
                 </div>
               )}
+              <div data-testid="hud-proton-readout">
+                <span className="text-slate-700">PROTON </span>
+                {protonValue !== null ? (
+                  <span className="text-slate-400">
+                    {protonValue.toFixed(2)} pfu · {interpretProtonFlux(protonValue)}
+                  </span>
+                ) : (
+                  <span className="text-slate-600">channel pending</span>
+                )}
+              </div>
               {windSpeed !== null && (
                 <div data-testid="hud-wind-readout">
                   <span className="text-slate-700">WIND </span>
