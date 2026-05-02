@@ -698,3 +698,35 @@ Phase 2E established the proton flux data pipeline (fetcher → normalizer → S
 - **Use "Radiation Storm" as the >= 10 pfu label** — rejected. "Radiation storm" is the official NOAA S-scale designation and requires the full operational criteria. Using it as a UI label without those criteria would be misleading.
 - **Drive planet glow with proton flux** — deferred. Proton flux is scientifically distinct from Kp. Mixing both into the same visual would confuse what the planet represents. Separate visualization (e.g., a particle halo) belongs in a future phase.
 - **Render PROTON conditionally (like XRAY/WIND)** — rejected for the HUD specifically. Proton flux is a new signal; always showing the line (with "channel pending") ensures users know it exists and can ingest it.
+
+---
+
+## ADR-023 — Unified manual ingestion for local demo (Phase 2G)
+
+**Date:** 2026-05-02
+**Status:** Accepted
+
+**Context:**
+Four NOAA signals are now tracked (kp-index, solar-wind-speed, xray-flux-long, proton-flux-10mev), each with its own `npm run ingest:noaa-*` command. For a demo or first-time setup, running four commands in sequence is tedious and error-prone (wrong order, missing one). Phase 2G adds `npm run ingest:all` as a single entry point.
+
+**Decision:**
+
+1. **`ingest:all` calls the four ingest service functions directly — no shell-out.** Shelling out to `npm run ingest:noaa-*` would spawn four Node processes and lose structured error information. Calling the service functions directly keeps everything in one process and gives access to the typed `IngestResult` from each pipeline.
+
+2. **Sequential, not parallel.** The four pipelines are independent (different NOAA endpoints, different SQLite signal names), so they *could* run in parallel. Sequential is chosen because:
+   - A network failure on one pipeline should be clearly visible before the next one starts, not interleaved with parallel output.
+   - SQLite write serialization is already guaranteed by `better-sqlite3` (synchronous writes), but avoiding concurrent async operations reduces reasoning complexity.
+   - For a demo setup run once per session, the extra few seconds of latency is irrelevant.
+
+3. **Per-signal error handling: continue, do not abort.** If one pipeline returns `result.errors.length > 0`, the script logs the errors and continues with the remaining signals. A signal with partial network failure should not prevent the other three from being ingested. The exit code is 1 at the end if any errors occurred.
+
+4. **Fatal throws abort the whole run.** If a pipeline throws (not just returns errors — e.g., database file cannot be opened, module cannot be imported), the outer try/catch records the failure but still attempts the remaining signals before exiting with code 1.
+
+5. **`IngestResult` type is reused, not duplicated.** The type is defined once in `noaa-kp.server.ts` and re-exported from the other three ingest modules. `ingest-all.ts` imports it from `noaa-kp.server` directly — no new type is introduced.
+
+6. **Ingest remains explicit, never automatic.** Loaders do not trigger ingest. The dashboard shows pending states for signals that have not been ingested yet, directing the user to run the appropriate command. This keeps the data flow unambiguous: loader → SQLite (read only); ingest scripts → SQLite (write only).
+
+**Alternatives considered:**
+- **Shell-out: `concurrently` or `npm-run-all`** — rejected. These are additional `devDependencies` that add bundle weight and abstract away the pipeline structure. The TypeScript approach is self-documenting and keeps the ingest layer visible.
+- **Parallel execution with `Promise.all`** — rejected for the reasons above (error interleaving, added reasoning complexity for marginal gain in a manual CLI command).
+- **Auto-ingest in the loader on first request** — rejected. Auto-ingest on request would run a side-effectful network operation inside an SSR loader, violating the architecture constraint (no fetch in loaders/components). It would also make timing unpredictable and test harder.
