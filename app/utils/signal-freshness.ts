@@ -13,7 +13,14 @@ const DEFAULT_THRESHOLD_MINUTES = 60;
 export interface SignalFreshness {
   status: "fresh" | "stale" | "missing";
   ageMinutes: number | null;
-  label: string;
+  label: "FRESH" | "STALE" | "NO DATA";
+}
+
+/** Maps a freshness status to its Tailwind text-color class. */
+export function freshnessStatusColor(status: SignalFreshness["status"]): string {
+  if (status === "fresh") return "text-emerald-400";
+  if (status === "stale") return "text-amber-400";
+  return "text-slate-600";
 }
 
 /**

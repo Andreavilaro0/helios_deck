@@ -1,5 +1,5 @@
 import type { SignalRecord } from "~/types/signal";
-import { getSignalFreshness } from "~/utils/signal-freshness";
+import { getSignalFreshness, freshnessStatusColor } from "~/utils/signal-freshness";
 
 interface Props {
   signal: SignalRecord;
@@ -98,16 +98,10 @@ export function KpTelemetryPanel({ signal }: Props) {
 
 function FreshnessRow({ signal }: { signal: SignalRecord }) {
   const freshness = getSignalFreshness(signal);
-  const color =
-    freshness.status === "fresh"
-      ? "text-emerald-400"
-      : freshness.status === "stale"
-        ? "text-amber-400"
-        : "text-slate-600";
   return (
     <div className="flex justify-between">
       <span className="text-slate-700">DATA AGE</span>
-      <span className={color} data-testid="freshness-badge">
+      <span className={freshnessStatusColor(freshness.status)} data-testid="freshness-badge">
         {freshness.label}
       </span>
     </div>
