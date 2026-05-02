@@ -39,3 +39,17 @@ export async function fetchXRayFlux(): Promise<unknown> {
   const data: unknown = await response.json();
   return data;
 }
+
+const PROTON_FLUX_URL =
+  "https://services.swpc.noaa.gov/json/goes/primary/integral-protons-6-hour.json";
+
+export async function fetchProtonFlux(): Promise<unknown> {
+  const response = await fetch(PROTON_FLUX_URL);
+  if (!response.ok) {
+    throw new Error(
+      `NOAA SWPC proton flux request failed: ${response.status} ${response.statusText}`
+    );
+  }
+  const data: unknown = await response.json();
+  return data;
+}

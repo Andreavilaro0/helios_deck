@@ -625,3 +625,37 @@ Phase 2C delivered the full X-ray flux data pipeline (fetcher → normalizer →
 - **Show only xray-flux-short in UI** — rejected. `xray-flux-long` is the standard operational channel for flare classification; short-channel is supplementary.
 - **Shared `interpretXRayFlux` utility module** — deferred. At two call sites (panel + HUD) a shared module adds structural overhead without clarity benefit. Re-evaluate if a third call site appears.
 - **Hide XRayFluxTelemetryPanel when data is absent** — rejected. A visible pending state shows the full causal chain and is clearer than a panel that silently disappears.
+
+---
+
+## ADR-021 — NOAA Proton Flux as fourth normalized signal (Phase 2E)
+
+**Date:** 2026-05-02
+**Status:** Accepted
+
+**Context:**
+Three signals are live in HELIOS_DECK: kp-index, solar-wind-speed, xray-flux. Phase 2E adds a fourth: integral proton flux from NOAA GOES. This phase covers the data pipeline only (fetcher → normalizer → SQLite → ingest script). No UI changes.
+
+**Decision:**
+
+1. **Endpoint: `integral-protons-6-hour.json` (primary satellite).** NOAA SWPC provides this endpoint with 6 hours of 1-minute data per satellite. Primary (GOES-18) is used by default, same choice made for X-ray flux.
+
+2. **Only the `>=10 MeV` channel is ingested.** The endpoint returns 7 channels per timestamp (>=1, >=5, >=10, >=30, >=50, >=100, >=500 MeV). The `>=10 MeV` channel is the NOAA operational threshold for the S-scale (Solar Radiation Storm) classification — the same one used in official alerts and bulletins. The `proton-flux-10mev` signal name and `pfu` unit were already defined in `signal.ts` before this phase, confirming the choice.
+
+3. **Other channels are silently skipped, not rejected.** Unlike the X-ray flux normalizer (which throws on unknown energy strings), the proton flux normalizer uses a continue-on-mismatch pattern. Rationale: all 7 channels are valid NOAA data — we are deliberately choosing not to ingest them, not detecting invalid input. Throwing would be semantically wrong.
+
+4. **`flux` field used directly as value.** The proton flux endpoint delivers `flux` as a number (unlike solar wind plasma data, which uses strings). No `parseFloat` is needed. NaN and Infinity are still explicitly rejected.
+
+5. **Metadata: `{ satellite, energy }`.** These two fields identify the measurement origin unambiguously. The proton flux endpoint has no equivalent of X-ray's `observed_flux`/`electron_correction` — the payload is simpler.
+
+6. **Data pipeline only — no UI in this phase.** The causal chain (XRay → SolarWind → Kp) is already rendered in the dashboard and CosmicHud. Proton flux will be integrated into the UI in a future phase once the data pipeline is proven stable.
+
+7. **No radiation storm level derived in this phase.** The S-scale classification (S1–S5) could be derived from >=10 MeV proton flux thresholds, but inventing a classification belongs in a higher-level enrichment layer, not in the normalizer. The raw `pfu` value is stored; classification is deferred.
+
+**Future extension path:** The remaining 6 channels (>=1, >=5, >=30, >=50, >=100, >=500 MeV) can be added in later phases as separate `SignalName` entries (e.g., `proton-flux-1mev`, `proton-flux-100mev`) without breaking existing data or the >=10 MeV pipeline. Each would be a new signal with its own ingest path, dedup key, and optional UI panel. The S-scale radiation storm classification (S1 < 10 pfu … S5 ≥ 10⁵ pfu) could be derived from the >=10 MeV channel value in a future enrichment service — it is explicitly deferred from Phase 2E to keep the normalizer as a pure shape transformer.
+
+**Alternatives considered:**
+- **Ingest all 7 channels now** — rejected for this phase. Would require 6 new `SignalName` entries, 6 new rows per timestamp in SQLite, and no UI to consume them. Adds complexity with no immediate value.
+- **Use secondary satellite (GOES-19)** — deferred. Secondary is available via the same URL pattern. Primary is used for consistency with the X-ray flux fetcher.
+- **Derive S-scale classification in normalizer** — rejected. Classification from raw flux is a derived enrichment, not a normalization step. The normalizer is a pure shape transformer.
+- **Use `proton-flux-1mev` as primary channel** — rejected. The 1 MeV channel has much higher background flux and is less operationally meaningful for storm impact assessment.

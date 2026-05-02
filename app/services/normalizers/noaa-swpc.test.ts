@@ -1,15 +1,19 @@
 /**
- * Tests for NOAA SWPC normalizers: Kp index, solar wind speed, and X-ray flux.
+ * Tests for NOAA SWPC normalizers: Kp index, solar wind speed, X-ray flux,
+ * and proton flux.
  *
  * Kp entry shape verified against live API on 2026-04-29:
  * { time_tag: "2026-04-29T16:26:00", kp_index: 0, estimated_kp: 0.33, kp: "0P" }
  *
  * Solar wind entry shape from plasma-7-day.json (verified 2026-05-01):
  * [["time_tag","density","speed","temperature"], ["2026-05-01 12:00:00.000","5.2","452.1","87523"], ...]
+ *
+ * Proton flux entry shape from integral-protons-6-hour.json (verified 2026-05-01):
+ * { time_tag: "2026-05-01T17:30:00Z", satellite: 18, flux: 1.077927589416504, energy: ">=10 MeV" }
  */
 
 import { describe, expect, it } from "vitest";
-import { normalize, normalizeSolarWindSpeed, normalizeXRayFlux } from "./noaa-swpc";
+import { normalize, normalizeSolarWindSpeed, normalizeXRayFlux, normalizeProtonFlux } from "./noaa-swpc";
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -442,5 +446,130 @@ describe("normalizeXRayFlux — metadata edge cases", () => {
   it("preserves electron_contaminaton: false (not dropped as falsy)", () => {
     const [record] = normalizeXRayFlux([XRAY_LONG_ENTRY]);
     expect(record.metadata?.electron_contaminaton).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// normalizeProtonFlux — fixtures
+//
+// Entry shapes verified against live NOAA integral-protons-6-hour.json (2026-05-01).
+// Seven entries share each timestamp, one per energy channel.
+// Only the ">=10 MeV" channel is ingested.
+// ---------------------------------------------------------------------------
+
+// One >=10 MeV entry per timestamp (the only channel we ingest)
+const VALID_PROTON_ENTRY = {
+  time_tag: "2026-05-01T17:30:00Z",
+  satellite: 18,
+  flux: 1.077927589416504,
+  energy: ">=10 MeV",
+};
+
+// A mix: one >=10 MeV entry and entries for other channels (should be skipped)
+const PROTON_MIXED_CHANNELS = [
+  { time_tag: "2026-05-01T17:30:00Z", satellite: 18, flux: 450.2, energy: ">=1 MeV" },
+  { time_tag: "2026-05-01T17:30:00Z", satellite: 18, flux: 87.3, energy: ">=5 MeV" },
+  { time_tag: "2026-05-01T17:30:00Z", satellite: 18, flux: 1.077927589416504, energy: ">=10 MeV" },
+  { time_tag: "2026-05-01T17:30:00Z", satellite: 18, flux: 0.23, energy: ">=30 MeV" },
+  { time_tag: "2026-05-01T17:30:00Z", satellite: 18, flux: 0.08, energy: ">=50 MeV" },
+  { time_tag: "2026-05-01T17:30:00Z", satellite: 18, flux: 0.01, energy: ">=100 MeV" },
+  { time_tag: "2026-05-01T17:30:00Z", satellite: 18, flux: 0.001, energy: ">=500 MeV" },
+];
+
+// ---------------------------------------------------------------------------
+// normalizeProtonFlux — valid input
+// ---------------------------------------------------------------------------
+
+describe("normalizeProtonFlux — valid input", () => {
+  it("returns one record for a single >=10 MeV entry", () => {
+    expect(normalizeProtonFlux([VALID_PROTON_ENTRY])).toHaveLength(1);
+  });
+
+  it("returns correct source, signal, and unit", () => {
+    const [record] = normalizeProtonFlux([VALID_PROTON_ENTRY]);
+    expect(record.source).toBe("noaa-swpc");
+    expect(record.signal).toBe("proton-flux-10mev");
+    expect(record.unit).toBe("pfu");
+  });
+
+  it("returns correct numeric flux value", () => {
+    const [record] = normalizeProtonFlux([VALID_PROTON_ENTRY]);
+    expect(record.value).toBe(1.077927589416504);
+  });
+
+  it("normalizes ISO timestamp (preserves Z suffix without modification)", () => {
+    const [record] = normalizeProtonFlux([VALID_PROTON_ENTRY]);
+    expect(record.timestamp).toBe("2026-05-01T17:30:00Z");
+    expect(record.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/);
+  });
+
+  it("metadata includes satellite and energy", () => {
+    const [record] = normalizeProtonFlux([VALID_PROTON_ENTRY]);
+    expect(record.metadata?.satellite).toBe(18);
+    expect(record.metadata?.energy).toBe(">=10 MeV");
+  });
+
+  it("skips non-10MeV channels and returns only the >=10 MeV entry", () => {
+    const records = normalizeProtonFlux(PROTON_MIXED_CHANNELS);
+    expect(records).toHaveLength(1);
+    expect(records[0].value).toBe(1.077927589416504);
+    expect(records[0].metadata?.energy).toBe(">=10 MeV");
+  });
+
+  it("returns empty array for empty input", () => {
+    expect(normalizeProtonFlux([])).toHaveLength(0);
+  });
+
+  it("handles two timestamps with >=10 MeV entries", () => {
+    const secondEntry = {
+      ...VALID_PROTON_ENTRY,
+      time_tag: "2026-05-01T18:00:00Z",
+      flux: 2.5,
+    };
+    const records = normalizeProtonFlux([VALID_PROTON_ENTRY, secondEntry]);
+    expect(records).toHaveLength(2);
+    expect(records[0].value).toBe(1.077927589416504);
+    expect(records[1].value).toBe(2.5);
+    expect(records[1].timestamp).toBe("2026-05-01T18:00:00Z");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// normalizeProtonFlux — invalid input throws
+// ---------------------------------------------------------------------------
+
+describe("normalizeProtonFlux — invalid input throws", () => {
+  it("throws for non-array input", () => {
+    expect(() => normalizeProtonFlux({ not: "an array" })).toThrow(
+      /expected array/
+    );
+  });
+
+  it("throws for missing time_tag", () => {
+    const { time_tag: _omitted, ...noTimeTag } = VALID_PROTON_ENTRY;
+    expect(() => normalizeProtonFlux([noTimeTag])).toThrow(/time_tag/);
+  });
+
+  it("throws for non-numeric flux", () => {
+    expect(() =>
+      normalizeProtonFlux([{ ...VALID_PROTON_ENTRY, flux: "1.077" }])
+    ).toThrow(/flux/);
+  });
+
+  it("throws for NaN flux", () => {
+    expect(() =>
+      normalizeProtonFlux([{ ...VALID_PROTON_ENTRY, flux: NaN }])
+    ).toThrow(/flux/);
+  });
+
+  it("throws for Infinity flux", () => {
+    expect(() =>
+      normalizeProtonFlux([{ ...VALID_PROTON_ENTRY, flux: Infinity }])
+    ).toThrow(/flux/);
+  });
+
+  it("throws for missing energy string", () => {
+    const { energy: _omitted, ...noEnergy } = VALID_PROTON_ENTRY;
+    expect(() => normalizeProtonFlux([noEnergy])).toThrow(/energy/);
   });
 });

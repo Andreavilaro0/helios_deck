@@ -16,6 +16,7 @@ Signals tracked:
 - **Kp index** — planetary geomagnetic activity (NOAA SWPC)
 - **Solar wind speed** — bulk solar wind velocity (NOAA SWPC)
 - **X-ray flux (long channel)** — GOES 0.1–0.8 nm, A/B/C/M/X flare classification (NOAA SWPC)
+- **Proton flux (≥10 MeV)** — energetic particle flux, radiation storm context (NOAA SWPC)
 
 ---
 
@@ -47,10 +48,11 @@ See [`docs/plan.md`](docs/plan.md) for the full roadmap and [`docs/checkpoint-1.
 
 ```bash
 npm install
-npm run ingest:noaa-kp           # Fetch and store real NOAA Kp data
-npm run ingest:noaa-solar-wind   # Fetch and store real solar wind speed
-npm run ingest:noaa-xray-flux    # Fetch and store GOES X-ray flux (both channels)
-npm run dev                      # Start dev server with HMR
+npm run ingest:noaa-kp            # Fetch and store real NOAA Kp data
+npm run ingest:noaa-solar-wind    # Fetch and store real solar wind speed
+npm run ingest:noaa-xray-flux     # Fetch and store GOES X-ray flux (both channels)
+npm run ingest:noaa-proton-flux   # Fetch and store GOES integral proton flux (>=10 MeV)
+npm run dev                       # Start dev server with HMR
 ```
 
 Then open: **http://localhost:5173/dashboard**
@@ -83,9 +85,10 @@ GitHub Actions runs these three checks automatically on every push and pull requ
 ## Manual Ingestion
 
 ```bash
-npm run ingest:noaa-kp           # NOAA SWPC real-time Kp index
-npm run ingest:noaa-solar-wind   # NOAA SWPC real-time solar wind speed
-npm run ingest:noaa-xray-flux    # NOAA SWPC GOES X-ray flux (both channels)
+npm run ingest:noaa-kp            # NOAA SWPC real-time Kp index
+npm run ingest:noaa-solar-wind    # NOAA SWPC real-time solar wind speed
+npm run ingest:noaa-xray-flux     # NOAA SWPC GOES X-ray flux (both channels)
+npm run ingest:noaa-proton-flux   # NOAA SWPC GOES integral proton flux (>=10 MeV)
 ```
 
 Each command queries the corresponding NOAA SWPC endpoint, normalizes every entry into a `SignalRecord`, and persists new records to `data/helios.sqlite`. Duplicate entries (same timestamp, source, and signal) are skipped automatically.

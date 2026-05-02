@@ -1,3 +1,5 @@
+// Normalizers exported: normalize (Kp index), normalizeSolarWindSpeed,
+// normalizeXRayFlux, normalizeProtonFlux
 import type { SignalMetadata, SignalName, SignalRecordInput } from "~/types/signal";
 
 // ---------------------------------------------------------------------------
@@ -289,6 +291,97 @@ export function normalizeXRayFlux(raw: unknown): SignalRecordInput[] {
       unit: "W/m²",
       confidence: 0.9,
       metadata,
+    });
+  }
+
+  return results;
+}
+
+// ---------------------------------------------------------------------------
+// Proton flux normalizer
+// ---------------------------------------------------------------------------
+
+/**
+ * Normalizes NOAA integral-protons-6-hour.json to SignalRecordInput[].
+ *
+ * Response shape (verified 2026-05-01, GOES primary satellite):
+ *   [
+ *     { time_tag, satellite, flux, energy },
+ *     ...
+ *   ]
+ *
+ * Seven entries share each timestamp — one per energy channel:
+ *   ">=1 MeV", ">=5 MeV", ">=10 MeV", ">=30 MeV",
+ *   ">=50 MeV", ">=100 MeV", ">=500 MeV"
+ *
+ * Only the ">=10 MeV" channel is ingested. This is the NOAA S-scale
+ * operational threshold for solar radiation storms. All other energy
+ * channels are silently skipped — they are not errors.
+ *
+ * `flux` is in particle flux units (pfu = particles/cm²/s/sr).
+ */
+export function normalizeProtonFlux(raw: unknown): SignalRecordInput[] {
+  if (!Array.isArray(raw)) {
+    throw new Error(
+      `NOAA proton flux normalizer: expected array, got ${typeof raw}`
+    );
+  }
+
+  if (raw.length === 0) return [];
+
+  const results: SignalRecordInput[] = [];
+
+  for (let i = 0; i < raw.length; i++) {
+    const entry = raw[i];
+
+    if (typeof entry !== "object" || entry === null) {
+      throw new Error(
+        `NOAA proton flux normalizer: entry[${i}] must be a non-null object`
+      );
+    }
+
+    // Safe: we verified entry is a non-null object above
+    const e = entry as Record<string, unknown>;
+
+    if (typeof e.time_tag !== "string") {
+      throw new Error(
+        `NOAA proton flux normalizer: entry[${i}] time_tag must be a string, got ${typeof e.time_tag}`
+      );
+    }
+
+    if (typeof e.energy !== "string") {
+      throw new Error(
+        `NOAA proton flux normalizer: entry[${i}] energy must be a string, got ${typeof e.energy}`
+      );
+    }
+
+    // Only ingest the >=10 MeV channel (NOAA S-scale operational threshold).
+    // Other channels (>=1, >=5, >=30, >=50, >=100, >=500 MeV) are skipped silently.
+    if (e.energy !== ">=10 MeV") continue;
+
+    if (typeof e.flux !== "number" || !isFinite(e.flux)) {
+      throw new Error(
+        `NOAA proton flux normalizer: entry[${i}] flux must be a finite number, got ${String(e.flux)}`
+      );
+    }
+
+    if (typeof e.satellite !== "number") {
+      throw new Error(
+        `NOAA proton flux normalizer: entry[${i}] satellite must be a number, got ${typeof e.satellite}`
+      );
+    }
+
+    results.push({
+      timestamp: parseTimeTag(e.time_tag),
+      source: "noaa-swpc",
+      signal: "proton-flux-10mev",
+      value: e.flux,
+      unit: "pfu",
+      confidence: 0.9,
+      metadata: {
+        satellite: e.satellite,
+        energy: e.energy,
+      },
     });
   }
 
