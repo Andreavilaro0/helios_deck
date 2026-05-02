@@ -652,8 +652,10 @@ Three signals are live in HELIOS_DECK: kp-index, solar-wind-speed, xray-flux. Ph
 
 7. **No radiation storm level derived in this phase.** The S-scale classification (S1–S5) could be derived from >=10 MeV proton flux thresholds, but inventing a classification belongs in a higher-level enrichment layer, not in the normalizer. The raw `pfu` value is stored; classification is deferred.
 
+**Future extension path:** The remaining 6 channels (>=1, >=5, >=30, >=50, >=100, >=500 MeV) can be added in later phases as separate `SignalName` entries (e.g., `proton-flux-1mev`, `proton-flux-100mev`) without breaking existing data or the >=10 MeV pipeline. Each would be a new signal with its own ingest path, dedup key, and optional UI panel. The S-scale radiation storm classification (S1 < 10 pfu … S5 ≥ 10⁵ pfu) could be derived from the >=10 MeV channel value in a future enrichment service — it is explicitly deferred from Phase 2E to keep the normalizer as a pure shape transformer.
+
 **Alternatives considered:**
-- **Ingest all 7 channels** — rejected for this phase. Would require adding 6 new `SignalName` entries, 6 new rows per timestamp, and no UI to consume them. Adds complexity with no immediate value.
+- **Ingest all 7 channels now** — rejected for this phase. Would require 6 new `SignalName` entries, 6 new rows per timestamp in SQLite, and no UI to consume them. Adds complexity with no immediate value.
 - **Use secondary satellite (GOES-19)** — deferred. Secondary is available via the same URL pattern. Primary is used for consistency with the X-ray flux fetcher.
 - **Derive S-scale classification in normalizer** — rejected. Classification from raw flux is a derived enrichment, not a normalization step. The normalizer is a pure shape transformer.
 - **Use `proton-flux-1mev` as primary channel** — rejected. The 1 MeV channel has much higher background flux and is less operationally meaningful for storm impact assessment.

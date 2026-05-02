@@ -321,6 +321,8 @@ Update frequency: ~1 minute. 6-hour window per file.
 
 **Rationale:** >=10 MeV is the NOAA operational threshold for the S-scale (Solar Radiation Storm) classification. It is the most widely cited channel in space weather alerts and is already defined in `SignalName`.
 
+**Future extension:** Additional energy channels (>=1, >=5, >=30, >=50, >=100, >=500 MeV) can be added in future phases as separate `SignalName` entries (e.g., `proton-flux-1mev`, `proton-flux-100mev`) without altering existing data or breaking the pipeline. No S-scale or radiation storm alert is derived in this phase — raw `pfu` values are stored; classification belongs in a future enrichment layer.
+
 **Normalizer target example:**
 ```ts
 {
