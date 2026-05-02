@@ -9,6 +9,7 @@
     "test": "vitest run --pool=threads --maxWorkers=2",
     "test:watch": "vitest",
     "typecheck": "react-router typegen && tsc",
+    "ingest:all": "tsx scripts/ingest-all.ts",
     "ingest:noaa-kp": "tsx scripts/ingest-noaa-kp.ts",
     "ingest:noaa-solar-wind": "tsx scripts/ingest-noaa-solar-wind.ts",
     "ingest:noaa-xray-flux": "tsx scripts/ingest-noaa-xray-flux.ts",
