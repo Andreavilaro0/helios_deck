@@ -9,9 +9,10 @@ interface Props {
   signal: SignalRecord;
   solarWind: SignalRecord | null;
   xrayFlux: SignalRecord | null;
+  protonFlux: SignalRecord | null;
 }
 
-export default function CosmicViewClient({ signal, solarWind, xrayFlux }: Props) {
+export default function CosmicViewClient({ signal, solarWind, xrayFlux, protonFlux }: Props) {
   const kp = typeof signal.value === "number" ? signal.value : 0;
 
   return (
@@ -28,7 +29,7 @@ export default function CosmicViewClient({ signal, solarWind, xrayFlux }: Props)
         <EarthInstrument kp={kp} />
         <KpFieldOverlay kp={kp} />
       </Canvas>
-      <CosmicHud signal={signal} kp={kp} solarWind={solarWind} xrayFlux={xrayFlux} />
+      <CosmicHud signal={signal} kp={kp} solarWind={solarWind} xrayFlux={xrayFlux} protonFlux={protonFlux} />
     </div>
   );
 }

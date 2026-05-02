@@ -659,3 +659,42 @@ Three signals are live in HELIOS_DECK: kp-index, solar-wind-speed, xray-flux. Ph
 - **Use secondary satellite (GOES-19)** — deferred. Secondary is available via the same URL pattern. Primary is used for consistency with the X-ray flux fetcher.
 - **Derive S-scale classification in normalizer** — rejected. Classification from raw flux is a derived enrichment, not a normalization step. The normalizer is a pure shape transformer.
 - **Use `proton-flux-1mev` as primary channel** — rejected. The 1 MeV channel has much higher background flux and is less operationally meaningful for storm impact assessment.
+
+---
+
+## ADR-022 — Proton Flux as energetic particle layer in UI (Phase 2F)
+
+**Date:** 2026-05-02
+**Status:** Accepted
+
+**Context:**
+Phase 2E established the proton flux data pipeline (fetcher → normalizer → SQLite). Phase 2F integrates proton-flux-10mev into the dashboard and CosmicHud alongside X-ray flux, solar wind speed, and Kp index. Four signals are now displayed end-to-end.
+
+**Decision:**
+
+1. **Proton flux is grouped with X-ray flux under "Solar Activity".** Both originate from the Sun and represent energetic output before it affects the near-Earth environment. Solar wind (the transport medium) and Kp (the ground-level geomagnetic response) are separate sections. The dashboard now communicates: Solar Activity → Solar Driver → Geomagnetic Response.
+
+2. **Classification labels: QUIET / ELEVATED / RADIATION WATCH.** The NOAA S-scale starts at S1 = 10 pfu (>=10 MeV). However, "radiation storm" is an official NOAA designation tied to specific alert thresholds and criteria beyond what this project derives. Labels used here are descriptive, not official:
+   - `< 1 pfu` → QUIET
+   - `1–10 pfu` → ELEVATED
+   - `>= 10 pfu` → RADIATION WATCH (NOAA S-scale S1 threshold; not an official alert)
+   The label "Radiation Watch" communicates elevated particle flux without claiming the authority of a NOAA operational alert.
+
+3. **CosmicHud always renders the PROTON line.** Unlike XRAY and WIND (which are omitted when null), the PROTON readout always appears. If no data has been ingested, it shows "channel pending". Rationale: the four-signal chain is the core narrative; absent signals should prompt ingest, not silently disappear.
+
+4. **Planet visualization remains Kp-driven.** The 3D Earth in CosmicHud responds to the Kp index (field overlay intensity, glow color). Proton flux is not used to drive any visual element in this phase. Rationale: Kp is the canonical measure of global geomagnetic disturbance and has a well-defined mapping to observable effects. Proton flux affects satellite electronics and radiation dosimetry — a different physical domain that warrants a separate visualization phase.
+
+5. **`interpretProtonFlux` exported from ProtonFluxTelemetryPanel for CosmicHud reuse.** Same pattern as `interpretXRayFlux`. No shared utility module is introduced at two call sites.
+
+6. **Dashboard layout: nested grid with section labels.** `lg:grid-cols-[2fr_1fr_3fr]` places Solar Activity (2 panels), Solar Driver (1 panel), and Geomagnetic Response (3 panels) proportionally. Section labels (`9px mono`) are visually subtle and do not change the Solar Instrument Console aesthetic — they only annotate the causal chain.
+
+**Separation of data and UI:**
+- The loader reads four signals from SQLite — no HTTP fetch, no mock data.
+- All panels accept `SignalRecord | null` and render a pending state when no data is available.
+- No signal value is fabricated. Every number on screen is a real NOAA measurement or an explicit pending state.
+
+**Alternatives considered:**
+- **Merge proton flux into the "Geomagnetic Response" section** — rejected. Proton flux is a solar output indicator, not a geomagnetic index. Placing it next to Kp would misrepresent the causal direction.
+- **Use "Radiation Storm" as the >= 10 pfu label** — rejected. "Radiation storm" is the official NOAA S-scale designation and requires the full operational criteria. Using it as a UI label without those criteria would be misleading.
+- **Drive planet glow with proton flux** — deferred. Proton flux is scientifically distinct from Kp. Mixing both into the same visual would confuse what the planet represents. Separate visualization (e.g., a particle halo) belongs in a future phase.
+- **Render PROTON conditionally (like XRAY/WIND)** — rejected for the HUD specifically. Proton flux is a new signal; always showing the line (with "channel pending") ensures users know it exists and can ingest it.

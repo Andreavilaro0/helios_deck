@@ -137,3 +137,53 @@ describe("CosmicHud — X-ray flux secondary readout", () => {
     expect(screen.getByTestId("hud-xray-readout").textContent).toMatch(/X — EXTREME/);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Proton flux readout — always rendered (pending text when absent)
+// ---------------------------------------------------------------------------
+
+const MOCK_PROTON: SignalRecord = {
+  timestamp: "2026-05-02T12:00:00Z",
+  source: "noaa-swpc",
+  signal: "proton-flux-10mev",
+  value: 0.3,
+  unit: "pfu",
+  confidence: 0.9,
+  metadata: { energy: ">=10 MeV" },
+};
+
+describe("CosmicHud — proton flux readout", () => {
+  it("always renders proton readout element", () => {
+    render(<MemoryRouter><CosmicHud signal={MOCK_SIGNAL} kp={2.33} /></MemoryRouter>);
+    expect(screen.getByTestId("hud-proton-readout")).toBeInTheDocument();
+  });
+
+  it("shows 'channel pending' when protonFlux is not provided", () => {
+    render(<MemoryRouter><CosmicHud signal={MOCK_SIGNAL} kp={2.33} /></MemoryRouter>);
+    expect(screen.getByTestId("hud-proton-readout").textContent).toMatch(/channel pending/);
+  });
+
+  it("shows 'channel pending' when protonFlux is null", () => {
+    render(<MemoryRouter><CosmicHud signal={MOCK_SIGNAL} kp={2.33} protonFlux={null} /></MemoryRouter>);
+    expect(screen.getByTestId("hud-proton-readout").textContent).toMatch(/channel pending/);
+  });
+
+  it("renders value and QUIET label when proton flux is provided", () => {
+    render(<MemoryRouter><CosmicHud signal={MOCK_SIGNAL} kp={2.33} protonFlux={MOCK_PROTON} /></MemoryRouter>);
+    const readout = screen.getByTestId("hud-proton-readout");
+    expect(readout.textContent).toMatch(/0\.30 pfu/);
+    expect(readout.textContent).toMatch(/QUIET/);
+  });
+
+  it("shows ELEVATED for proton flux between 1 and 10 pfu", () => {
+    const elevated = { ...MOCK_PROTON, value: 5 };
+    render(<MemoryRouter><CosmicHud signal={MOCK_SIGNAL} kp={2.33} protonFlux={elevated} /></MemoryRouter>);
+    expect(screen.getByTestId("hud-proton-readout").textContent).toMatch(/ELEVATED/);
+  });
+
+  it("shows RADIATION WATCH for proton flux >= 10 pfu", () => {
+    const watch = { ...MOCK_PROTON, value: 15 };
+    render(<MemoryRouter><CosmicHud signal={MOCK_SIGNAL} kp={2.33} protonFlux={watch} /></MemoryRouter>);
+    expect(screen.getByTestId("hud-proton-readout").textContent).toMatch(/RADIATION WATCH/);
+  });
+});
