@@ -10,13 +10,20 @@ Real signals. Real pipeline. No decorative demos.
 
 ## What It Does
 
-HELIOS_DECK ingests live data from space weather APIs (starting with NOAA SWPC), stores it in a local SQLite database, and presents it as a server-side-rendered dashboard. Every value on screen is a real measurement from a real instrument.
+HELIOS_DECK ingests live data from space weather APIs (NOAA SWPC), stores it in a local SQLite database, and presents it as a server-side-rendered dashboard. Every value on screen is a real measurement from a real instrument.
 
-Signals tracked:
-- **Kp index** — planetary geomagnetic activity (NOAA SWPC)
-- **Solar wind speed** — bulk solar wind velocity (NOAA SWPC)
-- **X-ray flux (long channel)** — GOES 0.1–0.8 nm, A/B/C/M/X flare classification (NOAA SWPC)
-- **Proton flux (≥10 MeV)** — energetic particle flux, radiation storm context (NOAA SWPC)
+---
+
+## Available Data Signals
+
+| Signal | Role in causal chain | Source | Unit |
+|--------|---------------------|--------|------|
+| `kp-index` | Geomagnetic response — planetary K-index, 0–9 scale | NOAA SWPC | index |
+| `solar-wind-speed` | Solar driver — bulk solar wind velocity at L1 | NOAA SWPC | km/s |
+| `xray-flux-long` | Solar activity — GOES 0.1–0.8 nm, A/B/C/M/X classification | NOAA SWPC | W/m² |
+| `proton-flux-10mev` | Solar activity — energetic particle context, ≥10 MeV channel | NOAA SWPC | pfu |
+
+Causal chain: **Solar Activity** (X-Ray + Proton) → **Solar Driver** (Wind) → **Geomagnetic Response** (Kp)
 
 ---
 
@@ -36,9 +43,9 @@ Signals tracked:
 
 ## Project Status
 
-**Current phase: 2D — X-ray flux UI integration complete**
+**Current phase: 2H — demo ready**
 
-Phases 1–2D complete. Three real NOAA signals are live end-to-end: Kp index, solar wind speed, and X-ray flux. Dashboard shows the full causal chain (XRay → Wind → Kp). CosmicHud overlays all three readouts in the 3D view.
+Phases 1–2H complete. Four real NOAA signals are live end-to-end. Dashboard presents the full causal chain across three sections (Solar Activity → Solar Driver → Geomagnetic Response). The 3D Cosmic View shows a Kp-driven Earth with all four signal readouts in the HUD. A single `npm run ingest:all` command populates the local database.
 
 See [`docs/plan.md`](docs/plan.md) for the full roadmap and [`docs/checkpoint-1.md`](docs/checkpoint-1.md) for the Phase 1 milestone summary.
 
@@ -52,9 +59,11 @@ npm run ingest:all   # Fetch and store all four NOAA signals in one command
 npm run dev          # Start dev server with HMR
 ```
 
-Then open: **http://localhost:5173/dashboard**
+Then open:
+- **http://localhost:5173/dashboard** — multi-signal instrument console
+- **http://localhost:5173/cosmic-view** — 3D Kp-driven Earth with HUD readouts
 
-The dashboard shows the full causal chain — X-Ray Flux → Proton Flux → Solar Wind Speed → Kp Index — rendered server-side from SQLite. All four signals must be ingested at least once to see every panel populated.
+The dashboard shows the full causal chain — X-Ray Flux → Proton Flux → Solar Wind Speed → Kp Index — rendered server-side from SQLite. All four signals must be ingested at least once to see every panel populated. Panels show a pending state before first ingest.
 
 **Individual signals** (alternative to `ingest:all`):
 
@@ -103,6 +112,8 @@ Each command queries the corresponding NOAA SWPC endpoint, normalizes every entr
 
 `ingest:all` runs the four pipelines sequentially and prints a unified summary. `ingest:noaa-xray-flux` populates both `xray-flux-short` and `xray-flux-long` signals in a single run.
 
+The local database lives at `data/helios.sqlite`. The `data/` directory is gitignored — the database is never committed.
+
 ---
 
 ## Data Flow
@@ -133,6 +144,7 @@ See [`docs/architecture.md`](docs/architecture.md) for the full diagram.
 | [`docs/decisions.md`](docs/decisions.md) | Technical decision log (ADRs) |
 | [`docs/ai-usage.md`](docs/ai-usage.md) | AI tool usage policy and session log |
 | [`docs/rubric-checklist.md`](docs/rubric-checklist.md) | Quality checklist for evaluation |
+| [`docs/demo-checklist.md`](docs/demo-checklist.md) | Step-by-step local demo verification guide |
 
 ---
 

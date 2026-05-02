@@ -41,25 +41,56 @@ The architecture is deliberately layered: each layer has a single responsibility
 
 ---
 
-## Component Tree (Phase 1E — implemented)
+## Component Tree (Phase 2H — current)
 
 ```
-app/routes/dashboard.tsx  (loader: reads SQLite → SignalRecord[])
-  ├─ app/components/widgets/SignalCard.tsx  (latest Kp, interpretation, confidence)
-  └─ KpHistoryBars (inline — CSS sparkline, no chart library)
+app/routes/dashboard.tsx  (loader: reads 4 signals from SQLite)
+  └─ InstrumentGrid
+       ├─ [Solar Activity]
+       │    ├─ app/components/widgets/XRayFluxTelemetryPanel.tsx
+       │    └─ app/components/widgets/ProtonFluxTelemetryPanel.tsx
+       ├─ [Solar Driver]
+       │    └─ app/components/widgets/SolarWindPanel.tsx
+       └─ [Geomagnetic Response]
+            ├─ app/components/widgets/KpTelemetryPanel.tsx
+            ├─ app/components/dashboard/KpScaleInstrument.tsx
+            └─ app/components/dashboard/MissionStatusPanel.tsx
+  └─ app/components/widgets/KpHistoryStrip.tsx  (full-width bar chart)
+
+app/routes/cosmic-view.tsx  (loader: reads 4 signals from SQLite)
+  └─ CosmicScene (client-only, dynamic import)
+       └─ CosmicViewClient
+            ├─ Canvas (Three.js / React Three Fiber)
+            │    ├─ EarthInstrument  (Kp-driven sphere + glow)
+            │    ├─ KpFieldOverlay   (field line mesh, intensity = Kp)
+            │    └─ StarField        (static star particle system)
+            └─ CosmicHud            (2D overlay: all 4 signal readouts)
 ```
 
-Phase 2 target (once more signals are ingested):
+All panels accept `SignalRecord | null`. A `null` value renders a pending state — no panel crashes and no data is fabricated.
+
+---
+
+## Current Signal Pipeline
+
 ```
-app/routes/dashboard.tsx
-  └─ app/components/DashboardLayout.tsx
-       ├─ app/widgets/KpIndexWidget.tsx
-       ├─ app/widgets/SolarWindWidget.tsx
-       ├─ app/widgets/XRayFluxWidget.tsx
-       └─ app/widgets/ProtonFluxWidget.tsx
+NOAA SWPC API  (4 endpoints)
+  └─ app/services/fetchers/noaa-swpc.server.ts   (raw HTTP — one function per signal)
+       └─ app/services/normalizers/noaa-swpc.ts   (raw → SignalRecordInput[])
+            └─ app/services/ingest/<signal>.server.ts  (coordinator: dedup + save)
+                 └─ app/services/signals.server.ts      (saveSignal → SQLite)
+                      └─ data/helios.sqlite
+
+Page load (SSR):
+  app/routes/dashboard.tsx  loader → getLatestSignalByName × 4
+  app/routes/cosmic-view.tsx loader → getLatestSignalByName × 4
+    → SignalRecord props → components (render only, no data logic)
+
+Manual ingest (CLI):
+  npm run ingest:all  →  scripts/ingest-all.ts  →  calls all four coordinators
 ```
 
-Widgets receive normalized `SignalRecord` props. They do not fetch anything themselves.
+Signals ingested: `kp-index`, `solar-wind-speed`, `xray-flux-long`, `proton-flux-10mev`.
 
 ---
 
@@ -93,20 +124,22 @@ the column names make the serialization visible at every call site. See ADR-010.
 External APIs are not called on every page load. Data is pre-fetched and stored:
 
 ```
-Ingest trigger (npm run ingest:noaa-kp, or future cron route)
-  └─ app/services/ingest/noaa-kp.server.ts  (coordinator)
-       └─ fetcher: GET https://services.swpc.noaa.gov/json/planetary_k_index_1m.json
-            └─ normalizer: raw JSON → SignalRecordInput[]
-                 └─ signalExists() — skip if (timestamp, source, signal) already stored
-                      └─ saveSignal() → data/helios.sqlite
+Ingest trigger (npm run ingest:all, or individual ingest:noaa-* commands)
+  └─ scripts/ingest-all.ts  (sequential runner — calls all four coordinators)
+       └─ app/services/ingest/noaa-kp.server.ts
+       └─ app/services/ingest/noaa-solar-wind.server.ts
+       └─ app/services/ingest/noaa-xray-flux.server.ts
+       └─ app/services/ingest/noaa-proton-flux.server.ts
+            └─ each: fetcher → normalizer → signalExists() → saveSignal()
+                 └─ data/helios.sqlite (local, gitignored)
 
 Page load (SSR)
-  └─ loader: getLatestSignalByName('kp-index') + listRecentSignalsByName('kp-index', 60)
-       └─ component receives { latestSignal, recentSignals, hasData }
-            └─ SignalCard + KpHistoryBars render server-side, hydrate on client
+  └─ loader: getLatestSignalByName × 4 + listRecentSignalsByName('kp-index', 60)
+       └─ components receive SignalRecord | null props
+            └─ null → pending state  |  SignalRecord → real value rendered
 ```
 
-This separation means the UI is never blocked by a slow external API.
+This separation means the UI is never blocked by a slow external API. Loaders are read-only — they never trigger ingest.
 
 The ingest coordinator (`ingest/noaa-kp.server.ts`) returns an `IngestResult`
 summary (`fetched`, `saved`, `skipped`, `errors`) so callers can report or act
