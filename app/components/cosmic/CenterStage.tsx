@@ -26,16 +26,16 @@ function formatUTCHeader(iso: string): string {
 
 export function CenterStage({ kp, signal }: Props) {
   return (
-    <div className="h-full flex flex-col pt-12 pb-16">
+    <div className="h-full flex flex-col pb-[140px]">
       {/* 3D canvas + HTML overlays */}
       <div className="flex-1 relative min-h-0">
-        {/* UTC header — floats over the canvas, no background */}
-        <div className="absolute top-0 inset-x-0 text-center pt-2 pb-1 z-10 pointer-events-none">
-          <div className="text-[9px] font-mono text-slate-600 uppercase tracking-widest">UTC</div>
+        {/* UTC header — below the floating topbar */}
+        <div className="absolute inset-x-0 text-center z-10 pointer-events-none" style={{ top: 100 }}>
+          <div className="text-[9px] font-mono text-slate-500 uppercase tracking-widest">UTC</div>
           <div className="text-sm font-mono text-slate-300 tabular-nums" style={{ textShadow: "0 1px 8px rgba(0,0,0,0.80)" }}>
             {formatUTCHeader(signal.timestamp)}
           </div>
-          <div className="text-[9px] font-mono text-slate-600 tracking-wide mt-0.5">
+          <div className="text-[9px] text-slate-600 tracking-wide mt-0.5">
             Real-time Space Weather Overview
           </div>
         </div>
@@ -53,7 +53,7 @@ export function CenterStage({ kp, signal }: Props) {
         />
 
         <Canvas
-          camera={{ position: [0, 0.60, 3.76], fov: 40 }}
+          camera={{ position: [0, 0.60, 4.8], fov: 40 }}
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
           gl={{ antialias: true }}
         >

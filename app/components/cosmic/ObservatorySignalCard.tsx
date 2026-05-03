@@ -89,7 +89,7 @@ export function ObservatorySignalCard({
 
   return (
     <div
-      className="relative rounded-xl flex flex-col gap-2 p-3.5 overflow-hidden"
+      className="relative rounded-3xl flex flex-col gap-2 p-3.5 overflow-hidden"
       style={cardStyle}
     >
       {/* Luminous top accent line */}
@@ -104,10 +104,10 @@ export function ObservatorySignalCard({
 
       <div className="flex items-start justify-between gap-1">
         <div>
-          <div className={`text-[10px] font-mono font-bold uppercase tracking-widest ${titleClass}`}>
+          <div className={`text-[10px] font-semibold uppercase tracking-widest ${titleClass}`}>
             {title}
           </div>
-          <div className="text-[9px] font-mono text-slate-400 mt-0.5">{subtitle}</div>
+          <div className="text-[9px] text-slate-400 mt-0.5">{subtitle}</div>
         </div>
         <Icon className={`size-4 shrink-0 mt-0.5 ${titleClass} opacity-80`} />
       </div>
@@ -140,7 +140,7 @@ export function ObservatorySignalCard({
         </div>
       ) : null}
 
-      <p className="text-[9px] font-mono text-slate-500 leading-relaxed line-clamp-2">
+      <p className="text-[9px] text-slate-500 leading-relaxed line-clamp-2">
         {description}
       </p>
 

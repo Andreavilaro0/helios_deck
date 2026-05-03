@@ -110,18 +110,18 @@ export function ObservatoryShell({
         <CenterStage kp={kp} signal={signal} />
       </div>
 
-      {/* Top bar — absolute, planet visible behind via backdrop-blur */}
-      <div className="absolute top-0 inset-x-0 z-20">
+      {/* Top bar — floating pill */}
+      <div className="absolute z-20" style={{ top: 18, left: 24, right: 24 }}>
         <TopSystemBar kpSignal={signal} />
       </div>
 
-      {/* Left floating cards — between bars */}
-      <div className="absolute left-0 top-12 bottom-16 w-56 xl:w-64 hidden md:flex flex-col justify-center gap-3 p-3 z-10">
+      {/* Card top-left: X-Ray */}
+      <div className="absolute hidden md:block z-10" style={{ left: "clamp(32px, 8vw, 160px)", top: "13vh", width: "clamp(260px, 18vw, 340px)" }}>
         <ObservatorySignalCard
           title="X-Ray Flux Long"
           subtitle="Solar activity"
           Icon={Sun}
-          borderClass="border-t-amber-500/50"
+          borderClass=""
           titleClass="text-amber-400"
           statusClass={xrayVal !== null ? xrayClass(xrayVal) : "text-slate-600"}
           signal={xrayFlux}
@@ -134,11 +134,15 @@ export function ObservatoryShell({
           sparklineColor="#f59e0b"
           accentHex="#f59e0b"
         />
+      </div>
+
+      {/* Card bottom-left: Solar Wind */}
+      <div className="absolute hidden md:block z-10" style={{ left: "clamp(70px, 12vw, 220px)", bottom: "17vh", width: "clamp(260px, 18vw, 340px)" }}>
         <ObservatorySignalCard
           title="Solar Wind Speed"
           subtitle="Incoming solar wind"
           Icon={Wind}
-          borderClass="border-t-sky-500/50"
+          borderClass=""
           titleClass="text-sky-400"
           statusClass={windVal !== null ? windClass(windVal) : "text-slate-600"}
           signal={solarWind}
@@ -152,13 +156,13 @@ export function ObservatoryShell({
         />
       </div>
 
-      {/* Right floating cards — between bars */}
-      <div className="absolute right-0 top-12 bottom-16 w-56 xl:w-64 hidden md:flex flex-col justify-center gap-3 p-3 z-10">
+      {/* Card top-right: Proton Flux */}
+      <div className="absolute hidden md:block z-10" style={{ right: "clamp(32px, 8vw, 150px)", top: "13vh", width: "clamp(260px, 18vw, 340px)" }}>
         <ObservatorySignalCard
           title="Proton Flux 10 MeV"
           subtitle="Energetic particles"
           Icon={Zap}
-          borderClass="border-t-cyan-500/50"
+          borderClass=""
           titleClass="text-cyan-400"
           statusClass={protonVal !== null ? protonClass(protonVal) : "text-slate-600"}
           signal={protonFlux}
@@ -171,11 +175,15 @@ export function ObservatoryShell({
           sparklineColor="#22d3ee"
           accentHex="#22d3ee"
         />
+      </div>
+
+      {/* Card bottom-right: Kp */}
+      <div className="absolute hidden md:block z-10" style={{ right: "clamp(32px, 8vw, 150px)", bottom: "17vh", width: "clamp(260px, 18vw, 340px)" }}>
         <ObservatorySignalCard
           title="Kp Index"
           subtitle="Geomagnetic response"
           Icon={Activity}
-          borderClass="border-t-violet-500/50"
+          borderClass=""
           titleClass="text-violet-400"
           statusClass={kpClass(kp)}
           signal={signal}
@@ -193,8 +201,8 @@ export function ObservatoryShell({
         />
       </div>
 
-      {/* Bottom bar — absolute, planet visible behind via backdrop-blur */}
-      <div className="absolute bottom-0 inset-x-0 z-20">
+      {/* Bottom dock — floating pill */}
+      <div className="absolute z-20" style={{ bottom: 20, left: "6.5vw", right: "6.5vw" }}>
         <BottomPipelineBar kpSignal={signal} />
       </div>
     </div>
