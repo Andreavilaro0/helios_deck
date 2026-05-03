@@ -26,7 +26,7 @@ function formatUTCHeader(iso: string): string {
 
 export function CenterStage({ kp, signal }: Props) {
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col pt-12 pb-16">
       {/* 3D canvas + HTML overlays */}
       <div className="flex-1 relative min-h-0">
         {/* UTC header — floats over the canvas, no background */}

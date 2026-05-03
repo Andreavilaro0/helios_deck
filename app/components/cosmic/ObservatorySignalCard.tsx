@@ -60,14 +60,14 @@ export function ObservatorySignalCard({
 
   const cardStyle = accentHex
     ? {
-        background: `linear-gradient(150deg, ${accentHex}2b 0%, ${accentHex}0f 35%, rgba(3,7,20,0.96) 70%)`,
-        border: `1px solid ${accentHex}45`,
-        boxShadow: `0 0 48px ${accentHex}30, 0 0 18px ${accentHex}18, 0 8px 32px rgba(0,0,0,0.60), inset 0 1px 0 ${accentHex}55`,
+        background: `linear-gradient(150deg, ${accentHex}2b 0%, ${accentHex}12 40%, rgba(4,8,26,0.72) 100%)`,
+        border: `1px solid ${accentHex}40`,
+        boxShadow: `0 0 64px ${accentHex}47, 0 0 24px ${accentHex}29, inset 0 1px 0 ${accentHex}a6, 0 14px 44px rgba(0,0,0,0.65), 0 4px 12px rgba(0,0,0,0.55)`,
       }
     : {
-        background: "rgba(4,8,26,0.92)",
-        border: "1px solid rgba(255,255,255,0.12)",
-        boxShadow: "0 8px 32px rgba(0,0,0,0.60)",
+        background: "rgba(4,8,26,0.70)",
+        border: "1px solid rgba(255,255,255,0.14)",
+        boxShadow: "0 14px 44px rgba(0,0,0,0.65), 0 4px 12px rgba(0,0,0,0.55)",
       };
 
   const dotClass =
@@ -85,7 +85,7 @@ export function ObservatorySignalCard({
 
   return (
     <div
-      className="relative rounded-xl backdrop-blur-md flex flex-col gap-2 p-3.5 overflow-hidden"
+      className="relative rounded-xl backdrop-blur-xl flex flex-col gap-2 p-3.5 overflow-hidden"
       style={cardStyle}
     >
       {/* Luminous top accent line */}

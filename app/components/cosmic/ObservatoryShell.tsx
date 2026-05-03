@@ -82,7 +82,7 @@ export function ObservatoryShell({
 
   return (
     <div
-      className="flex flex-col overflow-hidden relative"
+      className="relative overflow-hidden"
       style={{
         height: "100svh",
         background: "radial-gradient(ellipse 90% 90% at 50% 50%, #040b2e 0%, #020510 40%, #010208 100%)",
@@ -92,7 +92,7 @@ export function ObservatoryShell({
       <div className="absolute inset-0 pointer-events-none"
         style={{ background: "radial-gradient(ellipse 75% 55% at 50% 45%, rgba(18,30,95,0.60) 0%, rgba(10,16,55,0.28) 55%, transparent 80%)" }}
       />
-      {/* Amber solar source halo — upper-left matches sun direction [-4,2.5,4] */}
+      {/* Amber solar source halo */}
       <div className="absolute inset-0 pointer-events-none"
         style={{ background: "radial-gradient(ellipse 48% 60% at 6% 22%, rgba(200,110,20,0.28) 0%, rgba(160,80,10,0.10) 50%, transparent 78%)" }}
       />
@@ -104,100 +104,99 @@ export function ObservatoryShell({
       <div className="absolute inset-0 pointer-events-none"
         style={{ background: "linear-gradient(to right, rgba(0,0,0,0.45) 0%, transparent 14%, transparent 86%, rgba(0,0,0,0.45) 100%)" }}
       />
-      {/* Bottom fade */}
-      <div className="absolute inset-x-0 bottom-0 h-32 pointer-events-none"
-        style={{ background: "linear-gradient(to top, rgba(2,5,16,0.70) 0%, transparent 100%)" }}
-      />
 
-      <TopSystemBar kpSignal={signal} />
-
-      {/* Middle area — planet fills 100%, cards float as overlays */}
-      <div className="flex-1 relative min-h-0">
-        {/* Planet canvas fills entire area */}
-        <div className="absolute inset-0">
-          <CenterStage kp={kp} signal={signal} />
-        </div>
-
-        {/* Left floating cards */}
-        <div className="absolute left-0 top-0 bottom-0 w-56 xl:w-64 hidden md:flex flex-col justify-center gap-3 p-3 z-10">
-          <ObservatorySignalCard
-            title="X-Ray Flux Long"
-            subtitle="Solar activity"
-            Icon={Sun}
-            borderClass="border-t-amber-500/50"
-            titleClass="text-amber-400"
-            statusClass={xrayVal !== null ? xrayClass(xrayVal) : "text-slate-600"}
-            signal={xrayFlux}
-            displayValue={xrayVal !== null ? xrayVal.toExponential(2) : "—"}
-            unit="W/m²"
-            status={xrayVal !== null ? interpretXRayFlux(xrayVal) : "PENDING"}
-            description="X-ray emission from the Sun in the 1–8 Å band. Drives ionospheric absorption."
-            recentValues={numericValues(recentXRay)}
-            logScale
-            sparklineColor="#f59e0b"
-            accentHex="#f59e0b"
-          />
-          <ObservatorySignalCard
-            title="Solar Wind Speed"
-            subtitle="Incoming solar wind"
-            Icon={Wind}
-            borderClass="border-t-sky-500/50"
-            titleClass="text-sky-400"
-            statusClass={windVal !== null ? windClass(windVal) : "text-slate-600"}
-            signal={solarWind}
-            displayValue={windVal !== null ? windVal.toFixed(0) : "—"}
-            unit="km/s"
-            status={windVal !== null ? interpretWindSpeed(windVal) : "PENDING"}
-            description="Speed of the solar wind measured near Earth (ACE / DSCOVR)."
-            recentValues={numericValues(recentWind)}
-            sparklineColor="#38bdf8"
-            accentHex="#38bdf8"
-          />
-        </div>
-
-        {/* Right floating cards */}
-        <div className="absolute right-0 top-0 bottom-0 w-56 xl:w-64 hidden md:flex flex-col justify-center gap-3 p-3 z-10">
-          <ObservatorySignalCard
-            title="Proton Flux 10 MeV"
-            subtitle="Energetic particles"
-            Icon={Zap}
-            borderClass="border-t-cyan-500/50"
-            titleClass="text-cyan-400"
-            statusClass={protonVal !== null ? protonClass(protonVal) : "text-slate-600"}
-            signal={protonFlux}
-            displayValue={protonVal !== null ? protonVal.toFixed(2) : "—"}
-            unit="pfu"
-            status={protonVal !== null ? interpretProtonFlux(protonVal) : "PENDING"}
-            description="Integral proton flux at energies ≥ 10 MeV. Elevated levels indicate radiation storm risk."
-            recentValues={numericValues(recentProton)}
-            logScale
-            sparklineColor="#22d3ee"
-            accentHex="#22d3ee"
-          />
-          <ObservatorySignalCard
-            title="Kp Index"
-            subtitle="Geomagnetic response"
-            Icon={Activity}
-            borderClass="border-t-violet-500/50"
-            titleClass="text-violet-400"
-            statusClass={kpClass(kp)}
-            signal={signal}
-            displayValue={kp.toFixed(1)}
-            unit="index"
-            status={kpLabel(kp)}
-            description="Global geomagnetic activity index (0–9). Higher values indicate stronger storms."
-            recentValues={numericValues(recentKp)}
-            sparklineColor="#a78bfa"
-            accentHex="#a78bfa"
-            barMode
-            barColorFn={kpBarColor}
-            barDomainMax={9}
-            thresholdLines={[{ value: 5, color: "#f87171", label: "G1" }]}
-          />
-        </div>
+      {/* Canvas fills entire viewport — bars float on top */}
+      <div className="absolute inset-0">
+        <CenterStage kp={kp} signal={signal} />
       </div>
 
-      <BottomPipelineBar kpSignal={signal} />
+      {/* Top bar — absolute, planet visible behind via backdrop-blur */}
+      <div className="absolute top-0 inset-x-0 z-20">
+        <TopSystemBar kpSignal={signal} />
+      </div>
+
+      {/* Left floating cards — between bars */}
+      <div className="absolute left-0 top-12 bottom-16 w-56 xl:w-64 hidden md:flex flex-col justify-center gap-3 p-3 z-10">
+        <ObservatorySignalCard
+          title="X-Ray Flux Long"
+          subtitle="Solar activity"
+          Icon={Sun}
+          borderClass="border-t-amber-500/50"
+          titleClass="text-amber-400"
+          statusClass={xrayVal !== null ? xrayClass(xrayVal) : "text-slate-600"}
+          signal={xrayFlux}
+          displayValue={xrayVal !== null ? xrayVal.toExponential(2) : "—"}
+          unit="W/m²"
+          status={xrayVal !== null ? interpretXRayFlux(xrayVal) : "PENDING"}
+          description="X-ray emission from the Sun in the 1–8 Å band. Drives ionospheric absorption."
+          recentValues={numericValues(recentXRay)}
+          logScale
+          sparklineColor="#f59e0b"
+          accentHex="#f59e0b"
+        />
+        <ObservatorySignalCard
+          title="Solar Wind Speed"
+          subtitle="Incoming solar wind"
+          Icon={Wind}
+          borderClass="border-t-sky-500/50"
+          titleClass="text-sky-400"
+          statusClass={windVal !== null ? windClass(windVal) : "text-slate-600"}
+          signal={solarWind}
+          displayValue={windVal !== null ? windVal.toFixed(0) : "—"}
+          unit="km/s"
+          status={windVal !== null ? interpretWindSpeed(windVal) : "PENDING"}
+          description="Speed of the solar wind measured near Earth (ACE / DSCOVR)."
+          recentValues={numericValues(recentWind)}
+          sparklineColor="#38bdf8"
+          accentHex="#38bdf8"
+        />
+      </div>
+
+      {/* Right floating cards — between bars */}
+      <div className="absolute right-0 top-12 bottom-16 w-56 xl:w-64 hidden md:flex flex-col justify-center gap-3 p-3 z-10">
+        <ObservatorySignalCard
+          title="Proton Flux 10 MeV"
+          subtitle="Energetic particles"
+          Icon={Zap}
+          borderClass="border-t-cyan-500/50"
+          titleClass="text-cyan-400"
+          statusClass={protonVal !== null ? protonClass(protonVal) : "text-slate-600"}
+          signal={protonFlux}
+          displayValue={protonVal !== null ? protonVal.toFixed(2) : "—"}
+          unit="pfu"
+          status={protonVal !== null ? interpretProtonFlux(protonVal) : "PENDING"}
+          description="Integral proton flux at energies ≥ 10 MeV. Elevated levels indicate radiation storm risk."
+          recentValues={numericValues(recentProton)}
+          logScale
+          sparklineColor="#22d3ee"
+          accentHex="#22d3ee"
+        />
+        <ObservatorySignalCard
+          title="Kp Index"
+          subtitle="Geomagnetic response"
+          Icon={Activity}
+          borderClass="border-t-violet-500/50"
+          titleClass="text-violet-400"
+          statusClass={kpClass(kp)}
+          signal={signal}
+          displayValue={kp.toFixed(1)}
+          unit="index"
+          status={kpLabel(kp)}
+          description="Global geomagnetic activity index (0–9). Higher values indicate stronger storms."
+          recentValues={numericValues(recentKp)}
+          sparklineColor="#a78bfa"
+          accentHex="#a78bfa"
+          barMode
+          barColorFn={kpBarColor}
+          barDomainMax={9}
+          thresholdLines={[{ value: 5, color: "#f87171", label: "G1" }]}
+        />
+      </div>
+
+      {/* Bottom bar — absolute, planet visible behind via backdrop-blur */}
+      <div className="absolute bottom-0 inset-x-0 z-20">
+        <BottomPipelineBar kpSignal={signal} />
+      </div>
     </div>
   );
 }
