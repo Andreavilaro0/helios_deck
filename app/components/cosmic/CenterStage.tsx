@@ -26,7 +26,7 @@ function formatUTCHeader(iso: string): string {
 
 export function CenterStage({ kp, signal }: Props) {
   return (
-    <div className="flex-1 flex flex-col min-h-0 min-w-0">
+    <div className="h-full flex flex-col">
       {/* 3D canvas + HTML overlays */}
       <div className="flex-1 relative min-h-0">
         {/* UTC header — floats over the canvas, no background */}
@@ -42,7 +42,7 @@ export function CenterStage({ kp, signal }: Props) {
         {/* Deep central halo — planetary glow behind the globe */}
         <div className="absolute inset-0 pointer-events-none"
           style={{
-            background: "radial-gradient(ellipse 65% 65% at 50% 50%, rgba(25,55,160,0.65) 0%, rgba(12,22,80,0.30) 50%, transparent 75%)"
+            background: "radial-gradient(ellipse 68% 68% at 50% 50%, rgba(25,55,160,0.72) 0%, rgba(12,22,80,0.32) 50%, transparent 75%)"
           }}
         />
         {/* Solar ambient glow — warm lateral light from left matching sun [-4,2.5,4] */}
@@ -53,7 +53,7 @@ export function CenterStage({ kp, signal }: Props) {
         />
 
         <Canvas
-          camera={{ position: [0, 0.15, 3.2], fov: 40 }}
+          camera={{ position: [0, 0.60, 3.76], fov: 40 }}
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
           gl={{ antialias: true }}
         >
