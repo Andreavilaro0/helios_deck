@@ -116,7 +116,7 @@ export function ObservatoryShell({
       </div>
 
       {/* Card top-left: X-Ray */}
-      <div className="absolute hidden md:block z-10" style={{ left: "clamp(32px, 8vw, 160px)", top: "13vh", width: "clamp(260px, 18vw, 340px)", transform: "rotate(-6deg)", transformOrigin: "bottom right" }}>
+      <div className="absolute hidden md:block z-10" style={{ left: "clamp(24px, 6vw, 120px)", top: "11vh", width: "clamp(220px, 15vw, 280px)", transform: "rotate(9deg)", transformOrigin: "center" }}>
         <ObservatorySignalCard
           title="X-Ray Flux Long"
           subtitle="Solar activity"
@@ -137,7 +137,7 @@ export function ObservatoryShell({
       </div>
 
       {/* Card bottom-left: Solar Wind */}
-      <div className="absolute hidden md:block z-10" style={{ left: "clamp(70px, 12vw, 220px)", bottom: "17vh", width: "clamp(260px, 18vw, 340px)", transform: "rotate(5deg)", transformOrigin: "top right" }}>
+      <div className="absolute hidden md:block z-10" style={{ left: "clamp(24px, 6vw, 120px)", bottom: "14vh", width: "clamp(220px, 15vw, 280px)", transform: "rotate(-9deg)", transformOrigin: "center" }}>
         <ObservatorySignalCard
           title="Solar Wind Speed"
           subtitle="Incoming solar wind"
@@ -157,7 +157,7 @@ export function ObservatoryShell({
       </div>
 
       {/* Card top-right: Proton Flux */}
-      <div className="absolute hidden md:block z-10" style={{ right: "clamp(32px, 8vw, 150px)", top: "13vh", width: "clamp(260px, 18vw, 340px)", transform: "rotate(6deg)", transformOrigin: "bottom left" }}>
+      <div className="absolute hidden md:block z-10" style={{ right: "clamp(24px, 6vw, 120px)", top: "11vh", width: "clamp(220px, 15vw, 280px)", transform: "rotate(-9deg)", transformOrigin: "center" }}>
         <ObservatorySignalCard
           title="Proton Flux 10 MeV"
           subtitle="Energetic particles"
@@ -178,7 +178,7 @@ export function ObservatoryShell({
       </div>
 
       {/* Card bottom-right: Kp */}
-      <div className="absolute hidden md:block z-10" style={{ right: "clamp(32px, 8vw, 150px)", bottom: "17vh", width: "clamp(260px, 18vw, 340px)", transform: "rotate(-5deg)", transformOrigin: "top left" }}>
+      <div className="absolute hidden md:block z-10" style={{ right: "clamp(24px, 6vw, 120px)", bottom: "14vh", width: "clamp(220px, 15vw, 280px)", transform: "rotate(9deg)", transformOrigin: "center" }}>
         <ObservatorySignalCard
           title="Kp Index"
           subtitle="Geomagnetic response"
