@@ -47,12 +47,13 @@ export function TopSystemBar({ kpSignal }: Props) {
 
   return (
     <div
-      className="h-12 flex items-center justify-between px-4 backdrop-blur-xl shrink-0 z-20"
+      className="h-12 flex items-center justify-between px-4 shrink-0 z-20"
       style={{
-        background: "linear-gradient(180deg, rgba(8,14,48,0.32) 0%, rgba(4,8,28,0.22) 100%)",
-        borderBottom: "1px solid rgba(255,255,255,0.08)",
-        boxShadow: "0 1px 0 rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.06)",
-        WebkitBackdropFilter: "blur(24px) saturate(160%)",
+        background: "rgba(4,8,28,0.10)",
+        backdropFilter: "blur(40px) saturate(180%)",
+        WebkitBackdropFilter: "blur(40px) saturate(180%)",
+        borderBottom: "1px solid rgba(255,255,255,0.14)",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.18), 0 1px 20px rgba(0,0,0,0.25)",
       }}
     >
       {/* Logo */}

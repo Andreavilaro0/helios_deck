@@ -73,12 +73,13 @@ export function BottomPipelineBar({ kpSignal }: Props) {
 
   return (
     <div
-      className="h-16 flex items-center justify-between px-6 backdrop-blur-xl shrink-0 gap-5 z-20"
+      className="h-16 flex items-center justify-between px-6 shrink-0 gap-5 z-20"
       style={{
-        background: "linear-gradient(0deg, rgba(4,8,28,0.22) 0%, rgba(8,14,48,0.32) 100%)",
-        borderTop: "1px solid rgba(255,255,255,0.08)",
-        boxShadow: "0 -1px 0 rgba(255,255,255,0.03), inset 0 1px 0 rgba(255,255,255,0.06)",
-        WebkitBackdropFilter: "blur(24px) saturate(160%)",
+        background: "rgba(4,8,28,0.10)",
+        backdropFilter: "blur(40px) saturate(180%)",
+        WebkitBackdropFilter: "blur(40px) saturate(180%)",
+        borderTop: "1px solid rgba(255,255,255,0.14)",
+        boxShadow: "inset 0 -1px 0 rgba(255,255,255,0.18), 0 -1px 20px rgba(0,0,0,0.25)",
       }}
     >
       <IconModule
