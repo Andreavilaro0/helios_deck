@@ -53,7 +53,7 @@ export function CenterStage({ kp, signal }: Props) {
         />
 
         <Canvas
-          camera={{ position: [0, 0.60, 4.8], fov: 40 }}
+          camera={{ position: [0, 0.10, 6.2], fov: 40 }}
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
           gl={{ antialias: true }}
         >

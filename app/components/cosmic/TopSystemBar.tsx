@@ -47,14 +47,14 @@ export function TopSystemBar({ kpSignal }: Props) {
 
   return (
     <div
-      className="h-[72px] flex items-center justify-between px-6 shrink-0"
+      className="h-[54px] flex items-center justify-between px-5 shrink-0"
       style={{
-        borderRadius: 20,
-        background: "rgba(5,13,24,0.68)",
-        backdropFilter: "blur(28px) saturate(160%)",
-        WebkitBackdropFilter: "blur(28px) saturate(160%)",
-        border: "1px solid rgba(150,190,230,0.18)",
-        boxShadow: "0 12px 40px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.09)",
+        borderRadius: 16,
+        background: "rgba(10,18,38,0.14)",
+        backdropFilter: "blur(48px) saturate(200%)",
+        WebkitBackdropFilter: "blur(48px) saturate(200%)",
+        border: "1px solid rgba(200,220,255,0.13)",
+        boxShadow: "0 4px 24px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.20), inset 0 -1px 0 rgba(0,0,0,0.12)",
       }}
     >
       {/* Logo */}
@@ -69,7 +69,7 @@ export function TopSystemBar({ kpSignal }: Props) {
         >
           <Sun className="size-3.5 text-amber-400" />
         </div>
-        <span className="text-[22px] font-bold tracking-[0.28em] text-slate-100">
+        <span className="text-[16px] font-bold tracking-[0.28em] text-slate-100">
           HELIOS_DECK
         </span>
       </div>
