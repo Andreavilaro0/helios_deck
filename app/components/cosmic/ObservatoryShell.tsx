@@ -137,7 +137,7 @@ export function ObservatoryShell({
       </div>
 
       {/* Card bottom-left: Solar Wind */}
-      <div className="absolute hidden md:block z-10" style={{ left: "clamp(24px, 6vw, 120px)", bottom: "14vh", width: "clamp(220px, 15vw, 280px)", transform: "rotate(-9deg)", transformOrigin: "center" }}>
+      <div className="absolute hidden md:block z-10" style={{ left: "clamp(24px, 6vw, 120px)", bottom: "19vh", width: "clamp(220px, 15vw, 280px)", transform: "rotate(-9deg)", transformOrigin: "center" }}>
         <ObservatorySignalCard
           title="Solar Wind Speed"
           subtitle="Incoming solar wind"
@@ -178,7 +178,7 @@ export function ObservatoryShell({
       </div>
 
       {/* Card bottom-right: Kp */}
-      <div className="absolute hidden md:block z-10" style={{ right: "clamp(24px, 6vw, 120px)", bottom: "14vh", width: "clamp(220px, 15vw, 280px)", transform: "rotate(9deg)", transformOrigin: "center" }}>
+      <div className="absolute hidden md:block z-10" style={{ right: "clamp(24px, 6vw, 120px)", bottom: "19vh", width: "clamp(220px, 15vw, 280px)", transform: "rotate(9deg)", transformOrigin: "center" }}>
         <ObservatorySignalCard
           title="Kp Index"
           subtitle="Geomagnetic response"

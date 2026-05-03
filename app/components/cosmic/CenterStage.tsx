@@ -30,7 +30,7 @@ export function CenterStage({ kp, signal }: Props) {
       {/* 3D canvas + HTML overlays */}
       <div className="flex-1 relative min-h-0">
         {/* UTC header — below the floating topbar */}
-        <div className="absolute inset-x-0 text-center z-10 pointer-events-none" style={{ top: 100 }}>
+        <div className="absolute inset-x-0 text-center z-10 pointer-events-none" style={{ top: 80 }}>
           <div className="text-[9px] font-mono text-slate-500 uppercase tracking-widest">UTC</div>
           <div className="text-sm font-mono text-slate-300 tabular-nums" style={{ textShadow: "0 1px 8px rgba(0,0,0,0.80)" }}>
             {formatUTCHeader(signal.timestamp)}

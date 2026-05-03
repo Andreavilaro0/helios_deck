@@ -60,11 +60,11 @@ export function ObservatorySignalCard({
 
   const cardStyle = accentHex
     ? {
-        background: `linear-gradient(150deg, ${accentHex}22 0%, ${accentHex}0c 40%, rgba(4,8,26,0.38) 100%)`,
-        border: `1px solid ${accentHex}55`,
+        background: `linear-gradient(150deg, ${accentHex}14 0%, ${accentHex}08 40%, rgba(4,8,26,0.38) 100%)`,
+        border: `1px solid ${accentHex}38`,
         backdropFilter: "blur(32px) saturate(160%)",
         WebkitBackdropFilter: "blur(32px) saturate(160%)",
-        boxShadow: `0 0 64px ${accentHex}47, 0 0 28px ${accentHex}33, inset 0 1px 0 ${accentHex}cc, 0 16px 48px rgba(0,0,0,0.55), 0 4px 14px rgba(0,0,0,0.45)`,
+        boxShadow: `0 0 36px ${accentHex}22, 0 0 14px ${accentHex}14, inset 0 1px 0 ${accentHex}55, 0 16px 48px rgba(0,0,0,0.50), 0 4px 14px rgba(0,0,0,0.38)`,
       }
     : {
         background: "rgba(4,8,26,0.35)",
@@ -97,7 +97,7 @@ export function ObservatorySignalCard({
         <div
           className="absolute top-0 left-4 right-4 h-[1px]"
           style={{
-            background: `linear-gradient(90deg, transparent, ${accentHex}bb, transparent)`,
+            background: `linear-gradient(90deg, transparent, ${accentHex}66, transparent)`,
           }}
         />
       )}
@@ -115,7 +115,7 @@ export function ObservatorySignalCard({
       <div className="flex items-baseline gap-1.5 leading-none">
         <span
           className="text-4xl leading-none font-bold font-mono tabular-nums text-white"
-          style={accentHex ? { textShadow: `0 0 24px ${accentHex}cc, 0 0 10px ${accentHex}80, 0 0 4px ${accentHex}40` } : undefined}
+          style={accentHex ? { textShadow: `0 0 18px ${accentHex}70, 0 0 8px ${accentHex}40, 0 0 3px ${accentHex}20` } : undefined}
         >
           {displayValue}
         </span>
