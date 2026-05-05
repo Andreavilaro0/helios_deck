@@ -12,7 +12,8 @@ const isTest = process.env["VITEST"] !== undefined;
 
 export default defineConfig({
   server: {
-    port: 5174,
+    port: 5180,
+    strictPort: true,
   },
   plugins: isTest ? [tailwindcss(), react()] : [tailwindcss(), reactRouter()],
   resolve: {
