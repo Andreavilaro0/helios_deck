@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import type { ReactNode } from "react";
 import {
   normalize,
@@ -44,7 +44,7 @@ export function SignalTimeline({ signals }: SignalTimelineProps): ReactNode {
   const maxLen = Math.max(...signals.map((s) => s.data.length), 0);
   if (maxLen < 2) return null;
 
-  const prepared = signals.map(prepareSignal);
+  const prepared = useMemo(() => signals.map(prepareSignal), [signals]);
 
   function handleMouseMove(e: React.MouseEvent<SVGSVGElement>) {
     const rect = e.currentTarget.getBoundingClientRect();

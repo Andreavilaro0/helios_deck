@@ -18,6 +18,13 @@ interface SignalAreaChartProps {
 
 const VB_W = 400;
 
+const GLOW_HEX: Record<string, string> = {
+  "var(--dash-amber)":  "#f59e0b",
+  "var(--dash-cyan)":   "#22d3ee",
+  "var(--dash-blue)":   "#60a5fa",
+  "var(--dash-violet)": "#a78bfa",
+};
+
 export function SignalAreaChart({
   data,
   color,
@@ -74,7 +81,7 @@ export function SignalAreaChart({
           cy={pts[pts.length - 1][1]}
           r="3"
           fill={color}
-          style={{ filter: `drop-shadow(0 0 4px ${color}80)` }}
+          style={{ filter: `drop-shadow(0 0 4px ${GLOW_HEX[color] ?? color}40)` }}
         />
       )}
     </svg>
