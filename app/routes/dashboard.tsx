@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Route } from "./+types/dashboard";
+import { requireAuth } from "~/services/auth/auth.server";
 import { DashboardHero } from "~/components/dashboard/DashboardHero";
 import type { OverallStatus } from "~/components/dashboard/DashboardHero";
 import { DashboardSignalCard } from "~/components/dashboard/DashboardSignalCard";
@@ -9,7 +10,7 @@ import { SignalTimeline } from "~/components/charts/SignalTimeline";
 import type { TimelineSignal } from "~/components/charts/SignalTimeline";
 import { KpScaleInstrument } from "~/components/dashboard/KpScaleInstrument";
 import { KpHistoryStrip } from "~/components/widgets/KpHistoryStrip";
-import { MissionStatusPanel } from "~/components/dashboard/MissionStatusPanel";
+import { PipelineFooter } from "~/components/dashboard/PipelineFooter";
 import { EmptyDashboardState } from "~/components/widgets/EmptyDashboardState";
 import { getSignalFreshness } from "~/utils/signal-freshness";
 import {
@@ -105,7 +106,8 @@ export function meta(_: Route.MetaArgs) {
 // Loader
 // ---------------------------------------------------------------------------
 
-export function loader(_: Route.LoaderArgs) {
+export async function loader({ request }: Route.LoaderArgs) {
+  await requireAuth(request);
   const now = new Date();
 
   const kpSignal = getLatestSignalByName("kp-index");
@@ -323,20 +325,19 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
           <p className="text-xs font-mono tracking-[0.25em] text-white/30 uppercase mb-4">
             Geomagnetic Detail
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <KpScaleInstrument currentKp={currentKp} />
-            <MissionStatusPanel
-              source={kpSignal.source}
-              recordCount={stats.count}
-              maxKp={stats.max}
-              minKp={stats.min}
-              avgKp={stats.avg}
-            />
           </div>
           <div className="mt-4">
             <KpHistoryStrip signals={recentKpSignals} />
           </div>
         </section>
+        <PipelineFooter
+          source={kpSignal.source}
+          recordCount={stats.count}
+          maxKp={stats.max}
+          avgKp={stats.avg}
+        />
       </main>
 
       <AboutPanel open={aboutOpen} onClose={() => setAboutOpen(false)} />
