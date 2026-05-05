@@ -67,28 +67,28 @@ interface MiniCardProps {
 function MiniCard({ label, value, sub, valueColor }: MiniCardProps): ReactNode {
   return (
     <div
-      className="rounded-xl p-3"
+      className="rounded-lg px-3 py-2 min-w-[90px]"
       style={{
-        background: "rgba(255,255,255,0.04)",
+        background: "rgba(255,255,255,0.05)",
         border: "1px solid rgba(255,255,255,0.08)",
       }}
     >
       <p
-        className="text-[9px] font-mono tracking-[0.25em] uppercase mb-1"
-        style={{ color: "rgba(255,255,255,0.35)" }}
+        className="text-[8px] font-mono tracking-[0.2em] uppercase mb-0.5"
+        style={{ color: "rgba(255,255,255,0.30)" }}
       >
         {label}
       </p>
       <p
-        className="text-[13px] font-mono font-bold leading-tight"
+        className="text-[12px] font-mono font-bold leading-tight"
         style={{ color: valueColor ?? "#ffffff" }}
       >
         {value}
       </p>
       {sub && (
         <p
-          className="text-[9px] font-mono mt-0.5"
-          style={{ color: "rgba(255,255,255,0.35)" }}
+          className="text-[8px] font-mono mt-0.5"
+          style={{ color: "rgba(255,255,255,0.30)" }}
         >
           {sub}
         </p>
@@ -108,63 +108,44 @@ export function DashboardHero({
 
   return (
     <header
-      className="rounded-2xl p-6 mb-6 flex flex-row gap-6"
+      className="rounded-2xl px-5 py-4 mb-4 flex flex-row items-center gap-5"
       style={{
         background: cfg.bgColor,
         border: `1px solid ${cfg.borderColor}`,
         backdropFilter: "blur(8px)",
       }}
     >
-      {/* Left column */}
+      {/* Left — status headline */}
       <div className="flex-1 min-w-0">
         <p
-          className="text-[10px] font-mono tracking-[0.25em] uppercase mb-3"
-          style={{ color: "rgba(255,255,255,0.35)" }}
+          className="text-[9px] font-mono tracking-[0.25em] uppercase mb-1"
+          style={{ color: "rgba(255,255,255,0.30)" }}
         >
           Space Weather Condition
         </p>
         <h1
-          className="font-mono font-black leading-none"
+          className="font-mono font-black leading-[1.05]"
           style={{
-            fontSize: "42px",
+            fontSize: "26px",
             color: cfg.color,
             letterSpacing: "-0.02em",
           }}
         >
-          {cfg.headlineLines[0]}
-          <br />
-          {cfg.headlineLines[1]}
+          {cfg.headlineLines[0]} {cfg.headlineLines[1]}
         </h1>
         <p
-          className="text-[13px] mt-3 max-w-sm"
-          style={{ color: "rgba(255,255,255,0.45)" }}
-        >
-          {cfg.description}
-        </p>
-        <p
-          className="text-[11px] font-mono mt-4"
-          style={{ color: "rgba(255,255,255,0.25)" }}
+          className="text-[10px] font-mono mt-1"
+          style={{ color: "rgba(255,255,255,0.22)" }}
         >
           {timestamp}
         </p>
       </div>
 
-      {/* Right column — 2×2 mini cards */}
-      <div
-        className="shrink-0 grid grid-cols-2 gap-3"
-        style={{ width: "260px" }}
-      >
-        <MiniCard
-          label="Risk Level"
-          value={cfg.riskLabel}
-          valueColor={cfg.riskColor}
-        />
+      {/* Right — 4 mini stats in a row */}
+      <div className="shrink-0 flex gap-2">
+        <MiniCard label="Risk" value={cfg.riskLabel} valueColor={cfg.riskColor} />
         <MiniCard label="Freshness" value={freshnessAge} />
-        <MiniCard
-          label="Last Ingested"
-          value={lastIngestedTime}
-          sub={lastIngestedDate}
-        />
+        <MiniCard label="Ingested" value={lastIngestedTime} sub={lastIngestedDate} />
         <MiniCard label="Source" value="NOAA SWPC" sub="Primary feed" />
       </div>
     </header>

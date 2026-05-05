@@ -11,25 +11,21 @@ const BASE_PROPS = {
 };
 
 describe("DashboardHero", () => {
-  it("renders QUIET variant with correct description and risk label", () => {
+  it("renders QUIET variant with correct headline and risk label", () => {
     render(<DashboardHero overallStatus="QUIET" {...BASE_PROPS} />);
-    expect(screen.getByText(/QUIET/)).toBeInTheDocument();
-    expect(screen.getByText(/Geomagnetic activity is at quiet levels/)).toBeInTheDocument();
+    expect(screen.getByText(/QUIET CONDITIONS/)).toBeInTheDocument();
     expect(screen.getByText("LOW")).toBeInTheDocument();
   });
 
-  it("renders ACTIVE variant with correct description and risk label", () => {
+  it("renders ACTIVE variant with correct headline and risk label", () => {
     render(<DashboardHero overallStatus="ACTIVE" {...BASE_PROPS} />);
-    expect(screen.getByText(/ACTIVE/)).toBeInTheDocument();
-    expect(screen.getByText(/Elevated geomagnetic activity/)).toBeInTheDocument();
+    expect(screen.getByText(/ACTIVE CONDITIONS/)).toBeInTheDocument();
     expect(screen.getByText("MODERATE")).toBeInTheDocument();
   });
 
-  it("renders STORM variant with correct description and risk label", () => {
+  it("renders STORM variant with correct headline and risk label", () => {
     render(<DashboardHero overallStatus="STORM" {...BASE_PROPS} />);
-    // h1 contains both lines joined by <br> — match with regex on the combined text
-    expect(screen.getByText(/GEOMAGNETIC/)).toBeInTheDocument();
-    expect(screen.getByText(/Geomagnetic storm in progress/)).toBeInTheDocument();
+    expect(screen.getByText(/GEOMAGNETIC STORM/)).toBeInTheDocument();
     expect(screen.getByText("HIGH")).toBeInTheDocument();
   });
 

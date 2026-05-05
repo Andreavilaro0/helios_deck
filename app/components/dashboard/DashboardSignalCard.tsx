@@ -18,6 +18,7 @@ interface DashboardSignalCardProps {
   animationDelay?: number;
   historyData?: number[];
   logScale?: boolean;
+  compact?: boolean;
 }
 
 const COLOR_MAP: Record<SignalColor, string> = {
@@ -42,12 +43,13 @@ export function DashboardSignalCard({
   animationDelay = 0,
   historyData,
   logScale,
+  compact = false,
 }: DashboardSignalCardProps): ReactNode {
   const accent = COLOR_MAP[statusColor];
 
   return (
     <article
-      className="relative overflow-hidden rounded-2xl border p-5 flex flex-col gap-1"
+      className={`relative overflow-hidden rounded-2xl border flex flex-col gap-1 ${compact ? "p-4" : "p-5"}`}
       style={{
         background: "var(--dash-card-bg)",
         borderColor: "var(--dash-card-border)",
@@ -58,15 +60,15 @@ export function DashboardSignalCard({
       }}
     >
       {/* Header */}
-      <div className="flex items-center justify-between mb-1">
+      <div className="flex items-start justify-between gap-1 mb-1">
         <span
-          className="text-xs font-mono font-semibold tracking-widest uppercase"
+          className={`font-mono font-semibold uppercase leading-tight ${compact ? "text-[10px] tracking-wide" : "text-xs tracking-widest"}`}
           style={{ color: accent }}
         >
           {label}
         </span>
         <span
-          className="text-xs font-mono px-2 py-0.5 rounded-full"
+          className="text-[10px] font-mono px-1.5 py-0.5 rounded-full shrink-0"
           style={{
             background: fresh ? "rgba(34 197 94 / 0.15)" : "rgba(239 68 68 / 0.15)",
             color: fresh ? "#4ade80" : "#f87171",
@@ -77,19 +79,19 @@ export function DashboardSignalCard({
       </div>
 
       {/* Subtitle */}
-      <p className="text-xs text-white/40 font-sans -mt-0.5">{subtitle}</p>
+      <p className="text-[10px] text-white/40 font-sans -mt-0.5">{subtitle}</p>
 
       {/* Value */}
-      <div className="mt-3 flex items-baseline gap-2">
-        <span className="text-4xl font-mono font-bold text-white leading-none">
+      <div className={`flex items-baseline gap-1.5 ${compact ? "mt-2" : "mt-3"}`}>
+        <span className={`font-mono font-bold text-white leading-none ${compact ? "text-2xl" : "text-4xl"}`}>
           {value}
         </span>
-        <span className="text-sm font-mono text-white/50">{unit}</span>
+        <span className={`font-mono text-white/50 ${compact ? "text-xs" : "text-sm"}`}>{unit}</span>
       </div>
 
       {/* Status */}
       <div
-        className="text-sm font-mono font-semibold mt-1"
+        className={`font-mono font-semibold mt-1 ${compact ? "text-xs" : "text-sm"}`}
         style={{ color: accent }}
       >
         {status}
@@ -102,14 +104,14 @@ export function DashboardSignalCard({
             data={historyData}
             color={accent}
             logScale={logScale}
-            height={52}
+            height={compact ? 36 : 52}
             gradientId={`mini-grad-${statusColor}`}
           />
         </div>
       )}
 
       {/* Footer */}
-      <p className="text-xs font-mono text-white/25 mt-auto pt-3">
+      <p className="text-[10px] font-mono text-white/25 mt-auto pt-2">
         {source} · {timestamp}
       </p>
 

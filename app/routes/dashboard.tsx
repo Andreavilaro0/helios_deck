@@ -399,8 +399,10 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
   return (
     <div className="min-h-screen" style={{ background: "var(--dash-bg)" }}>
 
-      <main className="max-w-5xl mx-auto px-4 pb-16">
-        <div className="relative">
+      <main className="max-w-6xl mx-auto px-4 pt-4 pb-12">
+
+        {/* ── Row 1: Hero + About button ─────────────────────────────── */}
+        <div className="relative mb-4">
           <DashboardHero
             overallStatus={overallStatus}
             timestamp={heroTimestamp}
@@ -410,18 +412,18 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
           />
           <button
             onClick={() => setAboutOpen(true)}
-            className="absolute top-6 right-0 flex items-center gap-1.5 text-xs font-mono text-white/40 hover:text-white/80 transition-colors px-3 py-1.5 rounded-lg"
-            style={{ border: "1px solid rgba(255,255,255,0.08)" }}
+            className="absolute top-3 right-3 flex items-center gap-1 text-[10px] font-mono text-white/30 hover:text-white/70 transition-colors px-2 py-1 rounded-md"
+            style={{ border: "1px solid rgba(255,255,255,0.07)" }}
             type="button"
           >
-            <span className="text-sm">ⓘ</span>
-            About
+            ⓘ About
           </button>
         </div>
 
-        {/* Signal grid — 2×2 */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        {/* ── Row 2: 4 signal cards horizontal ──────────────────────── */}
+        <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
           <DashboardSignalCard
+            compact
             label="X-Ray Flux"
             subtitle="Solar radiation level"
             value={formatXRayValue(xraySignal?.value)}
@@ -438,8 +440,9 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
             logScale
           />
           <DashboardSignalCard
+            compact
             label="Proton Flux"
-            subtitle="Energetic particle flux ≥10 MeV"
+            subtitle="Flux ≥10 MeV"
             value={typeof protonSignal?.value === "number" ? protonSignal.value.toFixed(2) : "—"}
             unit="pfu"
             status={interpretProton(protonSignal?.value)}
@@ -449,12 +452,13 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
             source="noaa-goes"
             timestamp={protonSignal ? formatTimestamp(protonSignal.timestamp) : "—"}
             tooltipText={TOOLTIPS.proton}
-            animationDelay={80}
+            animationDelay={60}
             historyData={historyProton}
           />
           <DashboardSignalCard
+            compact
             label="Solar Wind"
-            subtitle="Bulk speed at L1 point"
+            subtitle="Speed at L1 point"
             value={typeof windSignal?.value === "number" ? Math.round(windSignal.value).toString() : "—"}
             unit="km/s"
             status={interpretWind(windSignal?.value)}
@@ -464,12 +468,13 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
             source="noaa-dscovr"
             timestamp={windSignal ? formatTimestamp(windSignal.timestamp) : "—"}
             tooltipText={TOOLTIPS.wind}
-            animationDelay={160}
+            animationDelay={120}
             historyData={historyWind}
           />
           <DashboardSignalCard
+            compact
             label="Kp Index"
-            subtitle="Planetary geomagnetic activity"
+            subtitle="Geomagnetic activity"
             value={typeof kpSignal.value === "number" ? kpSignal.value.toFixed(1) : "—"}
             unit="index"
             status={interpretKp(kpSignal.value)}
@@ -479,41 +484,35 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
             source="noaa-swpc"
             timestamp={formatTimestamp(kpSignal.timestamp)}
             tooltipText={TOOLTIPS.kp}
-            animationDelay={240}
+            animationDelay={180}
             historyData={historyKp}
           />
         </section>
 
-        {/* Multi-signal timeline */}
+        {/* ── Row 3: Timeline (2/3) + Kp Scale (1/3) ────────────────── */}
         {timelineSignals.length > 0 && (
-          <div className="mb-6">
-            <SignalTimeline signals={timelineSignals} />
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            <div className="col-span-2">
+              <SignalTimeline signals={timelineSignals} />
+            </div>
+            <div>
+              <KpScaleInstrument currentKp={currentKp} />
+            </div>
           </div>
         )}
 
-        <SpaceWeatherChain />
-
+        {/* ── Row 4: Recent Signals table ────────────────────────────── */}
         <RecentSignalsTable rows={signalRows} allSignals={allSignals} />
 
-        {/* Geomagnetic panel */}
-        <section
-          className="rounded-2xl border p-6 mb-6"
-          style={{
-            background: "var(--dash-card-bg)",
-            borderColor: "var(--dash-card-border)",
-          }}
-        >
-          <p className="text-xs font-mono tracking-[0.25em] text-white/30 uppercase mb-4">
-            Geomagnetic Detail
-          </p>
-          <div className="grid grid-cols-1 gap-4">
-            <KpScaleInstrument currentKp={currentKp} />
-          </div>
-          <div className="mt-4">
-            <KpHistoryStrip signals={recentKpSignals} />
-          </div>
-        </section>
+        {/* ── Row 5: Data Pipeline ───────────────────────────────────── */}
         <DataPipelinePanel pipelineOk={pipelineOk} staleAge={staleAge} />
+
+        {/* ── Below fold: Causal Chain + Kp history ─────────────────── */}
+        <SpaceWeatherChain />
+        <div className="mb-6">
+          <KpHistoryStrip signals={recentKpSignals} />
+        </div>
+
       </main>
 
       <AboutPanel open={aboutOpen} onClose={() => setAboutOpen(false)} />
