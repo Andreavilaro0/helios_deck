@@ -13,7 +13,9 @@ export function PipelineFooter({ source, recordCount, maxKp, avgKp }: PipelineFo
       <p className="text-xs font-mono text-white/20">
         ● {source.toUpperCase()}
         {"  →  "}HELIOS_DECK{"  →  "}SQLite{"  →  "}SSR{"  →  "}UI
-        {"    "}{recordCount} readings · Max {maxKp.toFixed(2)} · Avg {avgKp.toFixed(2)}
+        <span className="ml-4 opacity-60">
+          {recordCount} readings · Max {maxKp.toFixed(2)} · Avg {avgKp.toFixed(2)}
+        </span>
       </p>
     </footer>
   );
