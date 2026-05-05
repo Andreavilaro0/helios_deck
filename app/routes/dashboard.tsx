@@ -182,6 +182,10 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
 
   const currentKp = typeof kpSignal?.value === "number" ? kpSignal.value : 0;
   const heroTimestamp = formatTimestamp(generatedAt);
+  const sparklineData = recentKpSignals
+    .map((s) => (typeof s.value === "number" ? s.value : null))
+    .filter((v): v is number => v !== null)
+    .slice(-24);
 
   if (!kpSignal) {
     return (
@@ -265,10 +269,7 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
             timestamp={formatTimestamp(kpSignal.timestamp)}
             tooltipText={TOOLTIPS.kp}
             animationDelay={240}
-            sparklineData={recentKpSignals
-              .map((s) => (typeof s.value === "number" ? s.value : null))
-              .filter((v): v is number => v !== null)
-              .slice(-24)}
+            sparklineData={sparklineData}
           />
         </section>
 
