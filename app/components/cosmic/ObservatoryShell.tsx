@@ -3,7 +3,6 @@ import type { SignalRecord } from "~/types/signal";
 import { interpretXRayFlux } from "~/components/widgets/XRayFluxTelemetryPanel";
 import { interpretWindSpeed } from "~/components/widgets/SolarWindPanel";
 import { interpretProtonFlux } from "~/components/widgets/ProtonFluxTelemetryPanel";
-import { TopSystemBar } from "./TopSystemBar";
 import { BottomPipelineBar } from "./BottomPipelineBar";
 import { CenterStage } from "./CenterStage";
 import { ObservatorySignalCard } from "./ObservatorySignalCard";
@@ -108,11 +107,6 @@ export function ObservatoryShell({
       {/* Canvas fills entire viewport — bars float on top */}
       <div className="absolute inset-0">
         <CenterStage kp={kp} signal={signal} />
-      </div>
-
-      {/* Top bar — floating pill */}
-      <div className="absolute z-20" style={{ top: 18, left: 24, right: 24 }}>
-        <TopSystemBar kpSignal={signal} />
       </div>
 
       {/* Card top-left: X-Ray */}

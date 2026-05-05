@@ -11,6 +11,10 @@ import react from "@vitejs/plugin-react";
 const isTest = process.env["VITEST"] !== undefined;
 
 export default defineConfig({
+  server: {
+    port: 5180,
+    strictPort: true,
+  },
   plugins: isTest ? [tailwindcss(), react()] : [tailwindcss(), reactRouter()],
   resolve: {
     tsconfigPaths: true,

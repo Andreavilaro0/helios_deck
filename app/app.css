@@ -135,3 +135,59 @@
   background-color: #030712;
   color: #cbd5e1;
 }
+
+/* ── Dashboard premium — design tokens ─────────────────────────────────────── */
+:root {
+  --dash-bg: #080c14;
+  --dash-card-border: rgba(255 255 255 / 0.08);
+  --dash-card-bg: rgba(255 255 255 / 0.04);
+  --dash-amber: #f59e0b;
+  --dash-cyan: #22d3ee;
+  --dash-blue: #60a5fa;
+  --dash-violet: #a78bfa;
+}
+
+/* ── Dashboard animations ───────────────────────────────────────────────────── */
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes drawLine {
+  from { stroke-dashoffset: 1; }
+  to   { stroke-dashoffset: 0; }
+}
+
+@keyframes pulseQuiet {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@keyframes planetGlow {
+  0%, 100% { box-shadow: var(--planet-glow-base); }
+  50%       { box-shadow: var(--planet-glow-peak); }
+}
+
+@keyframes planetRotate {
+  from { background-position: 0% 50%; }
+  to   { background-position: 100% 50%; }
+}
