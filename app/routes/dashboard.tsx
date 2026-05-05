@@ -10,7 +10,9 @@ import { SignalTimeline } from "~/components/charts/SignalTimeline";
 import type { TimelineSignal } from "~/components/charts/SignalTimeline";
 import { KpScaleInstrument } from "~/components/dashboard/KpScaleInstrument";
 import { KpHistoryStrip } from "~/components/widgets/KpHistoryStrip";
-import { PipelineFooter } from "~/components/dashboard/PipelineFooter";
+import { DataPipelinePanel } from "~/components/dashboard/DataPipelinePanel";
+import { RecentSignalsTable } from "~/components/dashboard/RecentSignalsTable";
+import type { SignalRow } from "~/components/dashboard/RecentSignalsTable";
 import { EmptyDashboardState } from "~/components/widgets/EmptyDashboardState";
 import { getSignalFreshness } from "~/utils/signal-freshness";
 import {
@@ -124,6 +126,44 @@ export async function loader({ request }: Route.LoaderArgs) {
   const protonFresh = getSignalFreshness(protonSignal, now);
   const windFresh = getSignalFreshness(windSignal, now);
 
+  // Hero freshness — most recent of the 4 signals
+  const candidates = [kpSignal, xraySignal, protonSignal, windSignal].filter(
+    (s): s is NonNullable<typeof s> => s !== null
+  );
+  const mostRecent = candidates.reduce<typeof candidates[number] | null>(
+    (a, b) => (a && b && a.timestamp > b.timestamp ? a : b ?? a),
+    candidates[0] ?? null
+  );
+  const heroFreshness = getSignalFreshness(mostRecent, now);
+  const heroAge = formatAge(heroFreshness.ageMinutes);
+  const heroIngestedTime = mostRecent
+    ? new Date(mostRecent.timestamp).toLocaleString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "UTC",
+        timeZoneName: "short",
+      })
+    : "—";
+  const heroIngestedDate = mostRecent
+    ? new Date(mostRecent.timestamp).toLocaleDateString("en-US", {
+        month: "2-digit",
+        day: "2-digit",
+        year: "numeric",
+        timeZone: "UTC",
+      })
+    : "—";
+
+  // Pipeline status
+  const pipelineOk = [kpFresh, xrayFresh, protonFresh, windFresh].some(
+    (f) => f.status === "fresh"
+  );
+  const staleAgeMinutes = [kpFresh, xrayFresh, protonFresh, windFresh]
+    .map((f) => f.ageMinutes)
+    .filter((m): m is number => m !== null);
+  const staleAge = formatAge(
+    staleAgeMinutes.length ? Math.max(...staleAgeMinutes) : null
+  );
+
   const kpValues = recentKpSignals
     .map((s) => (typeof s.value === "number" ? s.value : null))
     .filter((v): v is number => v !== null);
@@ -151,6 +191,9 @@ export async function loader({ request }: Route.LoaderArgs) {
     protonSignal,
     windSignal,
     recentKpSignals,
+    recentXraySignals,
+    recentProtonSignals,
+    recentWindSignals,
     historyKp: extractNums(recentKpSignals),
     historyXray: extractNums(recentXraySignals),
     historyProton: extractNums(recentProtonSignals),
@@ -160,6 +203,11 @@ export async function loader({ request }: Route.LoaderArgs) {
     protonFresh,
     windFresh,
     stats,
+    pipelineOk,
+    staleAge,
+    heroAge,
+    heroIngestedTime,
+    heroIngestedDate,
   };
 }
 
@@ -187,6 +235,9 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
     protonSignal,
     windSignal,
     recentKpSignals,
+    recentXraySignals,
+    recentProtonSignals,
+    recentWindSignals,
     historyKp,
     historyXray,
     historyProton,
@@ -196,9 +247,132 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
     protonFresh,
     windFresh,
     stats,
+    pipelineOk,
+    staleAge,
+    heroAge,
+    heroIngestedTime,
+    heroIngestedDate,
   } = loaderData;
 
   const [aboutOpen, setAboutOpen] = useState(false);
+
+  // Build the 4 rows for RecentSignalsTable
+  function makeRow(
+    signal: SignalRecord | null,
+    opts: {
+      name: string;
+      subtitle: string;
+      unit: string;
+      source: string;
+      iconColor: string;
+      iconVariant: SignalRow["iconVariant"];
+      formatValue: (v: SignalRecord["value"]) => string;
+      statusLabel: (v: SignalRecord["value"]) => string;
+      ageMinutes: number | null;
+    }
+  ): SignalRow {
+    const age =
+      opts.ageMinutes === null
+        ? "—"
+        : opts.ageMinutes < 60
+          ? `${Math.round(opts.ageMinutes)}m`
+          : `${Math.floor(opts.ageMinutes / 60)}h ${Math.round(opts.ageMinutes % 60)}m`;
+
+    if (!signal) {
+      return {
+        name: opts.name,
+        subtitle: opts.subtitle,
+        value: "—",
+        unit: opts.unit,
+        statusLabel: "NO DATA",
+        source: opts.source,
+        ingestedAt: "—",
+        age: "—",
+        iconColor: opts.iconColor,
+        iconVariant: opts.iconVariant,
+      };
+    }
+
+    const ingestedAt = new Date(signal.timestamp).toLocaleString("en-US", {
+      month: "2-digit",
+      day: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      timeZone: "UTC",
+    });
+
+    return {
+      name: opts.name,
+      subtitle: opts.subtitle,
+      value: opts.formatValue(signal.value),
+      unit: opts.unit,
+      statusLabel: opts.statusLabel(signal.value),
+      source: opts.source,
+      ingestedAt,
+      age,
+      iconColor: opts.iconColor,
+      iconVariant: opts.iconVariant,
+    };
+  }
+
+  const signalRows: SignalRow[] = [
+    makeRow(xraySignal, {
+      name: "X-Ray Flux Long",
+      subtitle: "1–8 Å",
+      unit: "W/m²",
+      source: "NOAA SWPC",
+      iconColor: "#f59e0b",
+      iconVariant: "sun",
+      formatValue: (v) => (typeof v === "number" ? v.toExponential(2) : "—"),
+      statusLabel: interpretXRay,
+      ageMinutes: xrayFresh.ageMinutes,
+    }),
+    makeRow(windSignal, {
+      name: "Solar Wind Speed",
+      subtitle: "ACE / DSCOVR",
+      unit: "km/s",
+      source: "NOAA SWPC",
+      iconColor: "#60a5fa",
+      iconVariant: "wind",
+      formatValue: (v) => (typeof v === "number" ? Math.round(v).toString() : "—"),
+      statusLabel: interpretWind,
+      ageMinutes: windFresh.ageMinutes,
+    }),
+    makeRow(protonSignal, {
+      name: "Proton Flux 10 MeV",
+      subtitle: "Integral",
+      unit: "pfu",
+      source: "NOAA SWPC",
+      iconColor: "#22d3ee",
+      iconVariant: "zap",
+      formatValue: (v) => (typeof v === "number" ? v.toFixed(2) : "—"),
+      statusLabel: interpretProton,
+      ageMinutes: protonFresh.ageMinutes,
+    }),
+    makeRow(kpSignal, {
+      name: "Kp Index",
+      subtitle: "NOAA / GFZ",
+      unit: "index",
+      source: "NOAA SWPC",
+      iconColor: "#a78bfa",
+      iconVariant: "activity",
+      formatValue: (v) => (typeof v === "number" ? v.toFixed(1) : "—"),
+      statusLabel: interpretKp,
+      ageMinutes: kpFresh.ageMinutes,
+    }),
+  ];
+
+  // All signals for the modal — merged, sorted desc, capped at 60
+  const allSignals: SignalRecord[] = [
+    ...recentKpSignals,
+    ...recentXraySignals,
+    ...recentProtonSignals,
+    ...recentWindSignals,
+  ]
+    .sort((a, b) => (a.timestamp > b.timestamp ? -1 : 1))
+    .slice(0, 60);
 
   const currentKp = typeof kpSignal?.value === "number" ? kpSignal.value : 0;
   const heroTimestamp = formatTimestamp(generatedAt);
@@ -228,6 +402,9 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
           <DashboardHero
             overallStatus={overallStatus}
             timestamp={heroTimestamp}
+            freshnessAge={heroAge}
+            lastIngestedTime={heroIngestedTime}
+            lastIngestedDate={heroIngestedDate}
           />
           <button
             onClick={() => setAboutOpen(true)}
@@ -314,6 +491,8 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
 
         <SpaceWeatherChain />
 
+        <RecentSignalsTable rows={signalRows} allSignals={allSignals} />
+
         {/* Geomagnetic panel */}
         <section
           className="rounded-2xl border p-6 mb-6"
@@ -332,12 +511,7 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
             <KpHistoryStrip signals={recentKpSignals} />
           </div>
         </section>
-        <PipelineFooter
-          source={kpSignal.source}
-          recordCount={stats.count}
-          maxKp={stats.max}
-          avgKp={stats.avg}
-        />
+        <DataPipelinePanel pipelineOk={pipelineOk} staleAge={staleAge} />
       </main>
 
       <AboutPanel open={aboutOpen} onClose={() => setAboutOpen(false)} />
