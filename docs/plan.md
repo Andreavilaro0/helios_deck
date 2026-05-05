@@ -60,8 +60,11 @@ Completed sub-phases:
 - **2G** — Unified `npm run ingest:all` command (sequential, summary table, exit 1 on error)
 - **2H** — Demo readiness: README signals table, cosmic-view URL, architecture doc update
 - **2I** — Data freshness indicators (`getSignalFreshness`, per-signal thresholds, panel badges, HUD labels)
+- **2J** — `/cosmic-view` R3F scene: Earth globe with GLSL day/night shader, Fresnel atmosphere, cloud layer, orbital ring
+- **2K** — Living Planet Observatory visual system: 4 floating signal cards around planet, liquid-glass topbar/footer, UTC header, full-screen canvas, no Live Cloud Overlay
+- **2L** — Final checkpoint: docs updated, ramas mergeadas, typecheck/build/tests verdes, screenshots, checkpoint-2.md
 
-Done when: dashboard shows 4+ real signals with proper loading and error states. ✅
+Done when: dashboard shows 4+ real signals with proper loading and error states, `/cosmic-view` renders the planet with all 4 live signals, and full QA checkpoint is complete. ✅
 
 ---
 

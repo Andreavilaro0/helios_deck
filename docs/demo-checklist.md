@@ -27,15 +27,20 @@ Use before any live evaluation or demo. Each section maps to a grading criterion
 
 ---
 
-## 3. Cosmic View Route (`/cosmic-view`)
+## 3. Cosmic View Route (`/cosmic-view`) — Living Planet Observatory
 
-- [ ] Page loads and renders the 3D Earth globe
-- [ ] CosmicHud bottom panel shows Kp value and QUIET/ACTIVE/STORM status
-- [ ] XRAY readout shows flux value, flare class, and FRESH/STALE
-- [ ] PROTON readout shows value and QUIET/ELEVATED/RADIATION WATCH and FRESH/STALE
-- [ ] WIND readout shows speed, classification, and FRESH/STALE
+- [ ] Page loads and renders the full-screen 3D Earth globe with GLSL day/night shader
+- [ ] Planet has Fresnel atmosphere rim glow and animated cloud layer
+- [ ] 4 floating signal cards are positioned around the planet (top-left, top-right, bottom-left, bottom-right)
+- [ ] X-Ray Flux card shows flux value, flare class, sparkline, and FRESH/STALE badge
+- [ ] Proton Flux card shows value, QUIET/ELEVATED status, sparkline, and FRESH/STALE badge
+- [ ] Solar Wind card shows speed, CALM/ELEVATED classification, sparkline, and FRESH/STALE badge
+- [ ] Kp Index card shows index value, QUIET/ACTIVE/STORM status, bar chart, and FRESH/STALE badge
+- [ ] Liquid-glass topbar shows HELIOS_DECK logo, source badges (NOAA SWPC, UTC, SQLITE, SSR, FRESH)
+- [ ] UTC timestamp and "Real-time Space Weather Overview" subtitle are visible
+- [ ] Bottom status bar shows DATA INGESTED, FRESHNESS, DATA SOURCE, PIPELINE, SYSTEM STATUS
 - [ ] Navigation link "← dashboard" returns to the dashboard
-- [ ] 3D scene responds to Kp value (field overlay, glow color)
+- [ ] No Live Cloud Overlay (removed in Phase 2K)
 
 ---
 
@@ -119,7 +124,8 @@ Be ready to explain:
 ## 11. Documentation Completeness
 
 - [ ] `docs/decisions.md` has ADR-001 through ADR-025
-- [ ] `docs/plan.md` shows Phase 2 ✅ COMPLETE with 2A–2I sub-phases listed
+- [ ] `docs/plan.md` shows Phase 2 ✅ COMPLETE with 2A–2L sub-phases listed
+- [ ] `docs/checkpoint-2.md` exists and summarises current project state
 - [ ] `docs/architecture.md` reflects the four-signal pipeline
 - [ ] `docs/data-contract.md` matches the `SignalRecord` type in `app/types/signal.ts`
 - [ ] `README.md` lists all four signals and both route URLs

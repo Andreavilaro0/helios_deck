@@ -159,6 +159,22 @@ See `docs/decisions.md` for full rationale. Short version:
 
 ---
 
+## `/cosmic-view` — Living Planet Observatory (Phase 2J/2K, active)
+
+Three.js / React Three Fiber are isolated to this route. The SSR loader reads the same SQLite signals as `/dashboard` and passes them as props. The 3D scene is mounted client-side only via a dynamic import boundary (`CosmicViewClient`).
+
+```
+app/routes/cosmic-view.tsx       (SSR loader — reads SQLite, no Three.js)
+  └─ CosmicViewClient.tsx        (client boundary — dynamic import, R3F canvas)
+       ├─ EarthScene.tsx          (R3F canvas: globe, atmosphere, cloud layer)
+       │    └─ EarthDayNightMaterial.ts  (GLSL day/night + Fresnel shaders)
+       └─ ObservatoryShell.tsx    (4 floating signal cards + glass topbar/footer)
+```
+
+`/dashboard` never loads Three.js. The `CosmicViewClient` chunk (~918 kB minified, ~245 kB gzip) is only downloaded when the user navigates to `/cosmic-view`.
+
+---
+
 ## Phase 3 Addition: WebSocket Layer
 
 ```
@@ -172,8 +188,7 @@ WebSocket messages carry the same `SignalRecord` shape. Widgets do not change �
 
 ## Out of Scope (MVP 1)
 
-- Three.js / React Three Fiber (Phase 5 only, inside `/cosmic-view`)
-- Magic UI (Phase 5)
+- Magic UI (Phase 5 premium layer — beyond current scope)
 - OAuth / social login (Phase 4 uses session auth)
 - Multi-region / edge deployment
 - Service Worker / offline mode

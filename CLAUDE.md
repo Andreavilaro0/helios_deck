@@ -106,7 +106,9 @@ npm run typecheck    # react-router typegen + tsc (run after changing loaders/ro
 
 ## Current Phase
 
-**Phase 1 — Walking skeleton** (active)
+**Phase 2L — Final checkpoint ✅ COMPLETE**
 
-Scaffold is in place at root. Next: SQLite setup, NOAA fetcher, first normalizer, first widget.
-See `docs/plan.md` for full deliverables.
+All Phase 2 sub-phases (2A–2L) are complete. Four NOAA signals live end-to-end. Dashboard and `/cosmic-view` (Living Planet Observatory) are both functional with freshness indicators. Typecheck/build/tests green. No auto-ingest.
+
+Next phase: Phase 3 — Real-time WebSocket layer (deferred).
+See `docs/plan.md` for full deliverables and `docs/checkpoint-2.md` for project state.

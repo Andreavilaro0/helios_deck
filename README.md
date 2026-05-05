@@ -29,16 +29,16 @@ Signals tracked:
 | Database | SQLite via `better-sqlite3` |
 | Styling | Tailwind CSS v4 |
 | UI primitives | shadcn _(Phase 2)_ |
-| Visual premium | Magic UI _(Phase 5)_ |
-| 3D view | Three.js / React Three Fiber _(Phase 5)_ |
+| Visual premium | Magic UI / custom glass system |
+| 3D view | Three.js / React Three Fiber (cosmic-view) |
 
 ---
 
 ## Project Status
 
-**Current phase: 2I — data freshness indicators**
+**Current phase: 2L — Final checkpoint ✅**
 
-Phase 2 complete (2A–2I). Four real NOAA signals are live end-to-end: Kp index, solar wind speed, X-ray flux, and proton flux. The dashboard shows the full causal chain (Solar Activity → Solar Driver → Geomagnetic Response). CosmicHud overlays all four readouts with freshness indicators in the 3D view.
+Phase 2 complete (2A–2L). Four real NOAA signals are live end-to-end: Kp index, solar wind speed, X-ray flux, and proton flux. The dashboard shows the full causal chain (Solar Activity → Solar Driver → Geomagnetic Response). `/cosmic-view` renders the Living Planet Observatory: a full-screen 3D Earth globe with GLSL shaders, Fresnel atmosphere, and 4 floating signal cards with freshness indicators.
 
 ### Available Data Signals
 
@@ -49,7 +49,7 @@ Phase 2 complete (2A–2I). Four real NOAA signals are live end-to-end: Kp index
 | X-ray flux (0.1–0.8 nm) | NOAA GOES | W/m² | Solar Activity | ~1 min |
 | Proton flux (≥10 MeV) | NOAA GOES | pfu | Solar Activity | ~1 min |
 
-See [`docs/plan.md`](docs/plan.md) for the full roadmap and [`docs/checkpoint-1.md`](docs/checkpoint-1.md) for the Phase 1 milestone summary.
+See [`docs/plan.md`](docs/plan.md) for the full roadmap, [`docs/checkpoint-1.md`](docs/checkpoint-1.md) for the Phase 1 milestone summary, and [`docs/checkpoint-2.md`](docs/checkpoint-2.md) for the Phase 2 final state.
 
 ---
 
@@ -130,6 +130,7 @@ See [`docs/architecture.md`](docs/architecture.md) for the full diagram.
 |------|---------|
 | [`docs/plan.md`](docs/plan.md) | Phase-by-phase project plan |
 | [`docs/checkpoint-1.md`](docs/checkpoint-1.md) | Phase 1 walking skeleton milestone |
+| [`docs/checkpoint-2.md`](docs/checkpoint-2.md) | Phase 2 final state — all 4 signals + cosmic-view |
 | [`docs/architecture.md`](docs/architecture.md) | System architecture and deploy considerations |
 | [`docs/data-contract.md`](docs/data-contract.md) | `SignalRecord` shape and normalizer contract |
 | [`docs/api-sources.md`](docs/api-sources.md) | API source comparison and MVP recommendation |
