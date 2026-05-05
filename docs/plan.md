@@ -47,20 +47,21 @@ See [`docs/checkpoint-1.md`](checkpoint-1.md) for the full milestone summary.
 
 ---
 
-### Phase 2 — Base Dashboard
+### Phase 2 — Base Dashboard ✅ COMPLETE
 **Goal:** Add more signals and a coherent dashboard layout.
 
-Deliverables:
-- Solar wind speed (NOAA SWPC)
-- X-ray flux (NOAA SWPC)
-- Proton flux (NOAA SWPC)
-- `app/routes/dashboard.tsx` — multi-widget layout
-- shadcn Card, Badge, Skeleton components installed and used
-- Responsive grid layout with Tailwind
-- Error boundaries per widget (one widget failing must not break the page)
-- Loading states for all widgets
+Completed sub-phases:
+- **2A** — Solar wind speed pipeline (fetcher + normalizer + ingest + SQLite)
+- **2B** — Solar wind UI panel (`SolarWindTelemetryPanel`, speed classification, pending state)
+- **2C** — X-ray flux pipeline (GOES XRS both channels, flare classification A/B/C/M/X)
+- **2D** — X-ray flux UI panel + CosmicHud XRAY readout
+- **2E** — Proton flux pipeline (GOES ≥10 MeV, `proton-flux-10mev`)
+- **2F** — Proton flux UI panel + 3-section dashboard (Solar Activity → Driver → Geomagnetic) + CosmicHud PROTON readout
+- **2G** — Unified `npm run ingest:all` command (sequential, summary table, exit 1 on error)
+- **2H** — Demo readiness: README signals table, cosmic-view URL, architecture doc update
+- **2I** — Data freshness indicators (`getSignalFreshness`, per-signal thresholds, panel badges, HUD labels)
 
-Done when: dashboard shows 4+ real signals with proper loading and error states.
+Done when: dashboard shows 4+ real signals with proper loading and error states. ✅
 
 ---
 

@@ -36,9 +36,18 @@ Signals tracked:
 
 ## Project Status
 
-**Current phase: 2D — X-ray flux UI integration complete**
+**Current phase: 2I — data freshness indicators**
 
-Phases 1–2D complete. Three real NOAA signals are live end-to-end: Kp index, solar wind speed, and X-ray flux. Dashboard shows the full causal chain (XRay → Wind → Kp). CosmicHud overlays all three readouts in the 3D view.
+Phase 2 complete (2A–2I). Four real NOAA signals are live end-to-end: Kp index, solar wind speed, X-ray flux, and proton flux. The dashboard shows the full causal chain (Solar Activity → Solar Driver → Geomagnetic Response). CosmicHud overlays all four readouts with freshness indicators in the 3D view.
+
+### Available Data Signals
+
+| Signal | Source | Unit | Dashboard Panel | Refresh Cadence |
+|--------|--------|------|-----------------|-----------------|
+| Kp index | NOAA SWPC | index | Geomagnetic Response | 3 h |
+| Solar wind speed | NOAA SWPC | km/s | Solar Driver | ~1 min (DSCOVR) |
+| X-ray flux (0.1–0.8 nm) | NOAA GOES | W/m² | Solar Activity | ~1 min |
+| Proton flux (≥10 MeV) | NOAA GOES | pfu | Solar Activity | ~1 min |
 
 See [`docs/plan.md`](docs/plan.md) for the full roadmap and [`docs/checkpoint-1.md`](docs/checkpoint-1.md) for the Phase 1 milestone summary.
 
@@ -48,16 +57,15 @@ See [`docs/plan.md`](docs/plan.md) for the full roadmap and [`docs/checkpoint-1.
 
 ```bash
 npm install
-npm run ingest:noaa-kp            # Fetch and store real NOAA Kp data
-npm run ingest:noaa-solar-wind    # Fetch and store real solar wind speed
-npm run ingest:noaa-xray-flux     # Fetch and store GOES X-ray flux (both channels)
-npm run ingest:noaa-proton-flux   # Fetch and store GOES integral proton flux (>=10 MeV)
-npm run dev                       # Start dev server with HMR
+npm run ingest:all   # Fetch all four NOAA signals in one command
+npm run dev          # Start dev server with HMR
 ```
 
-Then open: **http://localhost:5173/dashboard**
+Then open:
+- **http://localhost:5173/dashboard** — instrument console with causal chain layout
+- **http://localhost:5173/cosmic-view** — 3D Earth with live Kp field overlay
 
-The dashboard shows the causal chain from X-ray flux → solar wind speed → Kp index, all rendered server-side from SQLite. Run at least `ingest:noaa-kp` to populate the Kp panel; the X-ray panel shows a pending state if no flux data has been ingested yet.
+> **If panels show "STALE":** run `npm run ingest:all` to refresh all signals from NOAA. Freshness thresholds: Kp 3 h, solar wind 1 h, X-ray 30 min, proton flux 1 h.
 
 ---
 
@@ -85,6 +93,9 @@ GitHub Actions runs these three checks automatically on every push and pull requ
 ## Manual Ingestion
 
 ```bash
+npm run ingest:all                # All four signals in one command (recommended)
+
+# Or individually:
 npm run ingest:noaa-kp            # NOAA SWPC real-time Kp index
 npm run ingest:noaa-solar-wind    # NOAA SWPC real-time solar wind speed
 npm run ingest:noaa-xray-flux     # NOAA SWPC GOES X-ray flux (both channels)
@@ -93,7 +104,7 @@ npm run ingest:noaa-proton-flux   # NOAA SWPC GOES integral proton flux (>=10 Me
 
 Each command queries the corresponding NOAA SWPC endpoint, normalizes every entry into a `SignalRecord`, and persists new records to `data/helios.sqlite`. Duplicate entries (same timestamp, source, and signal) are skipped automatically.
 
-Run at least `ingest:noaa-kp` once before `npm run dev` to populate the dashboard. `ingest:noaa-xray-flux` populates both `xray-flux-short` and `xray-flux-long` signals in a single run.
+`ingest:all` runs all four pipelines sequentially and prints a summary table. It exits with code 1 if any signal fails, code 0 if all succeed. Run at least once before `npm run dev` to populate the dashboard.
 
 ---
 

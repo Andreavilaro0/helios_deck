@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { SignalRecord } from "~/types/signal";
+import { getSignalFreshness, freshnessStatusColor } from "~/utils/signal-freshness";
 
 interface Props {
   signal: SignalRecord | null;
@@ -145,7 +146,19 @@ export function ProtonFluxTelemetryPanel({ signal }: Props) {
         {typeof signal.metadata?.energy === "string" && (
           <FooterRow label="ENERGY CHANNEL">{signal.metadata.energy}</FooterRow>
         )}
+        <FreshnessRow signal={signal} />
       </div>
     </div>
+  );
+}
+
+function FreshnessRow({ signal }: { signal: SignalRecord }) {
+  const freshness = getSignalFreshness(signal);
+  return (
+    <FooterRow label="DATA AGE">
+      <span className={freshnessStatusColor(freshness.status)} data-testid="freshness-badge">
+        {freshness.label}
+      </span>
+    </FooterRow>
   );
 }

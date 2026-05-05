@@ -3,6 +3,7 @@ import type { SignalRecord } from "~/types/signal";
 import { interpretWindSpeed } from "~/components/widgets/SolarWindPanel";
 import { interpretXRayFlux } from "~/components/widgets/XRayFluxTelemetryPanel";
 import { interpretProtonFlux } from "~/components/widgets/ProtonFluxTelemetryPanel";
+import { getSignalFreshness } from "~/utils/signal-freshness";
 
 interface Props {
   signal: SignalRecord;
@@ -45,6 +46,9 @@ export function CosmicHud({ signal, kp, solarWind, xrayFlux, protonFlux }: Props
     solarWind && typeof solarWind.value === "number" ? solarWind.value : null;
   const protonValue =
     protonFlux && typeof protonFlux.value === "number" ? protonFlux.value : null;
+  const xrayFreshness = getSignalFreshness(xrayFlux ?? null);
+  const windFreshness = getSignalFreshness(solarWind ?? null);
+  const protonFreshness = getSignalFreshness(protonFlux ?? null);
 
   return (
     <div className="absolute inset-0 pointer-events-none flex flex-col">
@@ -96,7 +100,7 @@ export function CosmicHud({ signal, kp, solarWind, xrayFlux, protonFlux }: Props
                 <div data-testid="hud-xray-readout">
                   <span className="text-slate-700">XRAY </span>
                   <span className="text-slate-400">
-                    {xrayFluxValue.toExponential(2)} W/m² · {interpretXRayFlux(xrayFluxValue)}
+                    {xrayFluxValue.toExponential(2)} W/m² · {interpretXRayFlux(xrayFluxValue)} · {xrayFreshness.label}
                   </span>
                 </div>
               )}
@@ -104,7 +108,7 @@ export function CosmicHud({ signal, kp, solarWind, xrayFlux, protonFlux }: Props
                 <span className="text-slate-700">PROTON </span>
                 {protonValue !== null ? (
                   <span className="text-slate-400">
-                    {protonValue.toFixed(2)} pfu · {interpretProtonFlux(protonValue)}
+                    {protonValue.toFixed(2)} pfu · {interpretProtonFlux(protonValue)} · {protonFreshness.label}
                   </span>
                 ) : (
                   <span className="text-slate-600">channel pending</span>
@@ -114,7 +118,7 @@ export function CosmicHud({ signal, kp, solarWind, xrayFlux, protonFlux }: Props
                 <div data-testid="hud-wind-readout">
                   <span className="text-slate-700">WIND </span>
                   <span className="text-slate-400">
-                    {windSpeed.toFixed(1)} km/s · {interpretWindSpeed(windSpeed)}
+                    {windSpeed.toFixed(1)} km/s · {interpretWindSpeed(windSpeed)} · {windFreshness.label}
                   </span>
                 </div>
               )}

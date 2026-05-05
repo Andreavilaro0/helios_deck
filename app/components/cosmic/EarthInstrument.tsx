@@ -1,79 +1,127 @@
-import { useRef } from "react";
-import { useFrame } from "@react-three/fiber";
+import { useEffect, useMemo, useRef, Suspense } from "react";
+import { useFrame, useLoader } from "@react-three/fiber";
 import * as THREE from "three";
+import {
+  createEarthDayNightMaterial,
+  createFresnelMaterial,
+  fresnelRimColor,
+} from "./EarthDayNightMaterial";
 
 interface Props {
   kp: number;
 }
 
-function sphereColor(kp: number): string {
-  if (kp >= 5) return "#0a0206";
-  if (kp >= 4) return "#090600";
-  return "#020b14";
-}
+function EarthMesh({ kp }: Props) {
+  const earthGroupRef = useRef<THREE.Group>(null);
+  const cloudRef = useRef<THREE.Mesh>(null);
 
-function sphereEmissive(kp: number): string {
-  if (kp >= 5) return "#3d0000";
-  if (kp >= 4) return "#2d1500";
-  return "#001520";
-}
+  const [dayMap, normalMap, specularMap, nightMap, cloudMap] = useLoader(THREE.TextureLoader, [
+    "/textures/earth_daymap.jpg",
+    "/textures/earth_normal.jpg",
+    "/textures/earth_specular.jpg",
+    "/textures/earth_nightmap.png",
+    "/textures/2k_earth_clouds.jpg",
+  ]);
 
-function sphereEmissiveIntensity(kp: number): number {
-  if (kp >= 5) return 0.35;
-  if (kp >= 4) return 0.2;
-  return 0.08;
-}
+  useEffect(() => {
+    dayMap.colorSpace  = THREE.SRGBColorSpace;
+    nightMap.colorSpace = THREE.SRGBColorSpace;
+    for (const t of [dayMap, normalMap, specularMap, nightMap, cloudMap]) {
+      t.minFilter = THREE.LinearMipmapLinearFilter;
+      t.magFilter = THREE.LinearFilter;
+    }
+  }, [dayMap, normalMap, specularMap, nightMap, cloudMap]);
 
-function atmosphereColor(kp: number): string {
-  if (kp >= 5) return "#ff2040";
-  if (kp >= 4) return "#f59e0b";
-  return "#06b6d4";
-}
+  const dayNightMat = useMemo(
+    () => createEarthDayNightMaterial({ dayTexture: dayMap, nightTexture: nightMap }),
+    [dayMap, nightMap],
+  );
 
-function atmosphereOpacity(kp: number): number {
-  if (kp >= 5) return 0.22;
-  if (kp >= 4) return 0.14;
-  return 0.07;
-}
+  const cloudMat = useMemo(
+    () =>
+      new THREE.MeshBasicMaterial({
+        map: cloudMap,
+        transparent: true,
+        opacity: 0.24,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      }),
+    [cloudMap],
+  );
 
-export function EarthInstrument({ kp }: Props) {
-  const sphereRef = useRef<THREE.Mesh>(null);
-  const atmosRef = useRef<THREE.Mesh>(null);
+  const fresnelMat = useMemo(() => createFresnelMaterial(fresnelRimColor(kp)), [kp]);
+
+  useEffect(() => {
+    dayNightMat.uniforms.uKp.value = kp;
+  }, [dayNightMat, kp]);
+
+  useEffect(() => {
+    return () => {
+      dayNightMat.dispose();
+      cloudMat.dispose();
+      fresnelMat.dispose();
+    };
+  }, [dayNightMat, cloudMat, fresnelMat]);
 
   useFrame((_, delta) => {
-    if (sphereRef.current) {
-      sphereRef.current.rotation.y += delta * 0.06;
+    if (earthGroupRef.current) {
+      earthGroupRef.current.rotation.y += delta * 0.05;
     }
-    if (atmosRef.current) {
-      atmosRef.current.rotation.y -= delta * 0.02;
+    if (cloudRef.current) {
+      cloudRef.current.rotation.y += delta * 0.042;
     }
   });
 
   return (
-    <group>
-      {/* Main planet sphere */}
-      <mesh ref={sphereRef}>
-        <sphereGeometry args={[1, 64, 64]} />
-        <meshStandardMaterial
-          color={sphereColor(kp)}
-          emissive={sphereEmissive(kp)}
-          emissiveIntensity={sphereEmissiveIntensity(kp)}
-          roughness={0.85}
-          metalness={0.05}
-        />
+    <group rotation={[THREE.MathUtils.degToRad(23.5), 0, 0]}>
+      <group ref={earthGroupRef}>
+        <mesh name="earth">
+          <sphereGeometry args={[1, 128, 128]} />
+          <primitive object={dayNightMat} attach="material" />
+        </mesh>
+
+        {/* Phong layer: normal-map ocean specular — blue-tinted for realism */}
+        <mesh>
+          <sphereGeometry args={[1.001, 64, 64]} />
+          <meshPhongMaterial
+            map={dayMap}
+            normalMap={normalMap}
+            specularMap={specularMap}
+            specular={new THREE.Color(0x446688)}
+            shininess={45}
+            transparent
+            opacity={0.09}
+            depthWrite={false}
+          />
+        </mesh>
+      </group>
+
+      <mesh ref={cloudRef}>
+        <sphereGeometry args={[1.005, 64, 64]} />
+        <primitive object={cloudMat} attach="material" />
       </mesh>
 
-      {/* Atmosphere — slightly larger, BackSide renders from inside */}
-      <mesh ref={atmosRef}>
-        <sphereGeometry args={[1.06, 64, 64]} />
-        <meshStandardMaterial
-          color={atmosphereColor(kp)}
-          transparent
-          opacity={atmosphereOpacity(kp)}
-          side={THREE.BackSide}
-          depthWrite={false}
-        />
+      <mesh scale={[1.01, 1.01, 1.01]}>
+        <sphereGeometry args={[1, 64, 64]} />
+        <primitive object={fresnelMat} attach="material" />
       </mesh>
     </group>
+  );
+}
+
+function EarthFallback() {
+  return (
+    <mesh>
+      <sphereGeometry args={[1, 32, 32]} />
+      <meshBasicMaterial color="#030e20" />
+    </mesh>
+  );
+}
+
+export function EarthInstrument({ kp }: Props) {
+  return (
+    <Suspense fallback={<EarthFallback />}>
+      <EarthMesh kp={kp} />
+    </Suspense>
   );
 }
