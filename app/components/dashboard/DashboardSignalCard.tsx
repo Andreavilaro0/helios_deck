@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { SignalAreaChart } from "~/components/charts/SignalAreaChart";
 
 export type SignalColor = "amber" | "cyan" | "blue" | "violet";
 
@@ -15,7 +16,8 @@ interface DashboardSignalCardProps {
   timestamp: string;
   tooltipText: string;
   animationDelay?: number;
-  sparklineData?: number[];
+  historyData?: number[];
+  logScale?: boolean;
 }
 
 const COLOR_MAP: Record<SignalColor, string> = {
@@ -24,24 +26,6 @@ const COLOR_MAP: Record<SignalColor, string> = {
   blue: "var(--dash-blue)",
   violet: "var(--dash-violet)",
 };
-
-function SparklineBar({ data }: { data: number[] }) {
-  const max = Math.max(...data, 1);
-  return (
-    <div className="flex items-end gap-px h-6 mt-2">
-      {data.map((v, i) => (
-        <div
-          key={i}
-          className="flex-1 rounded-sm opacity-60"
-          style={{
-            height: `${Math.max(10, (v / max) * 100)}%`,
-            background: "currentColor",
-          }}
-        />
-      ))}
-    </div>
-  );
-}
 
 export function DashboardSignalCard({
   label,
@@ -56,7 +40,8 @@ export function DashboardSignalCard({
   timestamp,
   tooltipText,
   animationDelay = 0,
-  sparklineData,
+  historyData,
+  logScale,
 }: DashboardSignalCardProps): ReactNode {
   const accent = COLOR_MAP[statusColor];
 
@@ -110,9 +95,17 @@ export function DashboardSignalCard({
         {status}
       </div>
 
-      {/* Sparkline */}
-      {sparklineData && sparklineData.length > 0 && (
-        <SparklineBar data={sparklineData} />
+      {/* Mini history chart */}
+      {historyData && historyData.length > 1 && (
+        <div className="mt-2 -mx-1">
+          <SignalAreaChart
+            data={historyData}
+            color={accent}
+            logScale={logScale}
+            height={52}
+            gradientId={`mini-grad-${statusColor}`}
+          />
+        </div>
       )}
 
       {/* Footer */}

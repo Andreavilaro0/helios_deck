@@ -5,6 +5,8 @@ import type { OverallStatus } from "~/components/dashboard/DashboardHero";
 import { DashboardSignalCard } from "~/components/dashboard/DashboardSignalCard";
 import { SpaceWeatherChain } from "~/components/dashboard/SpaceWeatherChain";
 import { AboutPanel } from "~/components/dashboard/AboutPanel";
+import { SignalTimeline } from "~/components/charts/SignalTimeline";
+import type { TimelineSignal } from "~/components/charts/SignalTimeline";
 import { KpScaleInstrument } from "~/components/dashboard/KpScaleInstrument";
 import { KpHistoryStrip } from "~/components/widgets/KpHistoryStrip";
 import { MissionStatusPanel } from "~/components/dashboard/MissionStatusPanel";
@@ -111,6 +113,9 @@ export function loader(_: Route.LoaderArgs) {
   const protonSignal = getLatestSignalByName("proton-flux-10mev");
   const windSignal = getLatestSignalByName("solar-wind-speed");
   const recentKpSignals = listRecentSignalsByName("kp-index", 60);
+  const recentXraySignals = listRecentSignalsByName("xray-flux-long", 60);
+  const recentProtonSignals = listRecentSignalsByName("proton-flux-10mev", 60);
+  const recentWindSignals = listRecentSignalsByName("solar-wind-speed", 60);
 
   const kpFresh = getSignalFreshness(kpSignal, now);
   const xrayFresh = getSignalFreshness(xraySignal, now);
@@ -130,6 +135,12 @@ export function loader(_: Route.LoaderArgs) {
       : 0,
   };
 
+  function extractNums(sigs: typeof recentKpSignals): number[] {
+    return sigs
+      .map((s) => (typeof s.value === "number" ? s.value : null))
+      .filter((v): v is number => v !== null);
+  }
+
   return {
     overallStatus: computeOverallStatus(kpSignal, xraySignal, protonSignal),
     generatedAt: now.toISOString(),
@@ -138,6 +149,10 @@ export function loader(_: Route.LoaderArgs) {
     protonSignal,
     windSignal,
     recentKpSignals,
+    historyKp: extractNums(recentKpSignals),
+    historyXray: extractNums(recentXraySignals),
+    historyProton: extractNums(recentProtonSignals),
+    historyWind: extractNums(recentWindSignals),
     kpFresh,
     xrayFresh,
     protonFresh,
@@ -170,6 +185,10 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
     protonSignal,
     windSignal,
     recentKpSignals,
+    historyKp,
+    historyXray,
+    historyProton,
+    historyWind,
     kpFresh,
     xrayFresh,
     protonFresh,
@@ -181,10 +200,12 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
 
   const currentKp = typeof kpSignal?.value === "number" ? kpSignal.value : 0;
   const heroTimestamp = formatTimestamp(generatedAt);
-  const sparklineData = recentKpSignals
-    .map((s) => (typeof s.value === "number" ? s.value : null))
-    .filter((v): v is number => v !== null)
-    .slice(-24);
+  const timelineSignals: TimelineSignal[] = [
+    { data: historyXray,   color: "var(--dash-amber)",  label: "X-Ray",  unit: "W/m²", logScale: true,  gradientId: "tl-xray"   },
+    { data: historyProton, color: "var(--dash-cyan)",   label: "Proton", unit: "pfu",  logScale: false, gradientId: "tl-proton" },
+    { data: historyWind,   color: "var(--dash-blue)",   label: "Wind",   unit: "km/s", logScale: false, gradientId: "tl-wind"   },
+    { data: historyKp,     color: "var(--dash-violet)", label: "Kp",     unit: "",     logScale: false, gradientId: "tl-kp"     },
+  ].filter((s) => s.data.length > 1);
 
   if (!kpSignal) {
     return (
@@ -232,6 +253,8 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
             timestamp={xraySignal ? formatTimestamp(xraySignal.timestamp) : "—"}
             tooltipText={TOOLTIPS.xray}
             animationDelay={0}
+            historyData={historyXray}
+            logScale
           />
           <DashboardSignalCard
             label="Proton Flux"
@@ -246,6 +269,7 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
             timestamp={protonSignal ? formatTimestamp(protonSignal.timestamp) : "—"}
             tooltipText={TOOLTIPS.proton}
             animationDelay={80}
+            historyData={historyProton}
           />
           <DashboardSignalCard
             label="Solar Wind"
@@ -260,6 +284,7 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
             timestamp={windSignal ? formatTimestamp(windSignal.timestamp) : "—"}
             tooltipText={TOOLTIPS.wind}
             animationDelay={160}
+            historyData={historyWind}
           />
           <DashboardSignalCard
             label="Kp Index"
@@ -274,9 +299,16 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
             timestamp={formatTimestamp(kpSignal.timestamp)}
             tooltipText={TOOLTIPS.kp}
             animationDelay={240}
-            sparklineData={sparklineData}
+            historyData={historyKp}
           />
         </section>
+
+        {/* Multi-signal timeline */}
+        {timelineSignals.length > 0 && (
+          <div className="mb-6">
+            <SignalTimeline signals={timelineSignals} />
+          </div>
+        )}
 
         <SpaceWeatherChain />
 

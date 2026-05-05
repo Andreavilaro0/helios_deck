@@ -45,21 +45,20 @@ describe("DashboardSignalCard", () => {
     expect(screen.getByText("Measures solar X-ray emission intensity.")).toBeTruthy();
   });
 
-  it("renders sparkline when sparklineData provided", () => {
+  it("renders mini chart SVG when historyData has 2+ values", () => {
     const { container } = render(
-      <DashboardSignalCard {...BASE_PROPS} sparklineData={[1, 2, 3, 4, 5]} />
+      <DashboardSignalCard {...BASE_PROPS} historyData={[1, 2, 3, 4, 5]} />
     );
-    // SparklineBar renders one div per data point inside the flex container
-    const bars = container.querySelectorAll(".flex-1.rounded-sm");
-    expect(bars.length).toBe(5);
+    const svg = container.querySelector("svg[aria-hidden='true']");
+    expect(svg).toBeTruthy();
   });
 
-  it("does not render sparkline when sparklineData is empty", () => {
+  it("does not render mini chart when historyData is empty", () => {
     const { container } = render(
-      <DashboardSignalCard {...BASE_PROPS} sparklineData={[]} />
+      <DashboardSignalCard {...BASE_PROPS} historyData={[]} />
     );
-    const bars = container.querySelectorAll(".flex-1.rounded-sm");
-    expect(bars.length).toBe(0);
+    const svg = container.querySelector("svg[aria-hidden='true']");
+    expect(svg).toBeNull();
   });
 
   it("applies animation-delay from animationDelay prop", () => {
