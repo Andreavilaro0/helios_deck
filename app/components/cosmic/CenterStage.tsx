@@ -26,9 +26,9 @@ function formatUTCHeader(iso: string): string {
 
 export function CenterStage({ kp, signal }: Props) {
   return (
-    <div className="h-full flex flex-col pb-[140px]">
-      {/* 3D canvas + HTML overlays */}
-      <div className="flex-1 relative min-h-0">
+    <div className="h-full relative">
+      {/* 3D canvas + HTML overlays — fills full viewport height */}
+      <div className="absolute inset-0">
         {/* UTC header — below the floating topbar */}
         <div className="absolute inset-x-0 text-center z-10 pointer-events-none" style={{ top: 80 }}>
           <div className="text-[9px] font-mono text-slate-500 uppercase tracking-widest">UTC</div>
@@ -53,7 +53,7 @@ export function CenterStage({ kp, signal }: Props) {
         />
 
         <Canvas
-          key="cam-0-0-5.2-fov40"
+          key="cam-0-0-5.2-fov40-centered"
           camera={{ position: [0, 0, 5.2], fov: 40 }}
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
           gl={{ antialias: true }}
@@ -66,15 +66,17 @@ export function CenterStage({ kp, signal }: Props) {
           {/* Cool backlight */}
           <pointLight position={[0, 0, -6]} color="#1a3580" intensity={0.35} />
           <StarField />
-          <EarthInstrument kp={kp} />
-          <KpFieldOverlay kp={kp} />
+          <group scale={0.9}>
+            <EarthInstrument kp={kp} />
+            <KpFieldOverlay kp={kp} />
+          </group>
         </Canvas>
 
         <OrbitAnnotations kp={kp} />
       </div>
 
-      {/* Kp ring — below the canvas */}
-      <div className="shrink-0 flex justify-center py-2">
+      {/* Kp ring — floating above the bottom pipeline bar */}
+      <div className="absolute inset-x-0 flex justify-center pointer-events-none z-10" style={{ bottom: 95 }}>
         <KpRingWidget kp={kp} />
       </div>
     </div>

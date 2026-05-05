@@ -767,3 +767,50 @@ The dashboard and CosmicHud display real-time space weather data ingested from N
 - **Single global threshold for all signals** — rejected. Kp is published every 3 hours by definition; treating it as stale after 30 min would produce false alarms. Per-signal thresholds reflect the actual publication cadence of each source.
 - **Color-coded panel border when stale** — rejected. The border color is already used to indicate signal intensity level (Kp storm/quiet, wind speed class, etc.). Overloading the border color with freshness would destroy that meaning.
 - **Auto-refresh via polling** — deferred. This is an SSR application; adding client-side polling would require converting loaders to API routes or adding a WebSocket. Out of scope for Phase 2I.
+
+---
+
+## ADR-025 — Automatic ingestion deferred; manual ingest is the intentional model
+
+**Date:** 2026-05-04
+**Status:** Accepted
+
+**Context:**
+After implementing signal freshness indicators (ADR-024), the UI displays "STALE" badges when observed data exceeds per-signal thresholds. This raised the question of whether the system should automatically refresh stale data — either inside the loader, on a server-side timer, or via a platform cron job.
+
+**Decision:**
+Automatic ingestion is deferred. The project maintains the manual ingest model established in ADR-012:
+
+```
+npm run ingest:all   # explicit, operator-triggered
+```
+
+No scheduler, no lazy refresh in loaders, no background timer.
+
+**Why lazy refresh in the loader was rejected:**
+ADR-012 already prohibits side effects in loaders. Calling the ingest pipeline from inside the loader would violate that constraint and introduce the exact problems ADR-012 enumerates: every page load couples UI availability to NOAA API availability, loaders become slow and unpredictable, and ingest is an operational concern that does not belong in the render path. Seeing "STALE" is correct behavior — it means the operator has not run the ingest script yet, not that the page is broken.
+
+**Why a server-side `setInterval` was rejected:**
+The React Router SSR server process is stateless across deployments and restarts. A `setInterval` registered at startup would be lost on every redeploy, would not survive Fly.io Machine suspensions or Railway container restarts, and would leave no audit trail. It creates invisible operational state that is hard to debug.
+
+**What automatic ingestion would look like in production (future):**
+A proper solution requires infrastructure outside the application process:
+- A **platform cron job** (Fly.io Machines scheduled tasks, Railway Cron, GitHub Actions scheduled workflow) that calls `npm run ingest:all` on a fixed schedule.
+- Or a **dedicated worker process** running alongside the SSR server, using the same ingest service layer without coupling it to the render path.
+
+Either option is straightforward to add when the project moves beyond academic scope. The ingest service layer (`app/services/ingest/`) is already structured to support this — it is pure async functions with no UI dependencies.
+
+**What this means for demos:**
+The STALE badge is expected behavior when the ingest script has not been run recently. The correct operator action is:
+
+```bash
+npm run ingest:all   # fetch fresh data from NOAA
+# then hard-reload the browser (Cmd+Shift+R)
+```
+
+This is intentional: the demo is reproducible and explicit. The evaluator can see the full pipeline working — ingest → SQLite → loader → UI — by running one command.
+
+**Alternatives considered:**
+- **Lazy refresh in loader when data is stale** — rejected. Violates ADR-012. Couples page load latency to NOAA network latency.
+- **`setInterval` in server entry** — rejected. Invisible operational state, lost on restart, no audit trail.
+- **Platform cron calling `/api/ingest` endpoint** — deferred to production phase. Requires infrastructure decisions not in scope for Phase 2.

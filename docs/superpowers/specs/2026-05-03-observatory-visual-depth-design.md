@@ -128,9 +128,61 @@ Also add a deep-blue gradient to the outer container:
 
 ---
 
-## Section 3 — CenterStage halo (`CenterStage.tsx`)
+## Section 3 — Floating card layout (`ObservatoryShell.tsx` + `CenterStage.tsx`)
 
-Strengthen the planetary halo slightly:
+### Problem
+The current 3-column flex layout (`[col 224px][canvas flex-1][col 224px]`) confines the cards in visible column boxes. `overflow-y-auto` on those columns also clips box-shadows. Cards look like sidebar widgets, not instruments floating in space.
+
+### Solution — absolute overlay layout
+The 3D canvas expands to fill the entire content area. Cards are absolutely positioned on top, with the nebula background and planet visible **behind** them.
+
+```
+┌─────────────────────────────────────┐
+│ nebula + stars (full width)         │
+│  ┌──────┐    🌍    ┌──────┐        │
+│  │ card │  (glow)  │ card │        │
+│  │ card │          │ card │        │
+│  └──────┘          └──────┘        │
+└─────────────────────────────────────┘
+```
+
+**`ObservatoryShell.tsx`** — replace the three-child flex row with:
+
+```tsx
+<div className="flex-1 relative min-h-0">
+  {/* Canvas fills entire area — planet visible edge-to-edge */}
+  <div className="absolute inset-0">
+    <CenterStage kp={kp} signal={signal} />
+  </div>
+
+  {/* Left cards — float over the canvas */}
+  <div className="absolute left-0 top-0 bottom-0 w-56 xl:w-64 flex flex-col justify-center gap-3 p-3 z-10 hidden md:flex">
+    {/* X-Ray + Solar Wind cards */}
+  </div>
+
+  {/* Right cards — float over the canvas */}
+  <div className="absolute right-0 top-0 bottom-0 w-56 xl:w-64 flex flex-col justify-center gap-3 p-3 z-10 hidden md:flex">
+    {/* Proton Flux + Kp cards */}
+  </div>
+</div>
+```
+
+Key differences vs old layout:
+- No `overflow-y-auto` → box-shadows and glows are never clipped
+- No column background → nebula visible behind cards
+- Cards vertically centered with `justify-center` (not top-aligned)
+- Planet occupies full canvas width (CenterStage no longer capped to `flex-1` minus columns)
+
+**`CenterStage.tsx`** — change outer div:
+```diff
+- <div className="flex-1 flex flex-col min-h-0 min-w-0">
++ <div className="h-full flex flex-col min-h-0 min-w-0">
+```
+
+Because CenterStage is now inside `absolute inset-0` (which has explicit dimensions), `flex-1` doesn't expand correctly — `h-full` fills the parent instead.
+
+### CenterStage halo
+Strengthen while we're in the file:
 ```diff
 - background: "radial-gradient(ellipse 65% 65% at 50% 50%, rgba(25,55,160,0.65) 0%, rgba(12,22,80,0.30) 50%, transparent 75%)"
 + background: "radial-gradient(ellipse 68% 68% at 50% 50%, rgba(25,55,175,0.72) 0%, rgba(12,22,88,0.36) 48%, transparent 74%)"
@@ -210,5 +262,7 @@ Keep existing 25%/50%/75% grid lines in line mode. Not shown in bar mode (thresh
 - [ ] X-axis `–24h / –12h / now` labels visible
 - [ ] Kp sparkline renders as colored bars (violet/amber/red by threshold)
 - [ ] G1 threshold dashed line visible on Kp bar chart
+- [ ] Cards float over full-width canvas (absolute positioning, no column containers)
+- [ ] Nebula background visible behind cards (no column background clipping it)
 - [ ] `npm run typecheck` EXIT 0
 - [ ] `npm run build` EXIT 0
