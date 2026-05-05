@@ -161,6 +161,48 @@ function SignalTableRow({ row }: { row: SignalRow }): ReactNode {
 }
 
 // ---------------------------------------------------------------------------
+// Status interpretation per signal name (for modal rows)
+// ---------------------------------------------------------------------------
+
+type InterpretFn = (v: SignalRecord["value"]) => string;
+
+const SIGNAL_INTERPRET: Partial<Record<SignalRecord["signal"], InterpretFn>> = {
+  "kp-index": (v) => {
+    if (typeof v !== "number") return "UNKNOWN";
+    if (v >= 5) return "STORM";
+    if (v >= 4) return "ACTIVE";
+    return "QUIET";
+  },
+  "xray-flux-long": (v) => {
+    if (typeof v !== "number") return "UNKNOWN";
+    if (v >= 1e-4) return "X — EXTREME";
+    if (v >= 1e-5) return "M — SIGNIFICANT";
+    if (v >= 1e-6) return "C — MODERATE";
+    if (v >= 1e-7) return "B — MINOR";
+    return "A — QUIET";
+  },
+  "xray-flux-short": (v) => {
+    if (typeof v !== "number") return "UNKNOWN";
+    if (v >= 1e-4) return "X — EXTREME";
+    if (v >= 1e-6) return "B — MINOR";
+    return "A — QUIET";
+  },
+  "proton-flux-10mev": (v) => {
+    if (typeof v !== "number") return "UNKNOWN";
+    if (v >= 10) return "RADIATION WATCH";
+    if (v >= 1) return "ELEVATED";
+    return "QUIET";
+  },
+  "solar-wind-speed": (v) => {
+    if (typeof v !== "number") return "UNKNOWN";
+    if (v >= 800) return "EXTREME";
+    if (v >= 600) return "FAST";
+    if (v >= 400) return "NOMINAL";
+    return "SLOW";
+  },
+};
+
+// ---------------------------------------------------------------------------
 // Modal table row (same shape but from SignalRecord)
 // ---------------------------------------------------------------------------
 
@@ -191,7 +233,8 @@ function modalRowFromRecord(r: SignalRecord, index: number): ReactNode {
         ? `${Math.floor(ageMin / 60)}h`
         : `${Math.floor(ageMin / 1440)}d`;
 
-  const badge = statusBadgeColor("NOMINAL");
+  const statusLabel = SIGNAL_INTERPRET[r.signal]?.(r.value) ?? "NOMINAL";
+  const badge = statusBadgeColor(statusLabel);
 
   return (
     <div
@@ -208,7 +251,7 @@ function modalRowFromRecord(r: SignalRecord, index: number): ReactNode {
         className="inline-flex px-2 py-0.5 rounded-full font-semibold text-[9px]"
         style={{ background: badge.bg, border: `1px solid ${badge.border}`, color: badge.text }}
       >
-        NOMINAL
+        {statusLabel}
       </span>
       <span style={{ color: "rgba(255,255,255,0.50)" }}>{r.source ?? "NOAA SWPC"}</span>
       <span style={{ color: "rgba(255,255,255,0.50)" }}>{ingestedAt}</span>
@@ -303,10 +346,7 @@ export function RecentSignalsTable({
         <button
           type="button"
           onClick={() => setModalOpen(true)}
-          className="text-[10px] font-mono transition-colors"
-          style={{ color: "rgba(255,255,255,0.40)" }}
-          onMouseEnter={(e) => ((e.target as HTMLElement).style.color = "rgba(255,255,255,0.80)")}
-          onMouseLeave={(e) => ((e.target as HTMLElement).style.color = "rgba(255,255,255,0.40)")}
+          className="text-[10px] font-mono transition-colors text-white/40 hover:text-white/80"
         >
           View All Signals →
         </button>

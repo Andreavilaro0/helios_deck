@@ -212,6 +212,69 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 // ---------------------------------------------------------------------------
+// makeRow — builds a SignalRow from a nullable SignalRecord + display config
+// ---------------------------------------------------------------------------
+
+interface MakeRowOpts {
+  name: string;
+  subtitle: string;
+  unit: string;
+  source: string;
+  iconColor: string;
+  iconVariant: SignalRow["iconVariant"];
+  formatValue: (v: SignalRecord["value"]) => string;
+  statusLabel: (v: SignalRecord["value"]) => string;
+  ageMinutes: number | null;
+}
+
+function makeRow(signal: SignalRecord | null, opts: MakeRowOpts): SignalRow {
+  const age =
+    opts.ageMinutes === null
+      ? "—"
+      : opts.ageMinutes < 60
+        ? `${Math.round(opts.ageMinutes)}m`
+        : `${Math.floor(opts.ageMinutes / 60)}h ${Math.round(opts.ageMinutes % 60)}m`;
+
+  if (!signal) {
+    return {
+      name: opts.name,
+      subtitle: opts.subtitle,
+      value: "—",
+      unit: opts.unit,
+      statusLabel: "NO DATA",
+      source: opts.source,
+      ingestedAt: "—",
+      age: "—",
+      iconColor: opts.iconColor,
+      iconVariant: opts.iconVariant,
+    };
+  }
+
+  const ingestedAt = new Date(signal.timestamp).toLocaleString("en-US", {
+    month: "2-digit",
+    day: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    timeZone: "UTC",
+  });
+
+  return {
+    name: opts.name,
+    subtitle: opts.subtitle,
+    value: opts.formatValue(signal.value),
+    unit: opts.unit,
+    statusLabel: opts.statusLabel(signal.value),
+    source: opts.source,
+    ingestedAt,
+    age,
+    iconColor: opts.iconColor,
+    iconVariant: opts.iconVariant,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Tooltip text
 // ---------------------------------------------------------------------------
 
@@ -255,67 +318,6 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
   } = loaderData;
 
   const [aboutOpen, setAboutOpen] = useState(false);
-
-  // Build the 4 rows for RecentSignalsTable
-  function makeRow(
-    signal: SignalRecord | null,
-    opts: {
-      name: string;
-      subtitle: string;
-      unit: string;
-      source: string;
-      iconColor: string;
-      iconVariant: SignalRow["iconVariant"];
-      formatValue: (v: SignalRecord["value"]) => string;
-      statusLabel: (v: SignalRecord["value"]) => string;
-      ageMinutes: number | null;
-    }
-  ): SignalRow {
-    const age =
-      opts.ageMinutes === null
-        ? "—"
-        : opts.ageMinutes < 60
-          ? `${Math.round(opts.ageMinutes)}m`
-          : `${Math.floor(opts.ageMinutes / 60)}h ${Math.round(opts.ageMinutes % 60)}m`;
-
-    if (!signal) {
-      return {
-        name: opts.name,
-        subtitle: opts.subtitle,
-        value: "—",
-        unit: opts.unit,
-        statusLabel: "NO DATA",
-        source: opts.source,
-        ingestedAt: "—",
-        age: "—",
-        iconColor: opts.iconColor,
-        iconVariant: opts.iconVariant,
-      };
-    }
-
-    const ingestedAt = new Date(signal.timestamp).toLocaleString("en-US", {
-      month: "2-digit",
-      day: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      timeZone: "UTC",
-    });
-
-    return {
-      name: opts.name,
-      subtitle: opts.subtitle,
-      value: opts.formatValue(signal.value),
-      unit: opts.unit,
-      statusLabel: opts.statusLabel(signal.value),
-      source: opts.source,
-      ingestedAt,
-      age,
-      iconColor: opts.iconColor,
-      iconVariant: opts.iconVariant,
-    };
-  }
 
   const signalRows: SignalRow[] = [
     makeRow(xraySignal, {
