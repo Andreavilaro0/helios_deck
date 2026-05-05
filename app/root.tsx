@@ -8,6 +8,7 @@ import {
 } from "react-router";
 
 import type { Route } from "./+types/root";
+import { AppSidebar, useSidebarVisible } from "~/components/layout/AppSidebar";
 import "./app.css";
 
 export const links: Route.LinksFunction = () => [];
@@ -30,8 +31,23 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
+function AppShell() {
+  const showSidebar = useSidebarVisible();
+  return (
+    <div className="flex min-h-screen">
+      {showSidebar && <AppSidebar />}
+      <div
+        className="flex-1 min-w-0"
+        style={{ paddingLeft: showSidebar ? "72px" : "0" }}
+      >
+        <Outlet />
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
-  return <Outlet />;
+  return <AppShell />;
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {

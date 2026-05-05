@@ -1,6 +1,5 @@
 import { useState } from "react";
 import type { Route } from "./+types/dashboard";
-import { DashboardNavbar } from "~/components/dashboard/DashboardNavbar";
 import { DashboardHero } from "~/components/dashboard/DashboardHero";
 import type { OverallStatus } from "~/components/dashboard/DashboardHero";
 import { DashboardSignalCard } from "~/components/dashboard/DashboardSignalCard";
@@ -189,11 +188,7 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
 
   if (!kpSignal) {
     return (
-      <div
-        className="min-h-screen"
-        style={{ background: "var(--dash-bg)" }}
-      >
-        <DashboardNavbar onAboutClick={() => setAboutOpen(true)} />
+      <div className="min-h-screen" style={{ background: "var(--dash-bg)" }}>
         <div className="pt-20 flex justify-center">
           <EmptyDashboardState />
         </div>
@@ -204,13 +199,23 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
 
   return (
     <div className="min-h-screen" style={{ background: "var(--dash-bg)" }}>
-      <DashboardNavbar onAboutClick={() => setAboutOpen(true)} />
 
       <main className="max-w-5xl mx-auto px-4 pb-16">
-        <DashboardHero
-          overallStatus={overallStatus}
-          timestamp={heroTimestamp}
-        />
+        <div className="relative">
+          <DashboardHero
+            overallStatus={overallStatus}
+            timestamp={heroTimestamp}
+          />
+          <button
+            onClick={() => setAboutOpen(true)}
+            className="absolute top-6 right-0 flex items-center gap-1.5 text-xs font-mono text-white/40 hover:text-white/80 transition-colors px-3 py-1.5 rounded-lg"
+            style={{ border: "1px solid rgba(255,255,255,0.08)" }}
+            type="button"
+          >
+            <span className="text-sm">ⓘ</span>
+            About
+          </button>
+        </div>
 
         {/* Signal grid — 2×2 */}
         <section className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
