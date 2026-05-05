@@ -57,11 +57,10 @@ function SystemBadges() {
 }
 
 function UtcClock() {
-  const [utc, setUtc] = useState(() =>
-    new Date().toISOString().slice(11, 19)
-  );
+  const [utc, setUtc] = useState("");
 
   useEffect(() => {
+    setUtc(new Date().toISOString().slice(11, 19));
     const id = setInterval(() => {
       setUtc(new Date().toISOString().slice(11, 19));
     }, 1000);
