@@ -814,3 +814,17 @@ This is intentional: the demo is reproducible and explicit. The evaluator can se
 - **Lazy refresh in loader when data is stale** — rejected. Violates ADR-012. Couples page load latency to NOAA network latency.
 - **`setInterval` in server entry** — rejected. Invisible operational state, lost on restart, no audit trail.
 - **Platform cron calling `/api/ingest` endpoint** — deferred to production phase. Requires infrastructure decisions not in scope for Phase 2.
+
+---
+
+## ADR-026 — Dashboard full visual redesign (Phase 2M)
+
+**Date:** 2026-05-05
+
+**Context:** Dashboard functioned correctly but felt generic — dense monospace grid with gap-px layout, no breathing room, no educational context for evaluators. The `/cosmic-view` had a premium visual identity; `/dashboard` did not match it.
+
+**Decision:** Full component-layer redesign. Dark premium aesthetic with glass cards (`bg-white/[0.04]`, `backdrop-blur-sm`), large sans-serif display numbers, staggered entry animations (`fadeSlideUp`), hover tooltip explanations per card, `SpaceWeatherChain` causal section, `AboutPanel` slide-in drawer, and `PipelineFooter` status line.
+
+**Constraints:** Loader and data pipeline unchanged. All interpret functions reused. No new npm dependencies — animations via CSS `@keyframes` only. `/cosmic-view` untouched.
+
+**Outcome:** `/dashboard` communicates the same data with premium visual quality. The About panel provides evaluator context (APIs, tech stack, test count) without a separate route. `AppSidebar` provides global navigation, replacing the earlier `InstrumentHeader`.
