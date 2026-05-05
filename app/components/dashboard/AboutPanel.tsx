@@ -37,6 +37,13 @@ const APIS = [
 
 const PIPELINE_STEPS = ["NOAA API", "Normalizer", "SQLite", "SSR Loader", "UI"];
 
+const STATS = [
+  { label: "Tests", value: "235 ✓" },
+  { label: "Signals tracked", value: "4" },
+  { label: "Data source", value: "NOAA" },
+  { label: "CI", value: "GitHub Actions" },
+] as const;
+
 export function AboutPanel({ open, onClose }: AboutPanelProps): ReactNode {
   return (
     <>
@@ -168,7 +175,7 @@ export function AboutPanel({ open, onClose }: AboutPanelProps): ReactNode {
                   className="rounded-lg px-3 py-2 text-center"
                   style={{
                     background: "var(--dash-card-bg)",
-                    border: `1px solid ${tech.color}30`,
+                    border: `1px solid color-mix(in srgb, ${tech.color} 19%, transparent)`,
                   }}
                 >
                   <span
@@ -186,12 +193,7 @@ export function AboutPanel({ open, onClose }: AboutPanelProps): ReactNode {
           <section>
             <SectionTitle>Project stats</SectionTitle>
             <div className="grid grid-cols-2 gap-2 mt-3">
-              {[
-                { label: "Tests", value: "235 ✓" },
-                { label: "Signals tracked", value: "4" },
-                { label: "Data source", value: "NOAA" },
-                { label: "CI", value: "GitHub Actions" },
-              ].map((stat) => (
+              {STATS.map((stat) => (
                 <div
                   key={stat.label}
                   className="rounded-lg px-3 py-3"
