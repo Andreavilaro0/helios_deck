@@ -181,3 +181,13 @@
     opacity: 0.6;
   }
 }
+
+@keyframes planetGlow {
+  0%, 100% { box-shadow: var(--planet-glow-base); }
+  50%       { box-shadow: var(--planet-glow-peak); }
+}
+
+@keyframes planetRotate {
+  from { background-position: 0% 50%; }
+  to   { background-position: 100% 50%; }
+}

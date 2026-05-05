@@ -57,6 +57,81 @@ const STATUS_CONFIG: Record<OverallStatus, HeroConfig> = {
   },
 };
 
+function Planet({ color }: { color: string }): ReactNode {
+  // Semi-transparent hex of the status color for the glow
+  const glow = `${color}55`;
+  const glowPeak = `${color}88`;
+
+  return (
+    <div className="shrink-0 relative" style={{ width: 76, height: 76 }}>
+      {/* Outer atmosphere ring */}
+      <div
+        className="absolute inset-0 rounded-full"
+        style={{
+          background: `radial-gradient(circle, transparent 48%, ${glow} 70%, transparent 100%)`,
+          animation: "planetGlow 3.5s ease-in-out infinite",
+          ["--planet-glow-base" as string]: `0 0 18px 4px ${glow}`,
+          ["--planet-glow-peak" as string]: `0 0 32px 10px ${glowPeak}`,
+        }}
+      />
+      {/* Planet sphere */}
+      <div
+        className="absolute rounded-full overflow-hidden"
+        style={{
+          inset: 8,
+          background: `
+            radial-gradient(circle at 35% 28%,
+              rgba(255,255,255,0.18) 0%,
+              ${color}cc 30%,
+              ${color}66 60%,
+              #020810 100%
+            )
+          `,
+          boxShadow: `inset -6px -6px 14px rgba(0,0,0,0.7), inset 2px 2px 6px rgba(255,255,255,0.08)`,
+          animation: "planetGlow 3.5s ease-in-out infinite",
+          ["--planet-glow-base" as string]: `0 0 0px 0px transparent`,
+          ["--planet-glow-peak" as string]: `0 0 0px 0px transparent`,
+        }}
+      >
+        {/* Surface texture bands */}
+        <div
+          className="absolute inset-0 opacity-20"
+          style={{
+            background: `
+              repeating-linear-gradient(
+                168deg,
+                transparent 0px,
+                transparent 6px,
+                rgba(255,255,255,0.06) 6px,
+                rgba(255,255,255,0.06) 7px
+              )
+            `,
+          }}
+        />
+      </div>
+      {/* Thin orbit arc */}
+      <svg
+        viewBox="0 0 76 76"
+        width="76"
+        height="76"
+        className="absolute inset-0"
+        style={{ opacity: 0.18 }}
+        aria-hidden="true"
+      >
+        <ellipse
+          cx="38" cy="38"
+          rx="34" ry="10"
+          fill="none"
+          stroke={color}
+          strokeWidth="1"
+          strokeDasharray="4 3"
+          transform="rotate(-20 38 38)"
+        />
+      </svg>
+    </div>
+  );
+}
+
 interface MiniCardProps {
   label: string;
   value: string;
@@ -115,6 +190,9 @@ export function DashboardHero({
         backdropFilter: "blur(8px)",
       }}
     >
+      {/* Planet */}
+      <Planet color={cfg.color} />
+
       {/* Left — status headline */}
       <div className="flex-1 min-w-0">
         <p
