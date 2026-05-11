@@ -18,17 +18,14 @@ function latLonToVec3(lat: number, lon: number, r: number): THREE.Vector3 {
 function EarthScene() {
   const groupRef = useRef<THREE.Group>(null);
 
-  // Usar daymap (siempre visible y brillante)
-  const [dayMap, nightMap, cloudMap] = useLoader(THREE.TextureLoader, [
+  const [dayMap, cloudMap] = useLoader(THREE.TextureLoader, [
     "/textures/earth_daymap.jpg",
-    "/textures/earth_nightmap.png",
     "/textures/2k_earth_clouds.jpg",
   ]);
 
   useMemo(() => {
-    dayMap.colorSpace   = THREE.SRGBColorSpace;
-    nightMap.colorSpace = THREE.SRGBColorSpace;
-  }, [dayMap, nightMap]);
+    dayMap.colorSpace = THREE.SRGBColorSpace;
+  }, [dayMap]);
 
   const cloudMat = useMemo(() => new THREE.MeshBasicMaterial({
     map: cloudMap,
@@ -67,9 +64,9 @@ function EarthScene() {
     if (groupRef.current) groupRef.current.rotation.y += dt * 0.05;
   });
 
-  // Rotación inicial: Y para poner Europa/Islandia hacia la cámara
-  // Iceland lon=-22 → theta=158°. Queremos que facing Z+ (cámara), necesitamos ~-0.8rad
-  const INITIAL_Y = -0.5;
+  // Iceland at lon=-22° → in latLonToVec3 space: x=0.404r, z=0.164r.
+  // To maximise z (face camera): rotate Y by atan2(-x,-z) = atan2(-0.404, -0.164) ≈ -1.185 rad.
+  const INITIAL_Y = -1.185;
 
   return (
     <group rotation={[THREE.MathUtils.degToRad(10), 0, 0]}>
@@ -125,10 +122,9 @@ export function WeatherGlobeScene() {
         gl={{ antialias: true, alpha: true }}
         style={{ background: "transparent" }}
       >
-        {/* Luz del sol desde un lado — simula amanecer/atardecer */}
-        <ambientLight intensity={0.25} />
-        <directionalLight position={[5, 2, 3]} intensity={2.5} color="#fff8e0" />
-        <directionalLight position={[-3, 1, 2]} intensity={0.4} color="#4488ff" />
+        <ambientLight intensity={0.85} />
+        <directionalLight position={[5, 2, 3]} intensity={1.8} color="#fff8e0" />
+        <directionalLight position={[-3, 1, 2]} intensity={0.5} color="#4488ff" />
         <Suspense fallback={null}>
           <EarthScene />
         </Suspense>
