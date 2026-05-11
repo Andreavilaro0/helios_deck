@@ -119,16 +119,16 @@ export function CurrentConditionsCard({
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         <WeatherIcon
           type={icon}
-          size={64}
-          color="rgba(148,163,184,0.85)"
+          size={96}
+          color="rgba(148,163,184,0.90)"
         />
         <div>
           <div
             style={{
-              fontSize: 56,
+              fontSize: 60,
               fontWeight: 700,
               fontFamily: "monospace",
               color: "#fff",

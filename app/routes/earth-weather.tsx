@@ -69,7 +69,7 @@ export default function EarthWeatherPage({ loaderData }: Route.ComponentProps) {
         {/* 3-column main section */}
         <div
           className="grid gap-3"
-          style={{ gridTemplateColumns: "300px 1fr 240px", flex: 1, minHeight: 0 }}
+          style={{ gridTemplateColumns: "300px 1fr 240px", minHeight: "420px" }}
         >
           {/* Left column: current conditions + hourly chart */}
           <div className="flex flex-col gap-3">
@@ -105,6 +105,7 @@ export default function EarthWeatherPage({ loaderData }: Route.ComponentProps) {
             style={{
               background: "#060b14",
               border: "1px solid rgba(255,255,255,0.07)",
+              minHeight: "420px",
             }}
           >
             <Suspense
