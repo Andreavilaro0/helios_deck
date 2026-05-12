@@ -1,5 +1,5 @@
 import type { Route } from "./+types/cosmic-view";
-import { lazy, Suspense, useSyncExternalStore } from "react";
+import { lazy, Suspense, useState, useSyncExternalStore } from "react";
 import type { SignalRecord } from "~/types/signal";
 import { getLatestSignalByName, listRecentSignalsByName } from "~/services/signals.server";
 import { getSignalFreshness } from "~/utils/signal-freshness";

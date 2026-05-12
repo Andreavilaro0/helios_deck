@@ -58,7 +58,7 @@ function AppShell() {
       style={{ background: "#020811" }}
     >
       <div
-        className="flex min-h-[calc(100vh-68px)] overflow-hidden"
+        className="flex min-h-[calc(100vh-68px)] overflow-hidden relative"
         style={{
           borderRadius: "28px",
           background: "#030915",
@@ -71,8 +71,16 @@ function AppShell() {
           boxShadow: "0 0 0 1px rgba(0,0,0,0.5), 0 40px 80px rgba(0,0,0,0.6)",
         }}
       >
+        {/* Animated nebula blobs — visible across all app pages */}
+        <div className="blob-orb absolute top-[-18%] left-[-8%] w-[520px] h-[520px] rounded-full pointer-events-none"
+          style={{ background: "radial-gradient(circle, rgba(43,98,214,0.18) 0%, transparent 70%)", filter: "blur(90px)" }} />
+        <div className="blob-orb blob-delay-4 absolute bottom-[-20%] right-[-6%] w-[460px] h-[460px] rounded-full pointer-events-none"
+          style={{ background: "radial-gradient(circle, rgba(139,92,246,0.13) 0%, transparent 70%)", filter: "blur(100px)" }} />
+        <div className="blob-orb blob-delay-2 absolute top-[35%] right-[18%] w-[380px] h-[380px] rounded-full pointer-events-none"
+          style={{ background: "radial-gradient(circle, rgba(52,129,255,0.10) 0%, transparent 65%)", filter: "blur(75px)" }} />
+
         {showSidebar && <AppSidebar />}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 relative" style={{ zIndex: 1 }}>
           <Outlet />
         </div>
       </div>
