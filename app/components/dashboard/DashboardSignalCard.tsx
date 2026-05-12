@@ -29,10 +29,10 @@ const COLOR_MAP: Record<SignalColor, string> = {
 };
 
 const GLOW_MAP: Record<SignalColor, string> = {
-  amber:  "0 0 28px rgba(245,158,11,0.22),  0 0 0 1px rgba(245,158,11,0.32),  inset 0 1px 0 rgba(255,255,255,0.07)",
-  cyan:   "0 0 28px rgba(34,211,238,0.18),  0 0 0 1px rgba(34,211,238,0.28),  inset 0 1px 0 rgba(255,255,255,0.07)",
-  blue:   "0 0 28px rgba(96,165,250,0.18),  0 0 0 1px rgba(96,165,250,0.28),  inset 0 1px 0 rgba(255,255,255,0.07)",
-  violet: "0 0 28px rgba(167,139,250,0.22), 0 0 0 1px rgba(167,139,250,0.32), inset 0 1px 0 rgba(255,255,255,0.07)",
+  amber:  "0 8px 32px rgba(245,158,11,0.20), 0 2px 10px rgba(245,158,11,0.13), 0 0 0 1px rgba(245,158,11,0.28), inset 0 1px 0 rgba(255,255,255,0.09), inset 0 -2px 12px rgba(0,0,0,0.22)",
+  cyan:   "0 8px 32px rgba(34,211,238,0.16),  0 2px 10px rgba(34,211,238,0.10),  0 0 0 1px rgba(34,211,238,0.24),  inset 0 1px 0 rgba(255,255,255,0.09), inset 0 -2px 12px rgba(0,0,0,0.22)",
+  blue:   "0 8px 32px rgba(96,165,250,0.16),  0 2px 10px rgba(96,165,250,0.10),  0 0 0 1px rgba(96,165,250,0.24),  inset 0 1px 0 rgba(255,255,255,0.09), inset 0 -2px 12px rgba(0,0,0,0.22)",
+  violet: "0 8px 32px rgba(167,139,250,0.20), 0 2px 10px rgba(167,139,250,0.13), 0 0 0 1px rgba(167,139,250,0.28), inset 0 1px 0 rgba(255,255,255,0.09), inset 0 -2px 12px rgba(0,0,0,0.22)",
 };
 
 const BG_MAP: Record<SignalColor, string> = {
@@ -63,89 +63,94 @@ export function DashboardSignalCard({
 
   return (
     <article
-      className={`relative overflow-hidden rounded-2xl border flex flex-col gap-1 ${compact ? "p-4" : "p-5"}`}
+      className={`relative overflow-hidden rounded-2xl border card-cosmic-border`}
       style={{
-        background: BG_MAP[statusColor],
         borderColor: "transparent",
         backdropFilter: "blur(8px)",
         boxShadow: GLOW_MAP[statusColor],
         animation: `fadeSlideUp 500ms ease both`,
         animationDelay: `${animationDelay}ms`,
-        color: accent,
+        ["--card-accent" as string]: accent,
       }}
     >
-      {/* Top accent line */}
+      {/* Inner surface — z-[1] keeps content above the spinning ::before conic */}
       <div
-        className="absolute top-0 left-0 right-0 h-px"
-        style={{ background: `linear-gradient(90deg, transparent, ${accent}80, transparent)` }}
-      />
+        className={`relative z-[1] flex flex-col gap-1 rounded-2xl ${compact ? "p-4" : "p-5"}`}
+        style={{ background: BG_MAP[statusColor], color: accent }}
+      >
+        {/* Top accent line */}
+        <div
+          className="absolute top-0 left-0 right-0 h-px"
+          style={{ background: `linear-gradient(90deg, transparent, ${accent}80, transparent)` }}
+        />
 
-      {/* Header */}
-      <div className="flex items-start justify-between gap-1 mb-1">
-        <span
-          className={`font-mono font-semibold uppercase leading-tight ${compact ? "text-[10px] tracking-wide" : "text-xs tracking-widest"}`}
+        {/* Header */}
+        <div className="flex items-start justify-between gap-1 mb-1">
+          <span
+            className={`font-mono font-semibold uppercase leading-tight ${compact ? "text-[10px] tracking-wide" : "text-xs tracking-widest"}`}
+            style={{ color: accent }}
+          >
+            {label}
+          </span>
+          <span
+            className="text-[10px] font-mono px-1.5 py-0.5 rounded-full shrink-0"
+            style={{
+              background: fresh ? "rgba(34 197 94 / 0.15)" : "rgba(239 68 68 / 0.15)",
+              color: fresh ? "#4ade80" : "#f87171",
+            }}
+          >
+            {fresh ? "RECIENTE" : "ANTIGUO"} · {freshLabel}
+          </span>
+        </div>
+
+        {/* Subtitle */}
+        <p className="text-[10px] text-white/40 font-sans -mt-0.5">{subtitle}</p>
+
+        {/* Value */}
+        <div className={`flex items-baseline gap-1.5 ${compact ? "mt-2" : "mt-3"}`}>
+          <span className={`font-mono font-bold text-white leading-none ${compact ? "text-2xl" : "text-4xl"}`}>
+            {value}
+          </span>
+          <span className={`font-mono text-white/50 ${compact ? "text-xs" : "text-sm"}`}>{unit}</span>
+        </div>
+
+        {/* Status */}
+        <div
+          className={`font-mono font-semibold mt-1 ${compact ? "text-xs" : "text-sm"}`}
           style={{ color: accent }}
         >
-          {label}
-        </span>
-        <span
-          className="text-[10px] font-mono px-1.5 py-0.5 rounded-full shrink-0"
-          style={{
-            background: fresh ? "rgba(34 197 94 / 0.15)" : "rgba(239 68 68 / 0.15)",
-            color: fresh ? "#4ade80" : "#f87171",
-          }}
-        >
-          {fresh ? "FRESH" : "STALE"} · {freshLabel}
-        </span>
-      </div>
-
-      {/* Subtitle */}
-      <p className="text-[10px] text-white/40 font-sans -mt-0.5">{subtitle}</p>
-
-      {/* Value */}
-      <div className={`flex items-baseline gap-1.5 ${compact ? "mt-2" : "mt-3"}`}>
-        <span className={`font-mono font-bold text-white leading-none ${compact ? "text-2xl" : "text-4xl"}`}>
-          {value}
-        </span>
-        <span className={`font-mono text-white/50 ${compact ? "text-xs" : "text-sm"}`}>{unit}</span>
-      </div>
-
-      {/* Status */}
-      <div
-        className={`font-mono font-semibold mt-1 ${compact ? "text-xs" : "text-sm"}`}
-        style={{ color: accent }}
-      >
-        {status}
-      </div>
-
-      {/* Mini history chart */}
-      {historyData && historyData.length > 1 && (
-        <div className="mt-2 -mx-1">
-          <SignalAreaChart
-            data={historyData}
-            color={accent}
-            logScale={logScale}
-            height={compact ? 36 : 52}
-            gradientId={`mini-grad-${statusColor}`}
-          />
+          {status}
         </div>
-      )}
 
-      {/* Footer */}
-      <p className="text-[10px] font-mono text-white/25 mt-auto pt-2">
-        {source} · {timestamp}
-      </p>
+        {/* Mini history chart */}
+        {historyData && historyData.length > 1 && (
+          <div className="mt-2 -mx-1">
+            <SignalAreaChart
+              data={historyData}
+              color={accent}
+              logScale={logScale}
+              height={compact ? 36 : 52}
+              gradientId={`mini-grad-${statusColor}`}
+            />
+          </div>
+        )}
 
-      {/* Hover tooltip */}
+        {/* Footer */}
+        <p className="text-[10px] font-mono text-white/25 mt-auto pt-2">
+          {source} · {timestamp}
+        </p>
+      </div>
+
+      {/* Hover tooltip — z-[20] above both inner surface and conic border */}
       <div
-        className="absolute inset-0 rounded-2xl flex flex-col justify-center p-5 opacity-0 transition-opacity duration-200 hover:opacity-100"
+        className="absolute inset-0 z-[20] rounded-2xl flex flex-col justify-center p-5 opacity-0 transition-opacity duration-200 hover:opacity-100"
         style={{
           background: "rgba(8 12 20 / 0.92)",
           backdropFilter: "blur(12px)",
         }}
       >
         <p className="text-xs font-mono font-semibold text-white/50 uppercase tracking-widest mb-2">
-          What is {label}?
+          ¿Qué es {label}?
         </p>
         <p className="text-sm text-white/80 leading-relaxed">{tooltipText}</p>
       </div>

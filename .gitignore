@@ -21,12 +21,12 @@ credentials
 credentials.json
 secrets/
 
-# Database (keep schema, not data)
-data/
+# Database — data/helios.sqlite committed for demo deployment
+data/*.db-shm
+data/*.db-wal
 *.db
 *.db-shm
 *.db-wal
-*.sqlite
 *.sqlite3
 
 # Logs

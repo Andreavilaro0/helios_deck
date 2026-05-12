@@ -187,22 +187,43 @@ export function DashboardHero({
 
   return (
     <header
-      className="rounded-2xl px-5 py-4 mb-4 flex flex-row items-center gap-5"
+      className="relative rounded-2xl px-5 py-4 mb-4 flex flex-row items-center gap-5 overflow-hidden"
       style={{
         background: cfg.bgColor,
         border: `1px solid ${cfg.borderColor}`,
         backdropFilter: "blur(12px)",
         boxShadow: cfg.boxShadow,
+        ["--card-accent" as string]: cfg.color,
       }}
     >
+      {/* Nebula blob orbs — organic depth behind the header */}
+      <div
+        className="blob-orb absolute -top-10 -left-10 w-44 h-44 rounded-full pointer-events-none"
+        style={{
+          background: `radial-gradient(circle, ${cfg.color}50 0%, transparent 70%)`,
+          filter: "blur(36px)",
+          mixBlendMode: "screen",
+          opacity: 0.45,
+        }}
+      />
+      <div
+        className="blob-orb blob-delay-4 absolute -bottom-12 right-1/4 w-52 h-52 rounded-full pointer-events-none"
+        style={{
+          background: "radial-gradient(circle, rgba(139,92,246,0.45) 0%, transparent 70%)",
+          filter: "blur(44px)",
+          mixBlendMode: "screen",
+          opacity: 0.30,
+        }}
+      />
+
       {/* Planet */}
       <Planet color={cfg.color} />
 
       {/* Left — status headline */}
-      <div className="flex-1 min-w-0">
+      <div className="relative z-[1] flex-1 min-w-0">
         <p
-          className="text-[9px] font-mono tracking-[0.25em] uppercase mb-1"
-          style={{ color: "rgba(255,255,255,0.30)" }}
+          className="label-dot text-[9px] font-mono tracking-[0.25em] uppercase mb-1"
+          style={{ color: "rgba(255,255,255,0.35)" }}
         >
           Condición del Clima Espacial
         </p>
@@ -210,8 +231,11 @@ export function DashboardHero({
           className="font-mono font-black leading-[1.05]"
           style={{
             fontSize: "26px",
-            color: cfg.color,
             letterSpacing: "-0.02em",
+            background: `linear-gradient(148deg, rgba(255,255,255,0.96) 0%, ${cfg.color} 55%, oklch(0.75 0.15 264) 100%)`,
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
           }}
         >
           {cfg.headlineLines[0]} {cfg.headlineLines[1]}
@@ -225,7 +249,7 @@ export function DashboardHero({
       </div>
 
       {/* Right — 4 mini stats in a row */}
-      <div className="shrink-0 flex gap-2">
+      <div className="relative z-[1] shrink-0 flex gap-2">
         <MiniCard label="Riesgo" value={cfg.riskLabel} valueColor={cfg.riskColor} />
         <MiniCard label="Actualización" value={freshnessAge} />
         <MiniCard label="Ingerido" value={lastIngestedTime} sub={lastIngestedDate} />

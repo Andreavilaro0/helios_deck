@@ -2,7 +2,6 @@ import { useState } from "react";
 import type React from "react";
 import type { Route } from "./+types/dashboard";
 import { requireAuth } from "~/services/auth/auth.server";
-import { DashboardTopbar } from "~/components/layout/DashboardTopbar";
 import { DashboardHero } from "~/components/dashboard/DashboardHero";
 import type { OverallStatus } from "~/components/dashboard/DashboardHero";
 import { AboutPanel } from "~/components/dashboard/AboutPanel";
@@ -390,7 +389,6 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
   if (!kpSignal) {
     return (
       <div style={pageStyle}>
-        <DashboardTopbar />
         <div className="flex-1 flex justify-center items-center">
           <EmptyDashboardState />
         </div>
@@ -401,11 +399,6 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
 
   return (
     <div style={pageStyle}>
-
-      <DashboardTopbar
-        freshnessAge={heroAge !== "—" ? heroAge : undefined}
-        overallStatus={overallStatus}
-      />
 
       {/* Hero */}
       <div className="relative px-10 pt-4 pb-0" style={{ flexShrink: 0 }}>

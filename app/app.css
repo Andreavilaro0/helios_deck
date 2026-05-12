@@ -237,3 +237,81 @@ html.dark {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* ── Cult-UI inspired design language ───────────────────────────────────────── */
+
+/* Organic blob morphing — for nebula background orbs                            */
+@keyframes blob {
+  0%, 100% { transform: translate(0px,   0px)    scale(1);    }
+  33%       { transform: translate(22px, -24px)   scale(1.16); }
+  66%       { transform: translate(-18px, 18px)   scale(0.88); }
+}
+
+/* Spinning conic gradient — for animated card border sweep                      */
+@keyframes cosmicSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* Shimmer sweep — for loading states and gradient text                          */
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+
+/* ── Spinning conic border — set --card-accent on the element ───────────────── */
+/* The ::before fills inset:-200% (5× card size). overflow:hidden clips it.      */
+/* As it rotates the bright arc traces the card perimeter — visible on hover.    */
+.card-cosmic-border::before {
+  content: "";
+  position: absolute;
+  inset: -200%;
+  z-index: 0;
+  animation: cosmicSpin 5s linear infinite paused;
+  background: conic-gradient(
+    from 0deg,
+    transparent 55%,
+    var(--card-accent, #60a5fa) 70%,
+    oklch(0.92 0.08 220) 77%,
+    var(--card-accent, #60a5fa) 83%,
+    transparent 100%
+  );
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+.card-cosmic-border:hover::before {
+  animation-play-state: running;
+  opacity: 0.75;
+}
+
+/* ── Gradient text heading utility ──────────────────────────────────────────── */
+.text-gradient-cosmos {
+  background: linear-gradient(
+    148deg,
+    oklch(0.98 0 0) 0%,
+    oklch(0.94 0.04 220) 45%,
+    oklch(0.82 0.10 264) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ── Glowing dot prefix for eyebrow / section labels ────────────────────────── */
+/* Usage: add class "label-dot" and set --card-accent on the element             */
+.label-dot::before {
+  content: "";
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: var(--card-accent, #60a5fa);
+  box-shadow: 0 0 7px 1px var(--card-accent, #60a5fa);
+  margin-right: 7px;
+  vertical-align: middle;
+}
+
+/* ── Nebula blob orbs ────────────────────────────────────────────────────────── */
+.blob-orb          { animation: blob 9s  ease-in-out infinite; }
+.blob-delay-2      { animation-delay: -3s; }
+.blob-delay-4      { animation-delay: -6s; }

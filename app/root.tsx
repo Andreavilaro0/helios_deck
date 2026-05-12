@@ -7,10 +7,20 @@ import {
   ScrollRestoration,
   useLocation,
 } from "react-router";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import type { Route } from "./+types/root";
 import { AppSidebar, useSidebarVisible } from "~/components/layout/AppSidebar";
 import "./app.css";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      retry: 1,
+    },
+  },
+});
 
 const FULL_SCREEN_ROUTES: string[] = [];
 
@@ -71,7 +81,11 @@ function AppShell() {
 }
 
 export default function App() {
-  return <AppShell />;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppShell />
+    </QueryClientProvider>
+  );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {

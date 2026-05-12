@@ -1,10 +1,10 @@
 import type { Route } from "./+types/cosmic-view";
-import { lazy, Suspense, useState, useEffect } from "react";
+import { lazy, Suspense, useSyncExternalStore } from "react";
 import type { SignalRecord } from "~/types/signal";
 import { getLatestSignalByName, listRecentSignalsByName } from "~/services/signals.server";
 import { getSignalFreshness } from "~/utils/signal-freshness";
+import { requireUser } from "~/services/auth/session.server";
 import { CosmicEmptyState } from "~/components/cosmic/CosmicEmptyState";
-import { DashboardTopbar } from "~/components/layout/DashboardTopbar";
 import type { PlanetId } from "~/components/cosmic/planet-explorer";
 import { PLANET_EXPLORER_PLANETS } from "~/components/cosmic/planet-explorer";
 
@@ -18,7 +18,8 @@ export function meta(_: Route.MetaArgs) {
   ];
 }
 
-export function loader(_: Route.LoaderArgs) {
+export async function loader({ request }: Route.LoaderArgs) {
+  await requireUser(request);
   const latestSignal     = getLatestSignalByName("kp-index");
   const latestSolarWind  = getLatestSignalByName("solar-wind-speed");
   const latestXRayFlux   = getLatestSignalByName("xray-flux-long");
@@ -80,8 +81,7 @@ export default function CosmicViewRoute({ loaderData }: Route.ComponentProps) {
 
   if (!latestSignal) {
     return (
-      <div className="flex flex-col" style={{ height: "calc(100vh - 68px)" }}>
-        <DashboardTopbar title={planetName} subtitle="Observatorio de Planetas Vivos" overallStatus="QUIET" />
+      <div className="flex flex-col" style={{ height: "100%" }}>
         <div style={{ flex: 1, overflow: "hidden", minHeight: 0 }}>
           <CosmicEmptyState />
         </div>
@@ -90,13 +90,7 @@ export default function CosmicViewRoute({ loaderData }: Route.ComponentProps) {
   }
 
   return (
-    <div className="flex flex-col" style={{ height: "calc(100vh - 68px)" }}>
-      <DashboardTopbar
-        title={planetName}
-        subtitle="Observatorio de Planetas Vivos"
-        overallStatus={overallStatus}
-        freshnessAge={heroAge}
-      />
+    <div className="flex flex-col" style={{ height: "100%" }}>
       <div style={{ flex: 1, overflow: "hidden", minHeight: 0 }}>
         <CosmicScene
           signal={latestSignal}
@@ -118,7 +112,7 @@ export default function CosmicViewRoute({ loaderData }: Route.ComponentProps) {
 }
 
 // ---------------------------------------------------------------------------
-// CosmicScene: blocks SSR and hydration from rendering the Canvas.
+// CosmicScene: blocks SSR from rendering the Canvas.
 // ---------------------------------------------------------------------------
 
 interface CosmicClientProps {
@@ -145,10 +139,15 @@ const loadingFallback = (
 );
 
 function CosmicScene(props: CosmicClientProps) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  // useSyncExternalStore: false on SSR, true on client.
+  // Survives React 19 Strict Mode double-mount (useState+useEffect does not).
+  const isClient = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
 
-  if (!mounted) return loadingFallback;
+  if (!isClient) return loadingFallback;
 
   return (
     <Suspense fallback={loadingFallback}>

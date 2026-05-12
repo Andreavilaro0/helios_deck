@@ -20,7 +20,16 @@ export default defineConfig({
     tsconfigPaths: true,
   },
   optimizeDeps: {
-    include: ["three", "@react-three/fiber"],
+    include: [
+      "three",
+      "@react-three/fiber",
+      "@react-three/drei",
+      "@tanstack/react-query",
+      "motion/react",
+      "clsx",
+      "tailwind-merge",
+      "lightweight-charts",
+    ],
     exclude: ["better-sqlite3"],
   },
   // better-sqlite3 is a native Node addon — must not be bundled by Rollup

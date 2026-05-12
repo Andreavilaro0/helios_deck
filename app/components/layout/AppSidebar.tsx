@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from "react-router";
+import { NavLink, useLocation, Form } from "react-router";
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 
@@ -209,11 +209,51 @@ export function AppSidebar(): ReactNode {
 
       {/* UTC clock */}
       <UtcClock />
+
+      {/* Divider */}
+      <div className="mx-5 h-px shrink-0" style={{ background: "rgba(59,130,246,0.10)" }} />
+
+      {/* Logout */}
+      <div className="px-3 shrink-0">
+        <Form method="post" action="/logout">
+          <button
+            type="submit"
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all duration-200 group"
+            style={{
+              background: "transparent",
+              border: "1px solid rgba(248,113,113,0.12)",
+              color: "rgba(248,113,113,0.45)",
+              cursor: "pointer",
+              fontSize: "12px",
+              fontWeight: 500,
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLButtonElement).style.background = "rgba(248,113,113,0.08)";
+              (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(248,113,113,0.30)";
+              (e.currentTarget as HTMLButtonElement).style.color = "rgba(248,113,113,0.80)";
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+              (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(248,113,113,0.12)";
+              (e.currentTarget as HTMLButtonElement).style.color = "rgba(248,113,113,0.45)";
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            <span>Cerrar sesión</span>
+          </button>
+        </Form>
+      </div>
     </aside>
   );
 }
 
+const NO_SIDEBAR_PATHS = new Set(["/", "/login", "/logout"]);
+
 export function useSidebarVisible(): boolean {
   const { pathname } = useLocation();
-  return pathname !== "/";
+  return !NO_SIDEBAR_PATHS.has(pathname);
 }

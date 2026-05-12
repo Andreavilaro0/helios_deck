@@ -5,4 +5,7 @@ export default [
   route('dashboard', 'routes/dashboard.tsx'),
   route('cosmic-view', 'routes/cosmic-view.tsx'),
   route('earth-weather', 'routes/earth-weather.tsx'),
+  route('api/kp', 'routes/api.kp.ts'),
+  route('login', 'routes/login.tsx'),
+  route('logout', 'routes/logout.tsx'),
 ] satisfies RouteConfig;

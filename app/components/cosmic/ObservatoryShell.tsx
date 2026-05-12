@@ -79,6 +79,15 @@ export function ObservatoryShell({
       }}
     >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_42%,rgba(17,38,98,0.22)_0%,transparent_42%),radial-gradient(circle_at_12%_64%,rgba(255,126,48,0.06)_0%,transparent_30%)]" />
+      {/* Animated nebula blobs — depth behind the 3D scene */}
+      <div
+        className="blob-orb pointer-events-none absolute -top-20 left-1/4 w-72 h-72 rounded-full"
+        style={{ background: "radial-gradient(circle, rgba(43,98,214,0.22) 0%, transparent 70%)", filter: "blur(56px)", mixBlendMode: "screen" }}
+      />
+      <div
+        className="blob-orb blob-delay-4 pointer-events-none absolute bottom-0 right-1/3 w-80 h-80 rounded-full"
+        style={{ background: "radial-gradient(circle, rgba(139,92,246,0.16) 0%, transparent 70%)", filter: "blur(64px)", mixBlendMode: "screen" }}
+      />
       <div className="grid h-full min-h-0 gap-2.5 xl:grid-cols-[minmax(0,1fr)_236px] xl:grid-rows-[minmax(0,1fr)_auto]">
         <main className="relative min-h-[620px] xl:min-h-0">
           <div className="relative h-full min-h-[580px] xl:min-h-0">

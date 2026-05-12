@@ -1,11 +1,12 @@
 import { lazy, Suspense } from "react";
+import { useQuery } from "@tanstack/react-query";
 import type { Route } from "./+types/earth-weather";
 import {
   getLatestSignalByName,
   listRecentSignalsByName,
 } from "~/services/signals.server";
 import { getSpaceWeatherImpact } from "~/utils/space-impact";
-import { DashboardTopbar } from "~/components/layout/DashboardTopbar";
+import { requireUser } from "~/services/auth/session.server";
 import { SearchBar } from "~/components/weather/SearchBar";
 import { CurrentConditionsCard } from "~/components/weather/CurrentConditionsCard";
 import { HourlyForecastChart } from "~/components/weather/HourlyForecastChart";
@@ -28,7 +29,8 @@ export function meta(_: Route.MetaArgs) {
   return [{ title: "HELIOS — Explorador de Clima Terrestre" }];
 }
 
-export async function loader(_: Route.LoaderArgs) {
+export async function loader({ request }: Route.LoaderArgs) {
+  await requireUser(request);
   const kpSignal  = getLatestSignalByName("kp-index");
   const kpHistory = listRecentSignalsByName("kp-index", 48);
   const kp        = typeof kpSignal?.value === "number" ? kpSignal.value : 0;
@@ -54,12 +56,24 @@ function EmptyCard({ label }: { label: string }) {
 }
 
 export default function EarthWeatherPage({ loaderData }: Route.ComponentProps) {
-  const { kp, kpHistory } = loaderData;
+  // SSR loader provides initialData — React Query takes over polling every 5 min
+  const { data: kpData } = useQuery({
+    queryKey: ["kp-current"],
+    queryFn: async () => {
+      const res = await fetch("/api/kp");
+      return res.json() as Promise<{ kp: number; kpHistory: typeof loaderData.kpHistory }>;
+    },
+    initialData: { kp: loaderData.kp, kpHistory: loaderData.kpHistory },
+    staleTime: 5 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
+  });
+
+  const { kp, kpHistory } = kpData;
   const overallStatus = kp >= 5 ? "STORM" as const : kp >= 4 ? "ACTIVE" as const : "QUIET" as const;
   const hw = useEarthWeather();
 
-  const cityLabel     = `${hw.location.name}, ${hw.location.country}`;
-  const precipToday   = hw.weather?.daily[0]?.precipProbMax ?? 0;
+  const cityLabel   = `${hw.location.name}, ${hw.location.country}`;
+  const precipToday = hw.weather?.daily[0]?.precipProbMax ?? 0;
 
   return (
     <div
@@ -74,8 +88,6 @@ export default function EarthWeatherPage({ loaderData }: Route.ComponentProps) {
         ].join(", "),
       }}
     >
-      <DashboardTopbar title="Clima Terrestre" subtitle="Explorador Meteorológico" overallStatus={overallStatus} />
-
       <main className="flex-1 overflow-hidden p-4 flex flex-col gap-3 min-h-0">
         <SearchBar
           city={cityLabel}
