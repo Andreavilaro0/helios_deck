@@ -9,7 +9,7 @@ interface Props {
 const DAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
 export function DailyForecastCard({ daily }: Props) {
-  const todayIdx = new Date().getDay();
+  const todayIdx = new Date(daily[0].date + "T00:00:00Z").getUTCDay();
 
   return (
     <div

@@ -13,12 +13,14 @@ export function SolarAuroraChart({ history, currentKp }: Props) {
   const statusColor = isActive ? "#f87171" : "#4ade80";
   const statusLabel = isActive ? "ACTIVE" : "INACTIVE";
 
-  const pts = history.slice(-24).filter((r) => typeof r.value === "number");
-  const maxKp = Math.max(9, ...pts.map((r) => r.value as number));
+  const pts = history.slice(-24).filter(
+    (r): r is SignalRecord & { value: number } => typeof r.value === "number"
+  );
+  const maxKp = Math.max(9, ...pts.map((r) => r.value));
 
   const points = pts.map((r, i) => {
     const x = pts.length < 2 ? W / 2 : (i / (pts.length - 1)) * W;
-    const y = H - ((r.value as number) / maxKp) * H;
+    const y = H - (r.value / maxKp) * H;
     return `${x.toFixed(1)},${y.toFixed(1)}`;
   }).join(" ");
 
