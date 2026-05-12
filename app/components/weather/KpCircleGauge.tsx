@@ -28,12 +28,17 @@ export function KpCircleGauge({ kp }: Props) {
   const label = safe >= 5 ? "Storm" : safe >= 4 ? "Active" : "Low Kp";
   const fillEnd = START + (safe / 9) * SPAN;
 
+  const needleAngle = START + (safe / 9) * SPAN;
+  const needleRad = ((needleAngle - 90) * Math.PI) / 180;
+  const needleTipX = CX + 26 * Math.cos(needleRad);
+  const needleTipY = CY + 26 * Math.sin(needleRad);
+
   return (
     <div
       className="rounded-2xl p-3 flex flex-col items-center gap-1"
       style={{
-        background: "rgba(255,255,255,0.025)",
-        border: "1px solid rgba(255,255,255,0.07)",
+        background: "rgba(255,255,255,0.045)",
+        border: "1px solid rgba(255,255,255,0.11)",
       }}
     >
       <p
@@ -60,6 +65,16 @@ export function KpCircleGauge({ kp }: Props) {
             opacity="0.9"
           />
         )}
+        <line
+          x1={CX}
+          y1={CY}
+          x2={needleTipX.toFixed(2)}
+          y2={needleTipY.toFixed(2)}
+          stroke={color}
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+        <circle cx={CX} cy={CY} r="4" fill={color} />
         <text
           x={CX}
           y={CY - 2}

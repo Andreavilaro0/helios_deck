@@ -18,7 +18,7 @@ export function AuroraSunsetCard({ kp, sunset, sunrise, minutesToSunset }: Props
 
   return (
     <div className="rounded-2xl p-4 flex flex-col gap-3 h-full"
-      style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.07)" }}>
+      style={{ background: "rgba(255,255,255,0.045)", border: "1px solid rgba(255,255,255,0.11)" }}>
       <p className="text-[9px] font-mono uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.28)" }}>
         Aurora &amp; Sunset
       </p>

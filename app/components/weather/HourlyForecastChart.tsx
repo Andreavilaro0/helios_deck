@@ -6,7 +6,7 @@ interface Props {
   hourly: WeatherData["hourly"];
 }
 
-const CHART_H = 50;
+const CHART_H = 72;
 const CHART_W = 280;
 
 export function HourlyForecastChart({ hourly }: Props) {
@@ -33,8 +33,8 @@ export function HourlyForecastChart({ hourly }: Props) {
     <div
       className="rounded-2xl p-3 flex flex-col gap-2"
       style={{
-        background: "rgba(255,255,255,0.025)",
-        border: "1px solid rgba(255,255,255,0.07)",
+        background: "rgba(255,255,255,0.045)",
+        border: "1px solid rgba(255,255,255,0.11)",
       }}
     >
       <p
@@ -63,7 +63,7 @@ export function HourlyForecastChart({ hourly }: Props) {
             <stop
               offset="0%"
               stopColor="#60a5fa"
-              stopOpacity="0.20"
+              stopOpacity="0.35"
             />
             <stop
               offset="100%"
@@ -77,7 +77,7 @@ export function HourlyForecastChart({ hourly }: Props) {
           points={points}
           fill="none"
           stroke="#60a5fa"
-          strokeWidth="1.5"
+          strokeWidth="2.5"
           strokeLinecap="round"
           strokeLinejoin="round"
         />

@@ -15,8 +15,8 @@ export function DailyForecastCard({ daily }: Props) {
     <div
       className="rounded-2xl p-4 flex flex-col gap-2 h-full"
       style={{
-        background: "rgba(255,255,255,0.025)",
-        border: "1px solid rgba(255,255,255,0.07)",
+        background: "rgba(255,255,255,0.045)",
+        border: "1px solid rgba(255,255,255,0.11)",
       }}
     >
       <p
@@ -25,10 +25,10 @@ export function DailyForecastCard({ daily }: Props) {
           color: "rgba(255,255,255,0.28)",
         }}
       >
-        3-Day Forecast
+        4-Day Forecast
       </p>
       <div className="flex flex-col gap-2 flex-1">
-        {daily.slice(1).map((d, i) => {
+        {daily.slice(1, 5).map((d, i) => {
           const dow = DAYS[(todayIdx + i + 1) % 7];
           const isNxt = i === 0;
           return (
@@ -90,6 +90,13 @@ export function DailyForecastCard({ daily }: Props) {
                   {d.tempMin}°
                 </span>
               </span>
+              <div style={{ opacity: 0.45, transform: "rotate(15deg)" }}>
+                <WeatherIcon
+                  type={wmoIcon(d.weatherCode)}
+                  size={18}
+                  color="rgba(148,163,184,0.8)"
+                />
+              </div>
             </div>
           );
         })}

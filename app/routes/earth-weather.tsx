@@ -61,7 +61,7 @@ export default function EarthWeatherPage({ loaderData }: Route.ComponentProps) {
 
   return (
     <div className="flex flex-col h-screen" style={{ background: "#050a12" }}>
-      <DashboardTopbar title="Earth Weather Explorer" />
+      <DashboardTopbar title="Earth Weather Explorer" subtitle="HELIOS Observatory" />
 
       <main className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
         <SearchBar city={DEFAULT_CITY} />
@@ -69,7 +69,7 @@ export default function EarthWeatherPage({ loaderData }: Route.ComponentProps) {
         {/* 3-column main section */}
         <div
           className="grid gap-3"
-          style={{ gridTemplateColumns: "300px 1fr 240px", minHeight: "420px" }}
+          style={{ gridTemplateColumns: "300px 1fr 240px", minHeight: "520px" }}
         >
           {/* Left column: current conditions + hourly chart */}
           <div className="flex flex-col gap-3">
@@ -105,7 +105,7 @@ export default function EarthWeatherPage({ loaderData }: Route.ComponentProps) {
             style={{
               background: "#060b14",
               border: "1px solid rgba(255,255,255,0.07)",
-              minHeight: "420px",
+              minHeight: "520px",
             }}
           >
             <Suspense

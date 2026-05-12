@@ -30,7 +30,7 @@ function EarthScene() {
   const cloudMat = useMemo(() => new THREE.MeshBasicMaterial({
     map: cloudMap,
     transparent: true,
-    opacity: 0.18,
+    opacity: 0.25,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
   }), [cloudMap]);
@@ -52,7 +52,7 @@ function EarthScene() {
       void main() {
         float rim = 1.0 - max(dot(vNormal, vec3(0,0,1)), 0.0);
         rim = pow(rim, 3.0);
-        gl_FragColor = vec4(0.15, 0.45, 1.0, rim * 0.8);
+        gl_FragColor = vec4(0.10, 0.40, 1.0, rim * 0.9);
       }
     `,
     transparent: true,
@@ -109,9 +109,6 @@ function EarthScene() {
 export function WeatherGlobeScene() {
   return (
     <div className="relative w-full h-full">
-      <div className="absolute inset-0 pointer-events-none" style={{
-        background: "radial-gradient(ellipse 60% 60% at 50% 50%, rgba(10,30,100,0.60) 0%, transparent 70%)",
-      }} />
       <Canvas
         key="weather-globe"
         camera={{ position: [0, 0, 2.6], fov: 42 }}

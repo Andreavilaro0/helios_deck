@@ -63,8 +63,8 @@ export function CurrentConditionsCard({
     <div
       className="rounded-2xl p-4 flex flex-col gap-3"
       style={{
-        background: "rgba(255,255,255,0.025)",
-        border: "1px solid rgba(255,255,255,0.07)",
+        background: "rgba(255,255,255,0.045)",
+        border: "1px solid rgba(255,255,255,0.11)",
       }}
     >
       <div className="flex items-start justify-between">
@@ -119,16 +119,16 @@ export function CurrentConditionsCard({
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
-        <WeatherIcon
-          type={icon}
-          size={96}
-          color="rgba(148,163,184,0.90)"
-        />
-        <div>
+      <div className="flex gap-3 flex-1">
+        <div className="flex flex-col items-center justify-center gap-1">
+          <WeatherIcon
+            type={icon}
+            size={80}
+            color="rgba(148,163,184,0.90)"
+          />
           <div
             style={{
-              fontSize: 60,
+              fontSize: 48,
               fontWeight: 700,
               fontFamily: "monospace",
               color: "#fff",
@@ -139,27 +139,27 @@ export function CurrentConditionsCard({
           </div>
           <div
             style={{
-              fontSize: "11px",
+              fontSize: "10px",
               fontFamily: "monospace",
               color: "rgba(255,255,255,0.45)",
-              marginTop: 2,
+              textAlign: "center",
             }}
           >
             {label}
           </div>
         </div>
-      </div>
 
-      <div
-        className="flex flex-col gap-1.5 pt-2"
-        style={{
-          borderTop: "1px solid rgba(255,255,255,0.06)",
-        }}
-      >
-        <StatItem label="Wind Speed" value={`${current.windSpeed} km/h`} />
-        <StatItem label="Pressure" value={`${current.pressure} hPa`} />
-        <StatItem label="Humidity" value={`${current.humidity}%`} />
-        <StatItem label="UV Index" value={String(current.uvIndex)} />
+        <div
+          className="self-stretch shrink-0"
+          style={{ width: 1, background: "rgba(255,255,255,0.08)" }}
+        />
+
+        <div className="flex flex-col gap-1.5 flex-1 justify-center">
+          <StatItem label="Wind" value={`${current.windSpeed} km/h`} />
+          <StatItem label="Pressure" value={`${current.pressure} hPa`} />
+          <StatItem label="Humidity" value={`${current.humidity}%`} />
+          <StatItem label="UV Index" value={String(current.uvIndex)} />
+        </div>
       </div>
     </div>
   );
