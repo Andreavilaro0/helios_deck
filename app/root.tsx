@@ -45,14 +45,19 @@ function AppShell() {
   return (
     <div
       className="min-h-screen pt-[34px] pb-[34px] px-[48px]"
-      style={{ background: "#060e14" }}
+      style={{ background: "#020811" }}
     >
       <div
         className="flex min-h-[calc(100vh-68px)] overflow-hidden"
         style={{
           borderRadius: "28px",
-          background: "#17262f",
-          border: "1px solid rgba(249,243,250,0.09)",
+          background: "#030915",
+          backgroundImage: `
+            radial-gradient(circle at 18% 18%, rgba(43,98,214,0.14) 0%, transparent 25%),
+            radial-gradient(circle at 76% 32%, rgba(52,129,255,0.08) 0%, transparent 26%),
+            radial-gradient(circle at 52% 100%, rgba(8,28,69,0.30) 0%, transparent 42%)
+          `,
+          border: "1px solid rgba(255,255,255,0.06)",
           boxShadow: "0 0 0 1px rgba(0,0,0,0.5), 0 40px 80px rgba(0,0,0,0.6)",
         }}
       >

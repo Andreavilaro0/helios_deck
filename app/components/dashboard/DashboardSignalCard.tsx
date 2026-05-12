@@ -28,6 +28,20 @@ const COLOR_MAP: Record<SignalColor, string> = {
   violet: "var(--dash-violet)",
 };
 
+const GLOW_MAP: Record<SignalColor, string> = {
+  amber:  "0 0 28px rgba(245,158,11,0.22),  0 0 0 1px rgba(245,158,11,0.32),  inset 0 1px 0 rgba(255,255,255,0.07)",
+  cyan:   "0 0 28px rgba(34,211,238,0.18),  0 0 0 1px rgba(34,211,238,0.28),  inset 0 1px 0 rgba(255,255,255,0.07)",
+  blue:   "0 0 28px rgba(96,165,250,0.18),  0 0 0 1px rgba(96,165,250,0.28),  inset 0 1px 0 rgba(255,255,255,0.07)",
+  violet: "0 0 28px rgba(167,139,250,0.22), 0 0 0 1px rgba(167,139,250,0.32), inset 0 1px 0 rgba(255,255,255,0.07)",
+};
+
+const BG_MAP: Record<SignalColor, string> = {
+  amber:  "linear-gradient(160deg, rgba(245,158,11,0.12) 0%, rgba(245,158,11,0.04) 35%, rgba(249,243,250,0.02) 100%)",
+  cyan:   "linear-gradient(160deg, rgba(34,211,238,0.10) 0%, rgba(34,211,238,0.03) 35%, rgba(249,243,250,0.02) 100%)",
+  blue:   "linear-gradient(160deg, rgba(96,165,250,0.10) 0%, rgba(96,165,250,0.03) 35%, rgba(249,243,250,0.02) 100%)",
+  violet: "linear-gradient(160deg, rgba(167,139,250,0.12) 0%, rgba(167,139,250,0.04) 35%, rgba(249,243,250,0.02) 100%)",
+};
+
 export function DashboardSignalCard({
   label,
   subtitle,
@@ -51,14 +65,21 @@ export function DashboardSignalCard({
     <article
       className={`relative overflow-hidden rounded-2xl border flex flex-col gap-1 ${compact ? "p-4" : "p-5"}`}
       style={{
-        background: "var(--dash-card-bg)",
-        borderColor: "var(--dash-card-border)",
+        background: BG_MAP[statusColor],
+        borderColor: "transparent",
         backdropFilter: "blur(8px)",
+        boxShadow: GLOW_MAP[statusColor],
         animation: `fadeSlideUp 500ms ease both`,
         animationDelay: `${animationDelay}ms`,
         color: accent,
       }}
     >
+      {/* Top accent line */}
+      <div
+        className="absolute top-0 left-0 right-0 h-px"
+        style={{ background: `linear-gradient(90deg, transparent, ${accent}80, transparent)` }}
+      />
+
       {/* Header */}
       <div className="flex items-start justify-between gap-1 mb-1">
         <span

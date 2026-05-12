@@ -25,6 +25,12 @@ function UtcClock() {
   );
 }
 
+const STATUS_LABEL: Record<string, string> = {
+  QUIET:  "CALMA",
+  ACTIVE: "ACTIVO",
+  STORM:  "TORMENTA",
+};
+
 const STATUS_DOT: Record<string, string> = {
   QUIET:  "rgba(249,243,250,0.55)",
   ACTIVE: "#8aa4d9",
@@ -42,7 +48,7 @@ const STATUS_BORDER: Record<string, string> = {
 };
 
 export function DashboardTopbar({
-  title = "Dashboard",
+  title = "Panel",
   subtitle,
   freshnessAge,
   overallStatus = "QUIET",
@@ -55,24 +61,25 @@ export function DashboardTopbar({
     <header
       className="sticky top-0 z-40 flex items-center"
       style={{
-        height: "70px",
-        paddingLeft: "28px",
-        paddingRight: "28px",
+        height: "68px",
+        paddingLeft: "24px",
+        paddingRight: "24px",
         gap: "14px",
-        background: "linear-gradient(180deg, rgba(98,137,206,0.07) 0%, #0d1b24 100%)",
-        borderBottom: "1px solid rgba(98,137,206,0.22)",
-        boxShadow: "0 1px 24px rgba(98,137,206,0.10)",
+        background: "linear-gradient(180deg, rgba(5,12,26,0.92) 0%, rgba(3,9,19,0.96) 100%)",
+        borderBottom: "1px solid rgba(255,255,255,0.06)",
+        boxShadow: "0 1px 24px rgba(0,0,0,0.18)",
+        backdropFilter: "blur(16px)",
       }}
     >
-      <div className="flex flex-col shrink-0" style={{ gap: 2 }}>
+      <div className="flex flex-col shrink-0" style={{ gap: 3 }}>
         {subtitle && (
-          <p style={{ fontSize: "9px", fontFamily: "monospace", color: "rgba(255,255,255,0.35)", letterSpacing: "0.14em", textTransform: "uppercase", lineHeight: 1 }}>
+          <p style={{ fontSize: "9px", fontFamily: "monospace", color: "rgba(255,255,255,0.35)", letterSpacing: "0.22em", textTransform: "uppercase", lineHeight: 1 }}>
             {subtitle}
           </p>
         )}
         <h1
-          className="font-bold"
-          style={{ fontSize: "22px", color: "#ffffff", letterSpacing: "-0.03em", lineHeight: 1 }}
+          className="font-semibold"
+          style={{ fontSize: "21px", color: "#ffffff", letterSpacing: "-0.02em", lineHeight: 1 }}
         >
           {title}
         </h1>
@@ -85,24 +92,23 @@ export function DashboardTopbar({
       <div
         className="flex items-center gap-2 shrink-0"
         style={{
-          padding: "8px 14px",
+          padding: "6px 14px",
           background: bg,
           border: `1px solid ${border}`,
-          borderRadius: "10px",
+          borderRadius: "20px",
         }}
       >
         <span
           className="rounded-full shrink-0"
           style={{
-            width: "8px",
-            height: "8px",
+            width: "7px",
+            height: "7px",
             background: dot,
             boxShadow: overallStatus !== "QUIET" ? `0 0 8px 2px ${dot}` : "none",
-            animation: overallStatus !== "QUIET" ? "glowPulse 2s ease-in-out infinite" : undefined,
           }}
         />
-        <span className="font-bold leading-none" style={{ fontSize: "12px", color: "#ffffff", letterSpacing: "0.07em" }}>
-          {overallStatus}
+        <span className="font-mono leading-none" style={{ fontSize: "10px", color: "#ffffff", letterSpacing: "0.18em", textTransform: "uppercase" }}>
+          {STATUS_LABEL[overallStatus] ?? overallStatus}
         </span>
       </div>
 
@@ -110,17 +116,26 @@ export function DashboardTopbar({
 
       <div className="flex items-center gap-2 shrink-0">
         {freshnessAge && (
-          <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)" }}>
-            {freshnessAge} ago
-          </span>
+          <div
+            style={{
+              padding: "6px 12px",
+              background: "linear-gradient(180deg, rgba(8,17,34,0.54) 0%, rgba(4,9,20,0.66) 100%)",
+              border: "1px solid rgba(255,255,255,0.07)",
+              borderRadius: "16px",
+            }}
+          >
+            <span style={{ fontSize: "10px", fontFamily: "monospace", color: "rgba(255,255,255,0.50)" }}>
+              hace {freshnessAge}
+            </span>
+          </div>
         )}
 
         <div
           style={{
-            padding: "8px 14px",
-            background: "rgba(255,255,255,0.05)",
-            border: "1px solid rgba(255,255,255,0.09)",
-            borderRadius: "10px",
+            padding: "6px 14px",
+            background: "linear-gradient(180deg, rgba(8,17,34,0.54) 0%, rgba(4,9,20,0.66) 100%)",
+            border: "1px solid rgba(255,255,255,0.07)",
+            borderRadius: "16px",
           }}
         >
           <UtcClock />
@@ -128,13 +143,13 @@ export function DashboardTopbar({
 
         <div
           style={{
-            padding: "8px 14px",
-            background: "rgba(98,137,206,0.10)",
-            border: "1px solid rgba(98,137,206,0.24)",
-            borderRadius: "10px",
+            padding: "6px 14px",
+            background: "linear-gradient(180deg, rgba(8,17,34,0.54) 0%, rgba(4,9,20,0.66) 100%)",
+            border: "1px solid rgba(77,153,255,0.32)",
+            borderRadius: "16px",
           }}
         >
-          <span style={{ fontSize: "12px", color: "#ffffff", letterSpacing: "0.06em", fontWeight: 700 }}>
+          <span style={{ fontSize: "11px", fontFamily: "monospace", color: "rgba(255,255,255,0.90)", letterSpacing: "0.16em" }}>
             NOAA SWPC
           </span>
         </div>

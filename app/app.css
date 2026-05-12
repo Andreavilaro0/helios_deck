@@ -81,41 +81,75 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
-/* Dark mode via system preference — no JS toggle needed */
+/* Dark mode — system preference + .dark class (JS toggle in root.tsx) */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
+    --background: #17262f;
+    --foreground: #f9f3fa;
+    --card: #1a2e3a;
+    --card-foreground: #f9f3fa;
+    --popover: #1a2e3a;
+    --popover-foreground: #f9f3fa;
+    --primary: #6289ce;
+    --primary-foreground: #17262f;
+    --secondary: #1a2e3a;
+    --secondary-foreground: #f9f3fa;
+    --muted: #1a2e3a;
+    --muted-foreground: rgba(249, 243, 250, 0.45);
+    --accent: #6289ce;
+    --accent-foreground: #17262f;
+    --destructive: #6289ce;
+    --border: rgba(249, 243, 250, 0.09);
+    --input: rgba(249, 243, 250, 0.09);
+    --ring: rgba(98, 137, 206, 0.40);
+    --chart-1: #6289ce;
+    --chart-2: #f9f3fa;
+    --chart-3: #8aa4d9;
+    --chart-4: #4a6ba8;
+    --chart-5: #1a2e3a;
+    --sidebar: #17262f;
+    --sidebar-foreground: #f9f3fa;
+    --sidebar-primary: #6289ce;
+    --sidebar-primary-foreground: #17262f;
+    --sidebar-accent: #1a2e3a;
+    --sidebar-accent-foreground: #f9f3fa;
+    --sidebar-border: rgba(249, 243, 250, 0.07);
+    --sidebar-ring: rgba(98, 137, 206, 0.25);
   }
+}
+
+html.dark {
+  --background: #17262f;
+  --foreground: #f9f3fa;
+  --card: #1a2e3a;
+  --card-foreground: #f9f3fa;
+  --popover: #1a2e3a;
+  --popover-foreground: #f9f3fa;
+  --primary: #6289ce;
+  --primary-foreground: #17262f;
+  --secondary: #1a2e3a;
+  --secondary-foreground: #f9f3fa;
+  --muted: #1a2e3a;
+  --muted-foreground: rgba(249, 243, 250, 0.45);
+  --accent: #6289ce;
+  --accent-foreground: #17262f;
+  --destructive: #6289ce;
+  --border: rgba(249, 243, 250, 0.09);
+  --input: rgba(249, 243, 250, 0.09);
+  --ring: rgba(98, 137, 206, 0.40);
+  --chart-1: #6289ce;
+  --chart-2: #f9f3fa;
+  --chart-3: #8aa4d9;
+  --chart-4: #4a6ba8;
+  --chart-5: #1a2e3a;
+  --sidebar: #17262f;
+  --sidebar-foreground: #f9f3fa;
+  --sidebar-primary: #6289ce;
+  --sidebar-primary-foreground: #17262f;
+  --sidebar-accent: #1a2e3a;
+  --sidebar-accent-foreground: #f9f3fa;
+  --sidebar-border: rgba(249, 243, 250, 0.07);
+  --sidebar-ring: rgba(98, 137, 206, 0.25);
 }
 
 @layer base {
@@ -132,19 +166,22 @@
 
 /* ── Instrument shell — always-dark scientific console ─────────────────────── */
 .instrument-shell {
-  background-color: #030712;
-  color: #cbd5e1;
+  background-color: #17262f;
+  color: #f9f3fa;
 }
 
 /* ── Dashboard premium — design tokens ─────────────────────────────────────── */
+/* Palette: #17262f (bg) · #f9f3fa (foreground) · #6289ce (blue accent) */
 :root {
-  --dash-bg: #080c14;
-  --dash-card-border: rgba(255 255 255 / 0.08);
-  --dash-card-bg: rgba(255 255 255 / 0.04);
-  --dash-amber: #f59e0b;
-  --dash-cyan: #22d3ee;
-  --dash-blue: #60a5fa;
-  --dash-violet: #a78bfa;
+  --dash-bg: #17262f;
+  --dash-card-border: rgba(249, 243, 250, 0.09);
+  --dash-card-bg: rgba(249, 243, 250, 0.03);
+
+  /* Signal accent colors — distinct per signal type */
+  --dash-amber: #f59e0b;   /* X-Ray Flux  — warm amber/solar fire */
+  --dash-cyan:  #22d3ee;   /* Proton Flux — energetic cyan         */
+  --dash-blue:  #60a5fa;   /* Solar Wind  — sky blue               */
+  --dash-violet: #a78bfa;  /* Kp Index    — aurora violet          */
 }
 
 /* ── Dashboard animations ───────────────────────────────────────────────────── */
@@ -187,7 +224,16 @@
   50%       { box-shadow: var(--planet-glow-peak); }
 }
 
+@keyframes glowPulse {
+  0%, 100% { opacity: 1;   box-shadow: inherit; }
+  50%       { opacity: 0.7; filter: brightness(1.6); }
+}
+
 @keyframes planetRotate {
   from { background-position: 0% 50%; }
   to   { background-position: 100% 50%; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }

@@ -7,7 +7,7 @@ import { CosmicEmptyState } from "./CosmicEmptyState";
 describe("CosmicEmptyState", () => {
   it("shows no-data message", () => {
     render(<MemoryRouter><CosmicEmptyState /></MemoryRouter>);
-    expect(screen.getByText(/no signal data available/i)).toBeInTheDocument();
+    expect(screen.getByText(/sin datos de señal/i)).toBeInTheDocument();
   });
 
   it("shows ingest command", () => {
@@ -17,11 +17,11 @@ describe("CosmicEmptyState", () => {
 
   it("shows reload instruction", () => {
     render(<MemoryRouter><CosmicEmptyState /></MemoryRouter>);
-    expect(screen.getByText(/reload this page/i)).toBeInTheDocument();
+    expect(screen.getByText(/recarga esta página/i)).toBeInTheDocument();
   });
 
   it("shows link back to dashboard", () => {
     render(<MemoryRouter><CosmicEmptyState /></MemoryRouter>);
-    expect(screen.getByText(/back to dashboard/i)).toBeInTheDocument();
+    expect(screen.getByText(/volver al panel/i)).toBeInTheDocument();
   });
 });

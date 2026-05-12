@@ -5,12 +5,14 @@ interface Props {
   city: string;
   searchQuery: string;
   isLoading: boolean;
+  isSearching: boolean;
   suggestions: WeatherLocation[];
   onSearch: (q: string) => void;
   onSelectLocation: (loc: WeatherLocation) => void;
+  onSubmit: () => void;
 }
 
-export function SearchBar({ city, searchQuery, isLoading, suggestions, onSearch, onSelectLocation }: Props) {
+export function SearchBar({ city, searchQuery, isLoading, isSearching, suggestions, onSearch, onSelectLocation, onSubmit }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -18,12 +20,18 @@ export function SearchBar({ city, searchQuery, isLoading, suggestions, onSearch,
       {/* Search input */}
       <div
         className="flex items-center gap-3 rounded-2xl"
-        style={{ padding: "10px 16px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)" }}
+        style={{
+          padding: "14px 18px",
+          background: "rgba(2,6,30,0.80)",
+          border: "1px solid rgba(59,130,246,0.55)",
+          boxShadow: "0 0 0 1px rgba(59,130,246,0.08), 0 6px 40px rgba(59,130,246,0.20), 0 0 120px rgba(59,130,246,0.07)",
+          backdropFilter: "blur(24px)",
+        }}
       >
         {/* Blue circle with search icon */}
         <div
           className="flex items-center justify-center shrink-0"
-          style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(59,130,246,0.22)", border: "1px solid rgba(59,130,246,0.38)" }}
+          style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(59,130,246,0.28)", border: "1px solid rgba(59,130,246,0.65)", boxShadow: "0 0 20px rgba(59,130,246,0.30)" }}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2.5" strokeLinecap="round">
             <circle cx="11" cy="11" r="8" />
@@ -35,14 +43,16 @@ export function SearchBar({ city, searchQuery, isLoading, suggestions, onSearch,
           ref={inputRef}
           value={searchQuery}
           onChange={(e) => onSearch(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") onSubmit(); }}
           placeholder={city}
           style={{
             flex: 1,
             background: "transparent",
             border: "none",
             outline: "none",
-            fontSize: "14px",
-            color: searchQuery ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.55)",
+            fontSize: "16px",
+            fontWeight: 500,
+            color: searchQuery ? "rgba(240,248,255,0.95)" : "rgba(148,163,184,0.55)",
             fontFamily: "inherit",
           }}
         />
@@ -62,10 +72,11 @@ export function SearchBar({ city, searchQuery, isLoading, suggestions, onSearch,
         {/* Loading spinner or location pin */}
         <div
           className="flex items-center justify-center shrink-0"
-          style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.10)" }}
+          style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(5,15,50,0.70)", border: "1px solid rgba(59,130,246,0.25)" }}
         >
           {isLoading ? (
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.50)" strokeWidth="2.5" strokeLinecap="round">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.50)" strokeWidth="2.5" strokeLinecap="round"
+              style={{ animation: "spin 0.8s linear infinite", transformOrigin: "center" }}>
               <path d="M21 12a9 9 0 1 1-6.219-8.56" />
             </svg>
           ) : (
@@ -78,8 +89,8 @@ export function SearchBar({ city, searchQuery, isLoading, suggestions, onSearch,
 
       {/* Suggestion chips */}
       <div className="flex items-center gap-3">
-        <span style={{ fontSize: "9px", fontFamily: "monospace", color: "rgba(255,255,255,0.25)", letterSpacing: "0.14em", textTransform: "uppercase", whiteSpace: "nowrap", flexShrink: 0 }}>
-          {searchQuery ? "Results" : "Suggestions"}
+        <span style={{ fontSize: "9px", fontFamily: "monospace", color: isSearching ? "rgba(147,197,253,0.70)" : "rgba(100,130,180,0.50)", letterSpacing: "0.16em", textTransform: "uppercase", whiteSpace: "nowrap", flexShrink: 0 }}>
+          {isSearching ? "Buscando…" : searchQuery ? "Resultados" : "Sugerencias"}
         </span>
         <div className="flex gap-1.5 overflow-x-auto">
           {suggestions.map((loc) => (
@@ -88,22 +99,24 @@ export function SearchBar({ city, searchQuery, isLoading, suggestions, onSearch,
               onClick={() => onSelectLocation(loc)}
               className="flex items-center gap-1.5 shrink-0 rounded-lg"
               style={{
-                padding: "4px 10px",
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.08)",
+                padding: "5px 12px",
+                background: "rgba(8,20,60,0.70)",
+                border: "1px solid rgba(59,130,246,0.22)",
                 fontSize: "10px",
                 fontFamily: "monospace",
-                color: "rgba(255,255,255,0.50)",
+                color: "rgba(148,163,184,0.65)",
                 cursor: "pointer",
-                transition: "background 0.15s, color 0.15s",
+                transition: "all 0.15s",
               }}
               onMouseEnter={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background = "rgba(59,130,246,0.14)";
-                (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.80)";
+                (e.currentTarget as HTMLButtonElement).style.background = "rgba(59,130,246,0.20)";
+                (e.currentTarget as HTMLButtonElement).style.color = "rgba(147,197,253,0.90)";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(59,130,246,0.50)";
               }}
               onMouseLeave={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.04)";
-                (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.50)";
+                (e.currentTarget as HTMLButtonElement).style.background = "rgba(8,20,60,0.70)";
+                (e.currentTarget as HTMLButtonElement).style.color = "rgba(148,163,184,0.65)";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(59,130,246,0.22)";
               }}
             >
               <svg width="7" height="9" viewBox="0 0 8 10" fill="rgba(255,255,255,0.35)">
@@ -112,9 +125,9 @@ export function SearchBar({ city, searchQuery, isLoading, suggestions, onSearch,
               {loc.name}
             </button>
           ))}
-          {suggestions.length === 0 && (
+          {suggestions.length === 0 && !isSearching && (
             <span style={{ fontSize: "10px", fontFamily: "monospace", color: "rgba(255,255,255,0.25)" }}>
-              No cities found
+              No se encontró ninguna ubicación
             </span>
           )}
         </div>

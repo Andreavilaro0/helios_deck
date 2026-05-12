@@ -36,30 +36,35 @@ function IconEarth() {
 }
 
 const NAV_ITEMS = [
-  { to: "/dashboard",     label: "Dashboard",      icon: <IconDashboard /> },
-  { to: "/cosmic-view",   label: "Cosmic View",    icon: <IconCosmic />    },
-  { to: "/earth-weather", label: "Earth Weather",  icon: <IconEarth />     },
+  { to: "/dashboard",     label: "Panel",               icon: <IconDashboard /> },
+  { to: "/cosmic-view",   label: "Vista Cósmica",        icon: <IconCosmic />    },
+  { to: "/earth-weather", label: "Clima Terrestre",      icon: <IconEarth />     },
 ];
 
 // ── System badges ─────────────────────────────────────────────────────────────
 
-const BADGES = ["NOAA", "UTC", "SQLite", "SSR"];
+const BADGES = [
+  { label: "NOAA",   color: "rgba(74,222,128,0.55)"  },
+  { label: "UTC",    color: "rgba(56,189,248,0.55)"  },
+  { label: "SQLite", color: "rgba(96,165,250,0.55)"  },
+  { label: "SSR",    color: "rgba(167,139,250,0.50)" },
+];
 
 function SystemBadges() {
   return (
     <div className="flex flex-col gap-1 w-full px-3">
       <div className="flex flex-wrap gap-1">
-        {BADGES.map((label) => (
+        {BADGES.map((b) => (
           <div
-            key={label}
+            key={b.label}
             className="flex items-center justify-center px-2 py-0.5 rounded"
             style={{
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.07)",
+              background: "rgba(5,15,45,0.65)",
+              border: "1px solid rgba(59,130,246,0.18)",
             }}
           >
-            <span className="text-[8px] font-mono tracking-widest text-white/25 uppercase">
-              {label}
+            <span className="text-[8px] font-mono tracking-widest uppercase" style={{ color: b.color }}>
+              {b.label}
             </span>
           </div>
         ))}
@@ -82,8 +87,8 @@ function UtcClock() {
   return (
     <div className="px-3 w-full">
       <div className="flex items-center gap-2">
-        <span className="text-[9px] font-mono text-white/25 uppercase tracking-widest">UTC</span>
-        <span className="text-[11px] font-mono text-white/40 tabular-nums">{utc}</span>
+        <span className="text-[9px] font-mono uppercase tracking-widest" style={{ color: "rgba(100,130,180,0.45)" }}>UTC</span>
+        <span className="text-[11px] font-mono tabular-nums" style={{ color: "rgba(147,197,253,0.60)" }}>{utc}</span>
       </div>
     </div>
   );
@@ -91,14 +96,23 @@ function UtcClock() {
 
 // ── Sidebar ───────────────────────────────────────────────────────────────────
 
+const PATH_META: Record<string, { label: string; sub: string }> = {
+  "/dashboard":     { label: "Panel",           sub: "Monitor de Clima Espacial" },
+  "/cosmic-view":   { label: "Vista Cósmica",   sub: "Planeta Vivo" },
+  "/earth-weather": { label: "Clima Terrestre", sub: "Explorador Meteorológico" },
+};
+
 export function AppSidebar(): ReactNode {
+  const { pathname } = useLocation();
+  const meta = PATH_META[pathname] ?? { label: "HELIOS", sub: "Observatorio" };
+
   return (
     <aside
       className="sticky top-0 h-screen shrink-0 z-50 flex flex-col py-5 gap-2"
       style={{
         width: "200px",
-        background: "#131f28",
-        borderRight: "1px solid rgba(249,243,250,0.05)",
+        background: "#030e22",
+        borderRight: "1px solid rgba(59,130,246,0.18)",
       }}
     >
       {/* App branding */}
@@ -107,11 +121,12 @@ export function AppSidebar(): ReactNode {
           <div
             className="rounded-xl flex items-center justify-center shrink-0"
             style={{
-              width: "36px",
-              height: "36px",
-              background: "rgba(98,137,206,0.12)",
-              border: "1px solid rgba(98,137,206,0.22)",
-              boxShadow: "0 0 12px rgba(98,137,206,0.10)",
+              width: "38px",
+              height: "38px",
+              background: "rgba(59,130,246,0.16)",
+              border: "1px solid rgba(59,130,246,0.38)",
+              boxShadow: "0 0 24px rgba(59,130,246,0.22)",
+              borderRadius: "10px",
             }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6289ce" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -123,11 +138,11 @@ export function AppSidebar(): ReactNode {
             </svg>
           </div>
           <div>
-            <p className="font-semibold leading-tight" style={{ fontSize: "15px", color: "#f9f3fa", letterSpacing: "-0.01em" }}>
+            <p className="font-semibold leading-tight" style={{ fontSize: "15px", color: "#f0f8ff", letterSpacing: "-0.01em", fontWeight: 700 }}>
               HELIOS
             </p>
-            <p style={{ fontSize: "10px", color: "rgba(249,243,250,0.35)", marginTop: "1px" }}>
-              Space Weather
+            <p style={{ fontSize: "10px", color: "rgba(100,130,180,0.60)", marginTop: "1px" }}>
+              Clima Espacial
             </p>
           </div>
         </div>
@@ -136,24 +151,24 @@ export function AppSidebar(): ReactNode {
         <div
           className="rounded-xl px-3 py-2.5"
           style={{
-            background: "rgba(98,137,206,0.08)",
-            border: "1px solid rgba(98,137,206,0.16)",
+            background: "rgba(8,25,70,0.65)",
+            border: "1px solid rgba(59,130,246,0.22)",
           }}
         >
-          <p style={{ fontSize: "11px", color: "rgba(249,243,250,0.40)", marginBottom: "2px" }}>
-            Current view
+          <p style={{ fontSize: "11px", color: "rgba(100,130,180,0.55)", marginBottom: "2px" }}>
+            Vista actual
           </p>
-          <p className="font-semibold" style={{ fontSize: "14px", color: "#f9f3fa" }}>
-            Dashboard
+          <p className="font-semibold" style={{ fontSize: "14px", color: "#e2f0ff", fontWeight: 600 }}>
+            {meta.label}
           </p>
           <p style={{ fontSize: "10px", color: "rgba(249,243,250,0.30)" }}>
-            Space Weather Monitor
+            {meta.sub}
           </p>
         </div>
       </div>
 
       {/* Divider */}
-      <div className="mx-5 h-px shrink-0" style={{ background: "rgba(255,255,255,0.05)" }} />
+      <div className="mx-5 h-px shrink-0" style={{ background: "rgba(59,130,246,0.10)" }} />
 
       {/* Nav items */}
       <nav className="flex flex-col gap-0.5 flex-1 px-3 pt-1">
@@ -163,11 +178,12 @@ export function AppSidebar(): ReactNode {
             to={item.to}
             className="group relative flex items-center gap-3 w-full px-3 py-2.5 rounded-xl transition-all duration-200"
             style={({ isActive }) => ({
-              color: isActive ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.30)",
-              background: isActive ? "rgba(255,255,255,0.08)" : "transparent",
+              color: isActive ? "#60a5fa" : "rgba(148,163,184,0.45)",
+              background: isActive ? "rgba(59,130,246,0.16)" : "transparent",
               border: isActive
-                ? "1px solid rgba(255,255,255,0.09)"
+                ? "1px solid rgba(59,130,246,0.38)"
                 : "1px solid transparent",
+              boxShadow: isActive ? "0 0 20px rgba(59,130,246,0.10)" : "none",
             })}
           >
             <span className="shrink-0">{item.icon}</span>
@@ -183,13 +199,13 @@ export function AppSidebar(): ReactNode {
       </nav>
 
       {/* Divider */}
-      <div className="mx-5 h-px shrink-0" style={{ background: "rgba(255,255,255,0.05)" }} />
+      <div className="mx-5 h-px shrink-0" style={{ background: "rgba(59,130,246,0.10)" }} />
 
       {/* System badges */}
       <SystemBadges />
 
       {/* Divider */}
-      <div className="mx-5 h-px shrink-0" style={{ background: "rgba(255,255,255,0.05)" }} />
+      <div className="mx-5 h-px shrink-0" style={{ background: "rgba(59,130,246,0.10)" }} />
 
       {/* UTC clock */}
       <UtcClock />
@@ -199,5 +215,5 @@ export function AppSidebar(): ReactNode {
 
 export function useSidebarVisible(): boolean {
   const { pathname } = useLocation();
-  return pathname !== "/" && pathname !== "/cosmic-view";
+  return pathname !== "/";
 }

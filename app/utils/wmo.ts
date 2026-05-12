@@ -1,18 +1,18 @@
 export function wmoLabel(code: number): string {
-  if (code === 0) return "Clear Sky";
+  if (code === 0) return "Cielo Despejado";
   if (code === 1) return "Mainly Clear";
-  if (code === 2) return "Partly Cloudy";
-  if (code === 3) return "Overcast";
-  if (code <= 48) return "Fog";
-  if (code <= 55) return "Drizzle";
-  if (code === 61) return "Light Rain";
-  if (code === 63) return "Moderate Rain";
-  if (code === 65) return "Heavy Rain";
-  if (code <= 67) return "Freezing Rain";
-  if (code <= 77) return "Snow";
-  if (code <= 82) return "Rain Showers";
-  if (code <= 86) return "Snow Showers";
-  return "Thunderstorm";
+  if (code === 2) return "Parcialmente Nublado";
+  if (code === 3) return "Nublado";
+  if (code <= 48) return "Niebla";
+  if (code <= 55) return "Llovizna";
+  if (code === 61) return "Lluvia Ligera";
+  if (code === 63) return "Lluvia Moderada";
+  if (code === 65) return "Lluvia Intensa";
+  if (code <= 67) return "Lluvia Helada";
+  if (code <= 77) return "Nieve";
+  if (code <= 82) return "Chubascos";
+  if (code <= 86) return "Chubascos de Nieve";
+  return "Tormenta Eléctrica";
 }
 
 export function wmoIcon(code: number): string {

@@ -4,14 +4,17 @@ import type { SignalRecord } from "~/types/signal";
 import { getLatestSignalByName, listRecentSignalsByName } from "~/services/signals.server";
 import { getSignalFreshness } from "~/utils/signal-freshness";
 import { CosmicEmptyState } from "~/components/cosmic/CosmicEmptyState";
+import { DashboardTopbar } from "~/components/layout/DashboardTopbar";
+import type { PlanetId } from "~/components/cosmic/planet-explorer";
+import { PLANET_EXPLORER_PLANETS } from "~/components/cosmic/planet-explorer";
 
 // Lazy — keeps Three.js/R3F out of the SSR bundle entirely.
 const CosmicViewClient = lazy(() => import("~/components/cosmic/CosmicViewClient"));
 
 export function meta(_: Route.MetaArgs) {
   return [
-    { title: "HELIOS_DECK — Cosmic View" },
-    { name: "description", content: "Living Planet Observatory — real-time space weather driven by NOAA data." },
+    { title: "HELIOS_DECK — Vista Cósmica" },
+    { name: "description", content: "Observatorio de Planetas Vivos — clima espacial en tiempo real con datos NOAA." },
   ];
 }
 
@@ -72,24 +75,44 @@ export default function CosmicViewRoute({ loaderData }: Route.ComponentProps) {
     heroAge,
   } = loaderData;
 
+  const [selectedPlanet, setSelectedPlanet] = useState<PlanetId>("mars");
+  const planetName = PLANET_EXPLORER_PLANETS.find((p) => p.id === selectedPlanet)?.name ?? "Mars";
+
   if (!latestSignal) {
-    return <CosmicEmptyState />;
+    return (
+      <div className="flex flex-col" style={{ height: "calc(100vh - 68px)" }}>
+        <DashboardTopbar title={planetName} subtitle="Observatorio de Planetas Vivos" overallStatus="QUIET" />
+        <div style={{ flex: 1, overflow: "hidden", minHeight: 0 }}>
+          <CosmicEmptyState />
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div style={{ height: "calc(100vh - 68px)", overflow: "hidden" }}>
-      <CosmicScene
-        signal={latestSignal}
-        solarWind={latestSolarWind}
-        xrayFlux={latestXRayFlux}
-        protonFlux={latestProtonFlux}
-        recentKp={recentKp}
-        recentXRay={recentXRay}
-        recentWind={recentWind}
-        recentProton={recentProton}
+    <div className="flex flex-col" style={{ height: "calc(100vh - 68px)" }}>
+      <DashboardTopbar
+        title={planetName}
+        subtitle="Observatorio de Planetas Vivos"
         overallStatus={overallStatus}
-        heroAge={heroAge}
+        freshnessAge={heroAge}
       />
+      <div style={{ flex: 1, overflow: "hidden", minHeight: 0 }}>
+        <CosmicScene
+          signal={latestSignal}
+          solarWind={latestSolarWind}
+          xrayFlux={latestXRayFlux}
+          protonFlux={latestProtonFlux}
+          recentKp={recentKp}
+          recentXRay={recentXRay}
+          recentWind={recentWind}
+          recentProton={recentProton}
+          overallStatus={overallStatus}
+          heroAge={heroAge}
+          selectedPlanet={selectedPlanet}
+          onSelectPlanet={setSelectedPlanet}
+        />
+      </div>
     </div>
   );
 }
@@ -109,12 +132,14 @@ interface CosmicClientProps {
   recentProton: SignalRecord[];
   overallStatus: "QUIET" | "ACTIVE" | "STORM";
   heroAge?: string;
+  selectedPlanet: PlanetId;
+  onSelectPlanet: (id: PlanetId) => void;
 }
 
 const loadingFallback = (
   <div className="bg-[#030712] flex items-center justify-center" style={{ height: "100%" }}>
     <span className="text-[10px] font-mono text-cyan-500/40 uppercase tracking-widest">
-      Initializing 3D engine…
+      Iniciando motor 3D…
     </span>
   </div>
 );

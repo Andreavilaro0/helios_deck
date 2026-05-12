@@ -27,7 +27,6 @@ function describeArc(startDeg: number, endDeg: number): string {
 
 export function KpRingWidget({ kp }: Props) {
   const color = kp >= 5 ? "#f43f5e" : kp >= 4 ? "#f59e0b" : "#34d399";
-  const label = kp >= 5 ? "STORM CONDITIONS" : kp >= 4 ? "ACTIVE CONDITIONS" : "QUIET CONDITIONS";
   const trackPath = describeArc(ARC_START_DEG, ARC_START_DEG + ARC_SPAN_DEG);
   const fillEnd   = ARC_START_DEG + (Math.min(kp, 9) / 9) * ARC_SPAN_DEG;
   const fillPath  = kp > 0.01 ? describeArc(ARC_START_DEG, fillEnd) : null;
@@ -37,7 +36,7 @@ export function KpRingWidget({ kp }: Props) {
   const dotPt  = arcPoint(dotDeg);
 
   return (
-    <div className="flex flex-col items-center gap-0.5">
+    <div className="flex flex-col items-center">
       <svg
         viewBox="0 0 140 140"
         className="w-28 h-28"
@@ -151,9 +150,6 @@ export function KpRingWidget({ kp }: Props) {
           Kp
         </text>
       </svg>
-      <span className="text-[9px] font-mono tracking-widest uppercase" style={{ color }}>
-        {label}
-      </span>
     </div>
   );
 }

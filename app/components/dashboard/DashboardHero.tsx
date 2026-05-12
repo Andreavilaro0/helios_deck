@@ -19,6 +19,7 @@ interface HeroConfig {
   color: string;
   borderColor: string;
   bgColor: string;
+  boxShadow: string;
   description: string;
   riskLabel: string;
   riskColor: string;
@@ -26,34 +27,37 @@ interface HeroConfig {
 
 const STATUS_CONFIG: Record<OverallStatus, HeroConfig> = {
   QUIET: {
-    headlineLines: ["QUIET", "CONDITIONS"],
-    color: "#22d3ee",
-    borderColor: "rgba(255,255,255,0.08)",
-    bgColor: "rgba(255,255,255,0.03)",
+    headlineLines: ["CONDICIONES", "TRANQUILAS"],
+    color: "#f9f3fa",
+    borderColor: "rgba(249,243,250,0.14)",
+    bgColor: "rgba(249,243,250,0.05)",
+    boxShadow: "0 0 48px rgba(249,243,250,0.04), inset 0 1px 0 rgba(255,255,255,0.09)",
     description:
-      "Geomagnetic activity is at quiet levels. No space weather alerts in effect.",
-    riskLabel: "LOW",
-    riskColor: "#4ade80",
+      "La actividad geomagnética está en niveles tranquilos. Sin alertas de clima espacial activas.",
+    riskLabel: "BAJO",
+    riskColor: "rgba(249,243,250,0.45)",
   },
   ACTIVE: {
-    headlineLines: ["ACTIVE", "CONDITIONS"],
-    color: "#fbbf24",
-    borderColor: "rgba(245,158,11,0.2)",
-    bgColor: "rgba(245,158,11,0.04)",
+    headlineLines: ["CONDICIONES", "ACTIVAS"],
+    color: "#8aa4d9",
+    borderColor: "rgba(138,164,217,0.28)",
+    bgColor: "rgba(138,164,217,0.07)",
+    boxShadow: "0 0 48px rgba(138,164,217,0.16), inset 0 1px 0 rgba(255,255,255,0.09)",
     description:
-      "Elevated geomagnetic activity. Minor disruptions to HF radio possible.",
-    riskLabel: "MODERATE",
-    riskColor: "#fbbf24",
+      "Actividad geomagnética elevada. Posibles disrupciones menores en radio HF.",
+    riskLabel: "MODERADO",
+    riskColor: "#8aa4d9",
   },
   STORM: {
-    headlineLines: ["GEOMAGNETIC", "STORM"],
-    color: "#f87171",
-    borderColor: "rgba(239,68,68,0.2)",
-    bgColor: "rgba(239,68,68,0.04)",
+    headlineLines: ["TORMENTA", "GEOMAGNÉTICA"],
+    color: "#6289ce",
+    borderColor: "rgba(98,137,206,0.38)",
+    bgColor: "rgba(98,137,206,0.09)",
+    boxShadow: "0 0 56px rgba(98,137,206,0.22), inset 0 1px 0 rgba(255,255,255,0.10)",
     description:
-      "Geomagnetic storm in progress. Significant satellite and grid impacts possible.",
-    riskLabel: "HIGH",
-    riskColor: "#f87171",
+      "Tormenta geomagnética en curso. Impactos significativos en satélites y redes eléctricas posibles.",
+    riskLabel: "ALTO",
+    riskColor: "#6289ce",
   },
 };
 
@@ -187,7 +191,8 @@ export function DashboardHero({
       style={{
         background: cfg.bgColor,
         border: `1px solid ${cfg.borderColor}`,
-        backdropFilter: "blur(8px)",
+        backdropFilter: "blur(12px)",
+        boxShadow: cfg.boxShadow,
       }}
     >
       {/* Planet */}
@@ -199,7 +204,7 @@ export function DashboardHero({
           className="text-[9px] font-mono tracking-[0.25em] uppercase mb-1"
           style={{ color: "rgba(255,255,255,0.30)" }}
         >
-          Space Weather Condition
+          Condición del Clima Espacial
         </p>
         <h1
           className="font-mono font-black leading-[1.05]"
@@ -221,10 +226,10 @@ export function DashboardHero({
 
       {/* Right — 4 mini stats in a row */}
       <div className="shrink-0 flex gap-2">
-        <MiniCard label="Risk" value={cfg.riskLabel} valueColor={cfg.riskColor} />
-        <MiniCard label="Freshness" value={freshnessAge} />
-        <MiniCard label="Ingested" value={lastIngestedTime} sub={lastIngestedDate} />
-        <MiniCard label="Source" value="NOAA SWPC" sub="Primary feed" />
+        <MiniCard label="Riesgo" value={cfg.riskLabel} valueColor={cfg.riskColor} />
+        <MiniCard label="Actualización" value={freshnessAge} />
+        <MiniCard label="Ingerido" value={lastIngestedTime} sub={lastIngestedDate} />
+        <MiniCard label="Fuente" value="NOAA SWPC" sub="Fuente principal" />
       </div>
     </header>
   );

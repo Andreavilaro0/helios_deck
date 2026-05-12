@@ -186,18 +186,52 @@ export function WeatherGlobeScene({ lat, lon, locationLabel }: Props) {
 
       {/* Location label overlay */}
       <div className="absolute inset-x-0 top-3 pointer-events-none flex flex-col items-center gap-1">
-        <span style={{ fontSize: "8px", fontFamily: "monospace", color: "rgba(255,255,255,0.38)",
-          letterSpacing: "0.16em", textTransform: "uppercase" }}>
+        <span style={{
+          fontSize: "8px", fontFamily: "monospace", color: "rgba(147,197,253,0.55)",
+          letterSpacing: "0.20em", textTransform: "uppercase",
+          textShadow: "0 0 10px rgba(59,130,246,0.40)",
+        }}>
           Location on Earth
         </span>
-        <div className="flex items-center gap-1.5">
-          <svg width="8" height="10" viewBox="0 0 8 10" fill="#38bdf8">
+        <div className="flex items-center gap-1.5" style={{
+          background: "rgba(2,6,30,0.72)",
+          border: "1px solid rgba(59,130,246,0.45)",
+          borderRadius: "99px",
+          padding: "4px 12px 4px 8px",
+          backdropFilter: "blur(12px)",
+          boxShadow: "0 0 20px rgba(59,130,246,0.18)",
+        }}>
+          <svg width="8" height="10" viewBox="0 0 8 10" fill="#38bdf8" style={{ filter: "drop-shadow(0 0 4px rgba(56,189,248,0.70))" }}>
             <path d="M4 0C2.07 0 .5 1.57.5 3.5 .5 6.13 4 10 4 10s3.5-3.87 3.5-6.5C7.5 1.57 5.93 0 4 0zm0 4.75a1.25 1.25 0 110-2.5 1.25 1.25 0 010 2.5z" />
           </svg>
-          <span style={{ fontSize: "13px", fontFamily: "monospace", fontWeight: 600, color: "#e2e8f0" }}>
+          <span style={{ fontSize: "13px", fontFamily: "monospace", fontWeight: 700, color: "#e2e8f0",
+            textShadow: "0 0 20px rgba(56,189,248,0.30)" }}>
             {locationLabel}
           </span>
         </div>
+      </div>
+
+      {/* HUD — corner brackets + center crosshair */}
+      <svg className="absolute inset-0 pointer-events-none w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+        {/* Corner brackets */}
+        <path d="M 5 16 L 5 5 L 16 5"  fill="none" stroke="rgba(59,130,246,0.60)" strokeWidth="1.2" />
+        <path d="M 84 5 L 95 5 L 95 16" fill="none" stroke="rgba(59,130,246,0.60)" strokeWidth="1.2" />
+        <path d="M 5 84 L 5 95 L 16 95" fill="none" stroke="rgba(59,130,246,0.60)" strokeWidth="1.2" />
+        <path d="M 95 84 L 95 95 L 84 95" fill="none" stroke="rgba(59,130,246,0.60)" strokeWidth="1.2" />
+        {/* Center crosshair */}
+        <circle cx="50" cy="50" r="1.5" fill="none" stroke="rgba(59,130,246,0.28)" strokeWidth="0.5" />
+        <line x1="45.5" y1="50" x2="48" y2="50" stroke="rgba(59,130,246,0.22)" strokeWidth="0.5" />
+        <line x1="52"   y1="50" x2="54.5" y2="50" stroke="rgba(59,130,246,0.22)" strokeWidth="0.5" />
+        <line x1="50" y1="45.5" x2="50" y2="48"   stroke="rgba(59,130,246,0.22)" strokeWidth="0.5" />
+        <line x1="50" y1="52"   x2="50" y2="54.5"  stroke="rgba(59,130,246,0.22)" strokeWidth="0.5" />
+      </svg>
+
+      {/* Coordinates readout — bottom right */}
+      <div className="absolute bottom-3 right-4 pointer-events-none">
+        <span style={{ fontSize: "8px", fontFamily: "monospace", color: "rgba(59,130,246,0.48)", letterSpacing: "0.12em" }}>
+          {lat >= 0 ? `${lat.toFixed(2)}°N` : `${Math.abs(lat).toFixed(2)}°S`}{" · "}
+          {lon >= 0 ? `${lon.toFixed(2)}°E` : `${Math.abs(lon).toFixed(2)}°W`}
+        </span>
       </div>
     </div>
   );

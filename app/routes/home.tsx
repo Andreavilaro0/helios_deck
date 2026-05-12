@@ -4,8 +4,8 @@ import { Welcome } from "../welcome/welcome";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "HELIOS_DECK — Space Weather Observatory" },
-    { name: "description", content: "A fullstack observatory for normalized heliophysical and geophysical data." },
+    { title: "HELIOS_DECK — Observatorio de Clima Espacial" },
+    { name: "description", content: "Un observatorio fullstack para datos heliosfísicos y geofísicos normalizados." },
   ];
 }
 
@@ -17,7 +17,7 @@ export default function Home() {
           to="/dashboard"
           className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
         >
-          → Observatory Dashboard
+          → Panel del Observatorio
         </Link>
       </nav>
       <Welcome />

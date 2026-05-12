@@ -36,21 +36,14 @@ interface IconModuleProps {
 
 function IconModule({ icon: Icon, colorClass, glowColor, label, value, sub }: IconModuleProps) {
   return (
-    <div className="flex items-center gap-2.5">
-      <div
-        className="size-8 rounded-lg flex items-center justify-center shrink-0"
-        style={{
-          background: `${glowColor}12`,
-          border: `1px solid ${glowColor}25`,
-          boxShadow: `0 0 10px ${glowColor}15`,
-        }}
-      >
-        <Icon className={`size-4 ${colorClass}`} />
+    <div className="flex items-center gap-3">
+      <div className="size-11 rounded-xl flex items-center justify-center shrink-0">
+        <Icon className={`size-5 ${colorClass}`} />
       </div>
       <div>
-        <div className="text-[8px] font-mono text-slate-600 uppercase tracking-wider">{label}</div>
-        <div className="text-[10px] font-mono text-slate-300 tabular-nums">{value}</div>
-        {sub && <div className="text-[8px] font-mono text-slate-700">{sub}</div>}
+        <div className="text-[9px] font-mono text-slate-500 uppercase tracking-wider mb-0.5">{label}</div>
+        <div className="text-[13px] font-mono text-slate-200 tabular-nums font-semibold">{value}</div>
+        {sub && <div className="text-[9px] font-mono text-slate-600 mt-0.5">{sub}</div>}
       </div>
     </div>
   );
@@ -60,10 +53,10 @@ export function BottomPipelineBar({ kpSignal }: Props) {
   const freshness = getSignalFreshness(kpSignal);
   const freshLabel =
     freshness.status === "fresh"
-      ? "Excellent"
+      ? "Excelente"
       : freshness.status === "stale"
-        ? "Stale"
-        : "No data";
+        ? "Desactualizado"
+        : "Sin datos";
   const freshClass =
     freshness.status === "fresh"
       ? "text-emerald-400"
@@ -73,56 +66,50 @@ export function BottomPipelineBar({ kpSignal }: Props) {
 
   return (
     <div
-      className="h-[80px] flex items-center justify-between px-7 shrink-0 gap-6"
+      className="flex items-center justify-between px-8 shrink-0 gap-6"
       style={{
-        borderRadius: 18,
-        background: "rgba(8,16,34,0.16)",
-        backdropFilter: "blur(44px) saturate(190%)",
-        WebkitBackdropFilter: "blur(44px) saturate(190%)",
-        border: "1px solid rgba(170,205,245,0.13)",
-        boxShadow: "0 4px 24px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.17), inset 0 -1px 0 rgba(0,0,0,0.10)",
+        height: "100px",
+        background: "transparent",
       }}
     >
       <IconModule
         icon={Database}
         colorClass="text-emerald-500/80"
         glowColor="#10b981"
-        label="Data Ingested"
+        label="Datos ingeridos"
         value={formatLastObserved(kpSignal)}
       />
 
       <IconModule
         icon={RefreshCw}
-        colorClass="text-cyan-500/80"
+        colorClass={freshClass}
         glowColor="#06b6d4"
-        label="Freshness"
+        label="Actualización"
         value={`${formatAge(kpSignal)} · ${freshLabel}`}
       />
-
-      <div className={`text-[10px] font-mono ${freshClass} hidden sm:block`} />
 
       <div className="hidden sm:block">
         <IconModule
           icon={Globe}
-          colorClass="text-blue-500/80"
-          glowColor="#3b82f6"
-          label="Data Source"
+          colorClass="text-[#6289ce]"
+          glowColor="#6289ce"
+          label="Fuente de datos"
           value="NOAA SWPC"
           sub="swpc.noaa.gov"
         />
       </div>
 
       <div className="hidden md:block">
-        <div className="text-[8px] font-mono text-slate-600 uppercase tracking-wider mb-1.5">Pipeline</div>
-        <div className="flex items-center gap-1.5 text-[9px] font-mono">
-          <Database className="size-3 text-emerald-500/70" />
-          <span className="text-slate-400">SQLite</span>
-          <span className="text-slate-700">→</span>
-          <Globe className="size-3 text-cyan-500/70" />
-          <span className="text-slate-400">SSR</span>
-          <span className="text-slate-700">→</span>
-          <Monitor className="size-3 text-blue-500/70" />
-          <span className="text-slate-400">UI</span>
+        <div className="text-[9px] font-mono text-slate-500 uppercase tracking-wider mb-2">Pipeline de datos</div>
+        <div className="flex items-center gap-2 text-[11px] font-mono">
+          <Database className="size-4 text-emerald-500/70" />
+          <span className="text-slate-300">SQLite</span>
+          <span className="text-slate-600 mx-0.5">→</span>
+          <Globe className="size-4 text-[#6289ce]/70" />
+          <span className="text-slate-300">SSR</span>
+          <span className="text-slate-600 mx-0.5">→</span>
+          <Monitor className="size-4 text-[#8aa4d9]/70" />
+          <span className="text-slate-300">UI</span>
         </div>
       </div>
 
@@ -130,8 +117,8 @@ export function BottomPipelineBar({ kpSignal }: Props) {
         icon={Monitor}
         colorClass="text-emerald-500/80"
         glowColor="#10b981"
-        label="System Status"
-        value="Operational"
+        label="Estado del sistema"
+        value="Operacional"
       />
     </div>
   );

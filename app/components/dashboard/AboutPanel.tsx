@@ -19,29 +19,29 @@ const APIS = [
     icon: "🛰",
     name: "NOAA SWPC",
     url: "services.swpc.noaa.gov",
-    desc: "Planetary K-index, 1-minute cadence. Primary geomagnetic source.",
+    desc: "Índice K planetario, cadencia de 1 minuto. Fuente geomagnética principal.",
   },
   {
     icon: "🛰",
     name: "NOAA GOES XRS",
-    url: "GOES-19 satellite",
-    desc: "X-ray flux 0.1–0.8 nm and proton flux ≥10 MeV integral.",
+    url: "satélite GOES-19",
+    desc: "Flujo de Rayos X 0.1–0.8 nm y flujo de protones ≥10 MeV integral.",
   },
   {
     icon: "🛰",
     name: "NOAA DSCOVR / ACE",
-    url: "L1 Lagrange point",
-    desc: "Real-time solar wind speed at 1.5 million km from Earth.",
+    url: "Punto de Lagrange L1",
+    desc: "Velocidad del viento solar en tiempo real a 1,5 millones de km de la Tierra.",
   },
 ];
 
-const PIPELINE_STEPS = ["NOAA API", "Normalizer", "SQLite", "SSR Loader", "UI"];
+const PIPELINE_STEPS = ["NOAA API", "Normalizador", "SQLite", "Cargador SSR", "UI"];
 
 const STATS = [
-  { label: "Tests", value: "235 ✓" },
-  { label: "Signals tracked", value: "4" },
-  { label: "Data source", value: "NOAA" },
-  { label: "CI", value: "GitHub Actions" },
+  { label: "Pruebas", value: "235 ✓" },
+  { label: "Señales rastreadas", value: "4" },
+  { label: "Fuente de datos", value: "NOAA" },
+  { label: "IC", value: "GitHub Actions" },
 ] as const;
 
 export function AboutPanel({ open, onClose }: AboutPanelProps): ReactNode {
@@ -80,7 +80,7 @@ export function AboutPanel({ open, onClose }: AboutPanelProps): ReactNode {
         >
           <div>
             <p className="font-mono text-xs text-white/30 tracking-widest uppercase">
-              About this project
+              Sobre este proyecto
             </p>
             <p className="font-mono text-base font-bold text-white mt-0.5">
               HELIOS_DECK
@@ -99,20 +99,21 @@ export function AboutPanel({ open, onClose }: AboutPanelProps): ReactNode {
         <div className="flex flex-col gap-8 px-6 py-8">
           {/* What it does */}
           <section>
-            <SectionTitle>What it does</SectionTitle>
+            <SectionTitle>Qué hace</SectionTitle>
             <p className="text-sm text-white/60 leading-relaxed">
-              HELIOS_DECK is a full-stack space weather observatory that
-              ingests live heliophysical data from NOAA satellites, normalizes
-              and stores it in SQLite, and renders it server-side in real time.
-              It tracks four key signals — X-Ray flux, Proton flux, Solar Wind
-              speed, and the Kp geomagnetic index — giving a live picture of
-              conditions between the Sun and Earth.
+              HELIOS_DECK es un observatorio fullstack de clima espacial que
+              ingiere datos heliosfísicos en vivo de satélites NOAA, los
+              normaliza y almacena en SQLite, y los renderiza en el servidor en
+              tiempo real. Rastrea cuatro señales clave — flujo de Rayos X,
+              flujo de protones, velocidad del viento solar y el índice
+              geomagnético Kp — dando una imagen en vivo de las condiciones
+              entre el Sol y la Tierra.
             </p>
           </section>
 
           {/* Data pipeline */}
           <section>
-            <SectionTitle>Data pipeline</SectionTitle>
+            <SectionTitle>Pipeline de datos</SectionTitle>
             <div className="flex items-center gap-1 flex-wrap mt-3">
               {PIPELINE_STEPS.map((step, i) => (
                 <div key={step} className="flex items-center gap-1">
@@ -136,7 +137,7 @@ export function AboutPanel({ open, onClose }: AboutPanelProps): ReactNode {
 
           {/* Data sources */}
           <section>
-            <SectionTitle>Data sources & APIs</SectionTitle>
+            <SectionTitle>Fuentes de datos y APIs</SectionTitle>
             <div className="flex flex-col gap-3 mt-3">
               {APIS.map((api) => (
                 <div
@@ -160,14 +161,14 @@ export function AboutPanel({ open, onClose }: AboutPanelProps): ReactNode {
                 </div>
               ))}
               <p className="text-xs font-mono text-white/25 mt-1">
-                All data: public domain — no API key required.
+                Todos los datos: dominio público — sin clave API requerida.
               </p>
             </div>
           </section>
 
           {/* Built with */}
           <section>
-            <SectionTitle>Built with</SectionTitle>
+            <SectionTitle>Construido con</SectionTitle>
             <div className="grid grid-cols-3 gap-2 mt-3">
               {TECH_STACK.map((tech) => (
                 <div
@@ -191,7 +192,7 @@ export function AboutPanel({ open, onClose }: AboutPanelProps): ReactNode {
 
           {/* Stats */}
           <section>
-            <SectionTitle>Project stats</SectionTitle>
+            <SectionTitle>Estadísticas del proyecto</SectionTitle>
             <div className="grid grid-cols-2 gap-2 mt-3">
               {STATS.map((stat) => (
                 <div

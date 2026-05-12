@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import type { SignalRecord } from "~/types/signal";
 import { getSignalFreshness } from "~/utils/signal-freshness";
-import { MiniSparkline } from "./MiniSparkline";
+import { LwSparkline } from "./LwSparkline";
 
 interface Props {
   title: string;
@@ -128,7 +128,7 @@ export function ObservatorySignalCard({
 
       {recentValues && recentValues.length >= 2 ? (
         <div className="border-t border-white/5 pt-1.5">
-          <MiniSparkline
+          <LwSparkline
             values={recentValues}
             color={sparklineColor}
             logScale={logScale}
@@ -136,6 +136,7 @@ export function ObservatorySignalCard({
             barColorFn={barColorFn}
             barDomainMax={barDomainMax}
             thresholdLines={thresholdLines}
+            height={72}
           />
         </div>
       ) : null}

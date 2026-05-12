@@ -5,7 +5,7 @@ import {
   listRecentSignalsByName,
 } from "~/services/signals.server";
 import { getSpaceWeatherImpact } from "~/utils/space-impact";
-import { EarthWeatherHeader } from "~/components/weather/EarthWeatherHeader";
+import { DashboardTopbar } from "~/components/layout/DashboardTopbar";
 import { SearchBar } from "~/components/weather/SearchBar";
 import { CurrentConditionsCard } from "~/components/weather/CurrentConditionsCard";
 import { HourlyForecastChart } from "~/components/weather/HourlyForecastChart";
@@ -25,7 +25,7 @@ const WeatherGlobeScene = lazy(() =>
 );
 
 export function meta(_: Route.MetaArgs) {
-  return [{ title: "HELIOS — Earth Weather Explorer" }];
+  return [{ title: "HELIOS — Explorador de Clima Terrestre" }];
 }
 
 export async function loader(_: Route.LoaderArgs) {
@@ -37,8 +37,10 @@ export async function loader(_: Route.LoaderArgs) {
 }
 
 const CARD_STYLE = {
-  background: "rgba(255,255,255,0.025)",
+  background: "linear-gradient(180deg, rgba(8,17,34,0.54) 0%, rgba(4,9,20,0.66) 100%)",
   border:     "1px solid rgba(255,255,255,0.07)",
+  boxShadow:  "0 10px 30px rgba(0,0,0,0.22), inset 0 0 18px rgba(255,255,255,0.018)",
+  backdropFilter: "blur(16px)",
 };
 
 function EmptyCard({ label }: { label: string }) {
@@ -53,39 +55,57 @@ function EmptyCard({ label }: { label: string }) {
 
 export default function EarthWeatherPage({ loaderData }: Route.ComponentProps) {
   const { kp, kpHistory } = loaderData;
+  const overallStatus = kp >= 5 ? "STORM" as const : kp >= 4 ? "ACTIVE" as const : "QUIET" as const;
   const hw = useEarthWeather();
 
   const cityLabel     = `${hw.location.name}, ${hw.location.country}`;
   const precipToday   = hw.weather?.daily[0]?.precipProbMax ?? 0;
 
   return (
-    <div className="flex flex-col h-full">
-      <EarthWeatherHeader />
+    <div
+      className="flex flex-col h-full"
+      style={{
+        background: "transparent",
+        backgroundImage: [
+          "radial-gradient(ellipse at 80% 0%, rgba(52,129,255,0.14) 0%, transparent 40%)",
+          "radial-gradient(ellipse at 5% 90%, rgba(14,165,233,0.10) 0%, transparent 36%)",
+          "radial-gradient(ellipse at 50% 50%, rgba(30,58,138,0.10) 0%, transparent 60%)",
+          "radial-gradient(ellipse at 78% 78%, rgba(99,102,241,0.07) 0%, transparent 28%)",
+        ].join(", "),
+      }}
+    >
+      <DashboardTopbar title="Clima Terrestre" subtitle="Explorador Meteorológico" overallStatus={overallStatus} />
 
-      <main className="flex-1 overflow-y-auto p-3 flex flex-col gap-3">
+      <main className="flex-1 overflow-hidden p-4 flex flex-col gap-3 min-h-0">
         <SearchBar
           city={cityLabel}
           searchQuery={hw.searchQuery}
           isLoading={hw.isLoading}
+          isSearching={hw.isSearching}
           suggestions={hw.suggestions}
           onSearch={hw.setSearchQuery}
           onSelectLocation={hw.setLocation}
+          onSubmit={hw.submitSearch}
         />
 
         {/* Row 1 — Current conditions + 3D Globe */}
         <div
-          className="grid gap-3"
-          style={{ gridTemplateColumns: "340px 1fr", height: "290px" }}
+          className="grid gap-4 min-h-0"
+          style={{ gridTemplateColumns: "300px 1fr", flex: "36 1 0" }}
         >
           {hw.weather ? (
-            <CurrentConditionsCard weather={hw.weather} city={cityLabel} />
+            <CurrentConditionsCard weather={hw.weather} city={cityLabel} apiStatus={hw.apiStatus} />
           ) : (
             <EmptyCard label="Weather unavailable" />
           )}
 
           <div
             className="rounded-2xl overflow-hidden relative"
-            style={{ background: "#060b14", border: "1px solid rgba(255,255,255,0.07)" }}
+            style={{
+              background: "radial-gradient(ellipse at 50% 55%, rgba(10,30,100,0.35) 0%, rgba(1,4,18,1) 58%)",
+              border: "1px solid rgba(59,130,246,0.32)",
+              boxShadow: "0 0 60px rgba(59,130,246,0.12) inset, 0 12px 60px rgba(0,0,0,0.85)",
+            }}
           >
             <Suspense
               fallback={
@@ -105,10 +125,10 @@ export default function EarthWeatherPage({ loaderData }: Route.ComponentProps) {
           </div>
         </div>
 
-        {/* Row 2 — Hourly chart + 5-day forecast */}
+        {/* Row 2 — Hourly chart + 4-day forecast */}
         <div
-          className="grid gap-3"
-          style={{ gridTemplateColumns: "1fr 340px" }}
+          className="grid gap-4 min-h-0"
+          style={{ gridTemplateColumns: "1fr 300px", flex: "40 1 0" }}
         >
           {hw.weather ? (
             <HourlyForecastChart hourly={hw.weather.hourly} />
@@ -125,8 +145,8 @@ export default function EarthWeatherPage({ loaderData }: Route.ComponentProps) {
 
         {/* Row 3 — 6 stat cards */}
         <div
-          className="grid gap-3"
-          style={{ gridTemplateColumns: "repeat(6, 1fr)", minHeight: "150px" }}
+          className="grid gap-4 min-h-0"
+          style={{ gridTemplateColumns: "repeat(6, 1fr)", flex: "24 1 0" }}
         >
           <SunriseSunsetCard
             sunrise={hw.sunrise}
@@ -152,11 +172,33 @@ export default function EarthWeatherPage({ loaderData }: Route.ComponentProps) {
         {/* Footer */}
         <div
           className="flex items-center justify-between px-2 pb-1 shrink-0"
-          style={{ fontSize: "8px", fontFamily: "monospace", color: "rgba(255,255,255,0.20)" }}
+          style={{ fontSize: "9px", fontFamily: "monospace", color: "rgba(100,130,180,0.45)" }}
         >
-          <span>Data Source: NOAA, MET Norway, Open-Meteo</span>
-          <span>All times local to {hw.location.name} ({hw.location.timezone})</span>
-          <span>Auto-refresh: 60s</span>
+          <span>Fuente: Open-Meteo · NOAA SWPC · SQLite</span>
+          <div className="flex items-center gap-2">
+            {hw.apiStatus === "demo" && (
+              <span style={{
+                fontSize: "9px", fontFamily: "monospace", letterSpacing: "0.10em",
+                color: "rgba(251,191,36,0.65)",
+                border: "1px solid rgba(251,191,36,0.22)",
+                padding: "1px 7px", borderRadius: 99,
+              }}>
+                DATOS DEMO
+              </span>
+            )}
+            {hw.apiStatus === "live" && (
+              <span style={{
+                fontSize: "9px", fontFamily: "monospace", letterSpacing: "0.10em",
+                color: "rgba(74,222,128,0.65)",
+                border: "1px solid rgba(74,222,128,0.22)",
+                padding: "1px 7px", borderRadius: 99,
+              }}>
+                EN VIVO
+              </span>
+            )}
+            <span>Hora local · {hw.location.timezone}</span>
+          </div>
+          <span>Actualización: 60s</span>
         </div>
       </main>
     </div>

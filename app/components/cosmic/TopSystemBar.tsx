@@ -100,7 +100,7 @@ export function TopSystemBar({ kpSignal }: Props) {
           <span
             className={`text-[9px] font-mono uppercase tracking-wider ${isFresh ? "text-emerald-400" : "text-amber-400"}`}
           >
-            {isFresh ? "Fresh" : "Stale"}
+            {isFresh ? "Actualizado" : "Desactualizado"}
           </span>
         </div>
       </div>
@@ -114,7 +114,7 @@ export function TopSystemBar({ kpSignal }: Props) {
           to="/dashboard"
           className="text-[10px] font-mono text-slate-400 hover:text-slate-200 transition-colors hidden md:block"
         >
-          ← dashboard
+          ← panel
         </Link>
         <Settings className="size-4 text-slate-500 hover:text-slate-300 transition-colors cursor-pointer" />
         <Bell className="size-4 text-slate-500 hover:text-slate-300 transition-colors cursor-pointer" />

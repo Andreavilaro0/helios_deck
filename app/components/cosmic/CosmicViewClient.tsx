@@ -1,4 +1,3 @@
-import { useState } from "react";
 import type { SignalRecord } from "~/types/signal";
 import { ObservatoryShell } from "./ObservatoryShell";
 import type { PlanetId } from "./planet-explorer";
@@ -14,6 +13,8 @@ interface Props {
   recentProton: SignalRecord[];
   overallStatus: "QUIET" | "ACTIVE" | "STORM";
   heroAge?: string;
+  selectedPlanet: PlanetId;
+  onSelectPlanet: (id: PlanetId) => void;
 }
 
 export default function CosmicViewClient({
@@ -21,15 +22,12 @@ export default function CosmicViewClient({
   solarWind,
   xrayFlux,
   protonFlux,
-  recentKp,
-  recentXRay,
-  recentWind,
-  recentProton,
   overallStatus,
   heroAge,
+  selectedPlanet,
+  onSelectPlanet,
 }: Props) {
   const kp = typeof signal.value === "number" ? signal.value : 0;
-  const [selectedPlanet, setSelectedPlanet] = useState<PlanetId>("mars");
 
   return (
     <ObservatoryShell
@@ -41,7 +39,7 @@ export default function CosmicViewClient({
       overallStatus={overallStatus}
       heroAge={heroAge}
       selectedPlanet={selectedPlanet}
-      onSelectPlanet={setSelectedPlanet}
+      onSelectPlanet={onSelectPlanet}
     />
   );
 }

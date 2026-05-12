@@ -15,7 +15,7 @@ export interface RawOpenMeteo {
     surface_pressure: number;
     wind_speed_10m: number;
     wind_direction_10m: number;
-    uv_index: number;
+    uv_index?: number;
     precipitation: number;
     visibility: number;
   };
@@ -23,6 +23,7 @@ export interface RawOpenMeteo {
     time: string[];
     temperature_2m: number[];
     weather_code: number[];
+    precipitation_probability?: number[];
   };
   daily: {
     time: string[];
@@ -30,6 +31,7 @@ export interface RawOpenMeteo {
     temperature_2m_max: number[];
     temperature_2m_min: number[];
     precipitation_probability_max: number[];
+    uv_index_max?: number[];
   };
 }
 
@@ -43,7 +45,7 @@ export function mapOpenMeteoResponse(raw: RawOpenMeteo, currentHourIdx: number):
     pressure: Math.round(raw.current.surface_pressure),
     windSpeed: Math.round(raw.current.wind_speed_10m),
     windDirection: degreesToCompass(raw.current.wind_direction_10m),
-    uvIndex: Math.round(raw.current.uv_index),
+    uvIndex: Math.round(raw.current.uv_index ?? 0),
     precipitation: raw.current.precipitation,
     visibility: Math.round(raw.current.visibility / 1000),
   };

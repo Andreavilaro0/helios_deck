@@ -21,6 +21,7 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ["three", "@react-three/fiber"],
+    exclude: ["better-sqlite3"],
   },
   // better-sqlite3 is a native Node addon — must not be bundled by Rollup
   // in the SSR build. Let Node load it at runtime instead.

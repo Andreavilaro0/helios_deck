@@ -1,110 +1,77 @@
-const KP_MAX = 9;
-const STORM_THRESHOLD = 5;
-const ACTIVE_THRESHOLD = 4;
+interface Props { currentKp: number }
 
-interface Props {
-  currentKp: number;
+function kpColor(kp: number) {
+  if (kp >= 5) return "#f87171";
+  if (kp >= 4) return "#fbbf24";
+  return "#818cf8";
 }
 
-function kpZoneLabel(kp: number): string {
-  if (kp >= STORM_THRESHOLD) return "STORM";
-  if (kp >= ACTIVE_THRESHOLD) return "ACTIVE";
-  return "QUIET";
-}
-
-function kpZoneColor(kp: number): string {
-  if (kp >= STORM_THRESHOLD) return "text-red-400";
-  if (kp >= ACTIVE_THRESHOLD) return "text-yellow-400";
-  return "text-sky-400";
+function kpLabel(kp: number) {
+  if (kp >= 5) return "TORMENTA";
+  if (kp >= 4) return "ACTIVO";
+  return "CALMA";
 }
 
 export function KpScaleInstrument({ currentKp }: Props) {
-  const clampedKp = Math.min(KP_MAX, Math.max(0, currentKp));
-  const positionPct = (clampedKp / KP_MAX) * 100;
-  const stormPct = (STORM_THRESHOLD / KP_MAX) * 100;
-  const activePct = (ACTIVE_THRESHOLD / KP_MAX) * 100;
+  const kp      = Math.min(9, Math.max(0, currentKp));
+  const pct     = (kp / 9) * 100;
+  const color   = kpColor(kp);
+  const label   = kpLabel(kp);
 
   return (
-    <div className="bg-[#070d1a] border border-cyan-900/30 rounded-sm p-4 space-y-4">
-      <div className="text-[10px] font-mono uppercase tracking-widest text-cyan-500/70 border-b border-cyan-900/20 pb-2">
-        Geomagnetic Scale / NOAA
+    <div
+      className="rounded-2xl p-5 flex flex-col justify-between h-full"
+      style={{ background: "rgba(249,243,250,0.03)", border: "1px solid rgba(249,243,250,0.09)" }}
+    >
+      {/* Header */}
+      <p className="text-[9px] font-mono uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.28)" }}>
+        Escala Geomagnética
+      </p>
+
+      {/* Value + label */}
+      <div className="flex flex-col gap-1">
+        <span style={{ fontSize: 52, fontWeight: 700, fontFamily: "monospace", color: "#fff", lineHeight: 1 }}>
+          {kp.toFixed(1)}
+        </span>
+        <span style={{ fontSize: 11, fontFamily: "monospace", fontWeight: 600, letterSpacing: "0.18em", color }}>
+          {label}
+        </span>
       </div>
 
-      <div className="space-y-3">
-        {/* Zone track */}
-        <div className="relative h-3 rounded-sm overflow-hidden bg-slate-900">
-          {/* Quiet zone */}
-          <div
-            className="absolute inset-y-0 left-0 bg-sky-900/60"
-            style={{ width: `${activePct}%` }}
-            aria-hidden="true"
-          />
-          {/* Active zone */}
-          <div
-            className="absolute inset-y-0 bg-yellow-900/60"
-            style={{ left: `${activePct}%`, width: `${stormPct - activePct}%` }}
-            aria-hidden="true"
-          />
-          {/* Storm zone */}
-          <div
-            className="absolute inset-y-0 right-0 bg-red-900/40"
-            style={{ left: `${stormPct}%` }}
-            aria-hidden="true"
-          />
-          {/* Threshold lines */}
-          <div
-            className="absolute inset-y-0 w-px bg-yellow-500/50"
-            style={{ left: `${activePct}%` }}
-            aria-hidden="true"
-          />
-          <div
-            className="absolute inset-y-0 w-px bg-red-500/50"
-            style={{ left: `${stormPct}%` }}
-            aria-hidden="true"
-          />
-          {/* Current position marker */}
-          <div
-            className="absolute inset-y-0 w-0.5 bg-white"
-            style={{ left: `${positionPct}%`, transform: "translateX(-50%)" }}
-            aria-label={`Current Kp: ${currentKp.toFixed(2)}`}
-          />
+      {/* Gauge */}
+      <div className="flex flex-col gap-2">
+        {/* Bar */}
+        <div className="relative w-full" style={{ height: 10, borderRadius: 99, overflow: "hidden", background: "rgba(255,255,255,0.07)" }}>
+          {/* Zone backgrounds */}
+          <div style={{ position: "absolute", left: 0, width: "44.4%", height: "100%", background: "#818cf8", opacity: 0.20 }} />
+          <div style={{ position: "absolute", left: "44.4%", width: "11.1%", height: "100%", background: "#fbbf24", opacity: 0.30 }} />
+          <div style={{ position: "absolute", left: "55.5%", width: "44.5%", height: "100%", background: "#f87171", opacity: 0.20 }} />
+          {/* Fill */}
+          <div style={{ position: "absolute", left: 0, width: `${pct}%`, height: "100%", background: color, borderRadius: 99 }} />
         </div>
 
-        {/* Scale tick labels */}
-        <div className="flex justify-between text-[9px] font-mono text-slate-600 px-0">
-          {["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"].map((n) => (
-            <span key={n}>{n}</span>
-          ))}
+        {/* Marker line (sits outside overflow:hidden bar) */}
+        <div className="relative w-full" style={{ height: 0 }}>
+          <div style={{
+            position: "absolute",
+            left: `${pct}%`,
+            top: -14,
+            transform: "translateX(-50%)",
+            width: 2,
+            height: 14,
+            background: "#fff",
+            opacity: 0.7,
+            borderRadius: 1,
+          }} />
         </div>
-      </div>
 
-      {/* Zone key */}
-      <div className="grid grid-cols-3 gap-1 text-[9px] font-mono text-center">
-        <div className="space-y-0.5">
-          <div className="text-sky-400 font-semibold">QUIET</div>
-          <div className="text-slate-700">Kp 0 – 3</div>
-        </div>
-        <div className="space-y-0.5">
-          <div className="text-yellow-400 font-semibold">ACTIVE</div>
-          <div className="text-slate-700">Kp 4</div>
-        </div>
-        <div className="space-y-0.5">
-          <div className="text-red-400 font-semibold">STORM</div>
-          <div className="text-slate-700">Kp 5 – 9</div>
-        </div>
-      </div>
-
-      {/* Current status callout */}
-      <div className="border-t border-cyan-900/20 pt-3 text-[10px] font-mono space-y-1">
-        <div className="flex justify-between">
-          <span className="text-slate-700">CURRENT STATUS</span>
-          <span className={`font-semibold ${kpZoneColor(currentKp)}`}>
-            {kpZoneLabel(currentKp)}
-          </span>
-        </div>
-        <div className="flex justify-between text-slate-700">
-          <span>G1 STORM THRESHOLD</span>
-          <span>Kp ≥ {STORM_THRESHOLD}</span>
+        {/* Scale labels */}
+        <div className="flex justify-between" style={{ fontSize: "9px", fontFamily: "monospace", color: "rgba(255,255,255,0.28)", letterSpacing: "0.04em" }}>
+          <span>0</span>
+          <span style={{ color: "rgba(129,140,248,0.6)" }}>CALMA</span>
+          <span style={{ color: "rgba(251,191,36,0.7)" }}>ACT.</span>
+          <span style={{ color: "rgba(248,113,113,0.6)" }}>TORM.</span>
+          <span>9</span>
         </div>
       </div>
     </div>
