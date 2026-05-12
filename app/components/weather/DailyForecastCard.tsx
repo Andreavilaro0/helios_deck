@@ -1,4 +1,4 @@
-import type { WeatherData } from "~/services/fetchers/open-meteo.server";
+import type { WeatherData } from "~/types/weather";
 import { wmoIcon, wmoLabel } from "~/utils/wmo";
 import { WeatherIcon } from "./WeatherIcon";
 
@@ -72,30 +72,21 @@ export function DailyForecastCard({ daily }: Props) {
               >
                 {wmoLabel(d.weatherCode)}
               </span>
-              <span
-                style={{
-                  fontSize: "11px",
-                  fontFamily: "monospace",
-                  fontWeight: 600,
-                  color: "#e2e8f0",
-                }}
-              >
-                {d.tempMax}°
-                <span
-                  style={{
-                    color: "rgba(255,255,255,0.30)",
-                    marginLeft: 4,
-                  }}
-                >
-                  {d.tempMin}°
+              <div className="flex flex-col items-end gap-0.5">
+                <span style={{ fontSize: "11px", fontFamily: "monospace", fontWeight: 600, color: "#e2e8f0" }}>
+                  {d.tempMax}°
+                  <span style={{ color: "rgba(255,255,255,0.30)", marginLeft: 4 }}>{d.tempMin}°</span>
                 </span>
-              </span>
-              <div style={{ opacity: 0.45, transform: "rotate(15deg)" }}>
-                <WeatherIcon
-                  type={wmoIcon(d.weatherCode)}
-                  size={18}
-                  color="rgba(148,163,184,0.8)"
-                />
+                {d.precipProbMax > 0 && (
+                  <div className="flex items-center gap-1">
+                    <svg width="8" height="10" viewBox="0 0 8 10" fill="#60a5fa">
+                      <path d="M4 0 C4 0 0 5.5 0 7a4 4 0 008 0C8 5.5 4 0 4 0z" />
+                    </svg>
+                    <span style={{ fontSize: "9px", fontFamily: "monospace", color: "#60a5fa" }}>
+                      {d.precipProbMax}%
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           );

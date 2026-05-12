@@ -1,31 +1,23 @@
 import { lazy, Suspense } from "react";
 import type { Route } from "./+types/earth-weather";
-import { fetchOpenMeteo } from "~/services/fetchers/open-meteo.server";
 import {
   getLatestSignalByName,
   listRecentSignalsByName,
 } from "~/services/signals.server";
-import { getMoonPhase } from "~/utils/moon-phase";
-import { getSunsetTime, getSunriseTime, minutesUntilSunset } from "~/utils/sun";
 import { getSpaceWeatherImpact } from "~/utils/space-impact";
 import { EarthWeatherHeader } from "~/components/weather/EarthWeatherHeader";
 import { SearchBar } from "~/components/weather/SearchBar";
 import { CurrentConditionsCard } from "~/components/weather/CurrentConditionsCard";
 import { HourlyForecastChart } from "~/components/weather/HourlyForecastChart";
 import { DailyForecastCard } from "~/components/weather/DailyForecastCard";
-import { KpCircleGauge } from "~/components/weather/KpCircleGauge";
-import { PressureGauge } from "~/components/weather/PressureGauge";
-import { HumidityGauge } from "~/components/weather/HumidityGauge";
-import { AuroraSunsetCard } from "~/components/weather/AuroraSunsetCard";
+import { SunriseSunsetCard } from "~/components/weather/SunriseSunsetCard";
+import { UVIndexCard } from "~/components/weather/UVIndexCard";
+import { PressureCard } from "~/components/weather/PressureCard";
+import { RainChanceCard } from "~/components/weather/RainChanceCard";
 import { MoonPhaseWidget } from "~/components/weather/MoonPhaseWidget";
-import { SolarAuroraChart } from "~/components/weather/SolarAuroraChart";
 import { SpaceWeatherImpactCard } from "~/components/weather/SpaceWeatherImpactCard";
+import { useEarthWeather } from "~/hooks/useEarthWeather";
 
-const DEFAULT_LAT = 64.1355;
-const DEFAULT_LON = -21.8954;
-const DEFAULT_CITY = "Reykjavik, Iceland";
-
-// Lazy-load the Three.js globe so it never blocks the main bundle.
 const WeatherGlobeScene = lazy(() =>
   import("~/components/weather/WeatherGlobeScene").then((m) => ({
     default: m.WeatherGlobeScene,
@@ -37,145 +29,134 @@ export function meta(_: Route.MetaArgs) {
 }
 
 export async function loader(_: Route.LoaderArgs) {
-  const now = new Date();
+  const kpSignal  = getLatestSignalByName("kp-index");
+  const kpHistory = listRecentSignalsByName("kp-index", 48);
+  const kp        = typeof kpSignal?.value === "number" ? kpSignal.value : 0;
+  const impact    = getSpaceWeatherImpact(kp);
+  return { kp, kpHistory, impact };
+}
 
-  const [weather, kpSignal, kpHistory] = await Promise.all([
-    fetchOpenMeteo(DEFAULT_LAT, DEFAULT_LON).catch(() => null),
-    Promise.resolve(getLatestSignalByName("kp-index")),
-    Promise.resolve(listRecentSignalsByName("kp-index", 48)),
-  ]);
+const CARD_STYLE = {
+  background: "rgba(255,255,255,0.025)",
+  border:     "1px solid rgba(255,255,255,0.07)",
+};
 
-  const kp = typeof kpSignal?.value === "number" ? kpSignal.value : 0;
-  const moon = getMoonPhase(now);
-  const sunset = getSunsetTime(DEFAULT_LAT, DEFAULT_LON, now);
-  const sunrise = getSunriseTime(DEFAULT_LAT, DEFAULT_LON, now);
-  const minsToSunset = minutesUntilSunset(sunset, now);
-  const impact = getSpaceWeatherImpact(kp);
-
-  return { weather, kp, kpHistory, moon, sunset, sunrise, minsToSunset, impact };
+function EmptyCard({ label }: { label: string }) {
+  return (
+    <div className="rounded-2xl p-4 flex items-center justify-center h-full" style={CARD_STYLE}>
+      <span style={{ fontSize: "11px", fontFamily: "monospace", color: "rgba(255,255,255,0.25)" }}>
+        {label}
+      </span>
+    </div>
+  );
 }
 
 export default function EarthWeatherPage({ loaderData }: Route.ComponentProps) {
-  const { weather, kp, kpHistory, moon, sunset, sunrise, minsToSunset, impact } =
-    loaderData;
+  const { kp, kpHistory } = loaderData;
+  const hw = useEarthWeather();
+
+  const cityLabel     = `${hw.location.name}, ${hw.location.country}`;
+  const precipToday   = hw.weather?.daily[0]?.precipProbMax ?? 0;
 
   return (
-    <div className="flex flex-col h-screen" style={{ background: "#050a12" }}>
+    <div className="flex flex-col h-full">
       <EarthWeatherHeader />
 
-      <main className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
-        <SearchBar city={DEFAULT_CITY} />
+      <main className="flex-1 overflow-y-auto p-3 flex flex-col gap-3">
+        <SearchBar
+          city={cityLabel}
+          searchQuery={hw.searchQuery}
+          isLoading={hw.isLoading}
+          suggestions={hw.suggestions}
+          onSearch={hw.setSearchQuery}
+          onSelectLocation={hw.setLocation}
+        />
 
-        {/* 3-column main section */}
+        {/* Row 1 — Current conditions + 3D Globe */}
         <div
           className="grid gap-3"
-          style={{ gridTemplateColumns: "310px 1fr 190px", minHeight: "580px" }}
+          style={{ gridTemplateColumns: "340px 1fr", height: "290px" }}
         >
-          {/* Left column: current conditions + hourly chart */}
-          <div className="flex flex-col gap-3">
-            {weather ? (
-              <>
-                <CurrentConditionsCard weather={weather} city={DEFAULT_CITY} />
-                <HourlyForecastChart hourly={weather.hourly} />
-              </>
-            ) : (
-              <div
-                className="rounded-2xl p-4 flex items-center justify-center flex-1"
-                style={{
-                  background: "rgba(255,255,255,0.025)",
-                  border: "1px solid rgba(255,255,255,0.07)",
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: "11px",
-                    fontFamily: "monospace",
-                    color: "rgba(255,255,255,0.25)",
-                  }}
-                >
-                  Weather unavailable
-                </span>
-              </div>
-            )}
-          </div>
+          {hw.weather ? (
+            <CurrentConditionsCard weather={hw.weather} city={cityLabel} />
+          ) : (
+            <EmptyCard label="Weather unavailable" />
+          )}
 
-          {/* Center column: interactive 3D globe */}
           <div
             className="rounded-2xl overflow-hidden relative"
-            style={{
-              background: "#060b14",
-              border: "1px solid rgba(255,255,255,0.07)",
-              minHeight: "580px",
-            }}
+            style={{ background: "#060b14", border: "1px solid rgba(255,255,255,0.07)" }}
           >
             <Suspense
               fallback={
                 <div className="w-full h-full flex items-center justify-center">
-                  <span
-                    style={{
-                      fontSize: "10px",
-                      fontFamily: "monospace",
-                      color: "rgba(255,255,255,0.2)",
-                    }}
-                  >
+                  <span style={{ fontSize: "10px", fontFamily: "monospace", color: "rgba(255,255,255,0.2)" }}>
                     Loading globe…
                   </span>
                 </div>
               }
             >
-              <WeatherGlobeScene />
+              <WeatherGlobeScene
+                lat={hw.location.lat}
+                lon={hw.location.lon}
+                locationLabel={cityLabel}
+              />
             </Suspense>
           </div>
+        </div>
 
-          {/* Right column: 3-day daily forecast */}
-          {weather ? (
-            <DailyForecastCard daily={weather.daily} />
+        {/* Row 2 — Hourly chart + 5-day forecast */}
+        <div
+          className="grid gap-3"
+          style={{ gridTemplateColumns: "1fr 340px" }}
+        >
+          {hw.weather ? (
+            <HourlyForecastChart hourly={hw.weather.hourly} />
           ) : (
-            <div
-              className="rounded-2xl p-4 flex items-center justify-center"
-              style={{
-                background: "rgba(255,255,255,0.025)",
-                border: "1px solid rgba(255,255,255,0.07)",
-              }}
-            >
-              <span
-                style={{
-                  fontSize: "11px",
-                  fontFamily: "monospace",
-                  color: "rgba(255,255,255,0.25)",
-                }}
-              >
-                Forecast unavailable
-              </span>
-            </div>
+            <EmptyCard label="Hourly unavailable" />
+          )}
+
+          {hw.weather ? (
+            <DailyForecastCard daily={hw.weather.daily} />
+          ) : (
+            <EmptyCard label="Forecast unavailable" />
           )}
         </div>
 
-        {/* 7-card bottom instrument row */}
+        {/* Row 3 — 6 stat cards */}
         <div
           className="grid gap-3"
-          style={{ gridTemplateColumns: "1.4fr 1fr 1fr 1fr 1fr 1.4fr 1.4fr" }}
+          style={{ gridTemplateColumns: "repeat(6, 1fr)", minHeight: "150px" }}
         >
-          <AuroraSunsetCard
-            kp={kp}
-            sunset={sunset}
-            sunrise={sunrise}
-            minutesToSunset={minsToSunset}
+          <SunriseSunsetCard
+            sunrise={hw.sunrise}
+            sunset={hw.sunset}
+            minutesToSunset={hw.minsToSunset}
+            daylightMinutes={hw.daylightMinutes}
           />
-          <KpCircleGauge kp={kp} />
-          {weather ? (
-            <PressureGauge pressure={weather.current.pressure} />
+          {hw.weather ? (
+            <UVIndexCard uvIndex={hw.weather.current.uvIndex} />
           ) : (
-            <div />
+            <EmptyCard label="UV unavailable" />
           )}
-          {weather ? (
-            <HumidityGauge humidity={weather.current.humidity} />
+          {hw.weather ? (
+            <PressureCard pressure={hw.weather.current.pressure} />
           ) : (
-            <div />
+            <EmptyCard label="Pressure unavailable" />
           )}
-          <MoonPhaseWidget moon={moon} />
-          <SolarAuroraChart history={kpHistory} currentKp={kp} />
-          <SpaceWeatherImpactCard impact={impact} />
+          <RainChanceCard precipProbability={precipToday} />
+          <MoonPhaseWidget moon={hw.moon} />
+          <SpaceWeatherImpactCard kp={kp} kpHistory={kpHistory} />
+        </div>
+
+        {/* Footer */}
+        <div
+          className="flex items-center justify-between px-2 pb-1 shrink-0"
+          style={{ fontSize: "8px", fontFamily: "monospace", color: "rgba(255,255,255,0.20)" }}
+        >
+          <span>Data Source: NOAA, MET Norway, Open-Meteo</span>
+          <span>All times local to {hw.location.name} ({hw.location.timezone})</span>
+          <span>Auto-refresh: 60s</span>
         </div>
       </main>
     </div>

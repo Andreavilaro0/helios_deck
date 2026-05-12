@@ -3,9 +3,6 @@ import { Canvas, useFrame, useLoader } from "@react-three/fiber";
 import * as THREE from "three";
 import { EARTH_VERT, EARTH_FRAG, ATMOS_VERT, ATMOS_FRAG } from "./earth-shaders";
 
-const LAT = 64.14;
-const LON = -21.90;
-const INITIAL_Y = -1.6;
 // Sun angle: upper-right in world space, lights Europe from a cinematic morning angle
 const SUN_DIR = new THREE.Vector3(1.2, 0.5, 0.85).normalize();
 
@@ -19,10 +16,32 @@ function latLonToVec3(lat: number, lon: number, r: number): THREE.Vector3 {
   );
 }
 
-function EarthScene() {
+// Compute globe Y-rotation so that the given longitude faces the camera (at +Z)
+function targetRotY(lon: number): number {
+  return Math.PI / 2 - (lon + 180) * (Math.PI / 180);
+}
+
+// Find shortest rotation from current to a target angle
+function shortestPath(current: number, target: number): number {
+  const c = ((current % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+  const t = ((target  % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+  let diff = t - c;
+  if (diff >  Math.PI) diff -= 2 * Math.PI;
+  if (diff < -Math.PI) diff += 2 * Math.PI;
+  return current + diff;
+}
+
+interface EarthSceneProps { lat: number; lon: number }
+
+function EarthScene({ lat, lon }: EarthSceneProps) {
   const earthGroupRef = useRef<THREE.Group>(null);
   const cloudGroupRef = useRef<THREE.Group>(null);
   const earthMatRef   = useRef<THREE.ShaderMaterial | null>(null);
+
+  // Y-rotation tracking (fully controlled via refs, not JSX state)
+  const rotYRef             = useRef(targetRotY(lon));
+  const transitionTargetRef = useRef(rotYRef.current);
+  const isTransitioningRef  = useRef(false);
 
   const [dayMap, nightMap, specMap, cloudMap, cloudAlpha] = useLoader(
     THREE.TextureLoader,
@@ -73,24 +92,44 @@ function EarthScene() {
     opacity:     0.88,
   }), [cloudMap, cloudAlpha]);
 
-  const pinPos = useMemo(() => latLonToVec3(LAT, LON, 1.04), []);
+  // Animate globe to new location when lat/lon change
+  useEffect(() => {
+    const raw = targetRotY(lon);
+    transitionTargetRef.current = shortestPath(rotYRef.current, raw);
+    isTransitioningRef.current = true;
+  }, [lat, lon]);
+
+  const pinPos = useMemo(() => latLonToVec3(lat, lon, 1.04), [lat, lon]);
 
   useFrame(({ camera }, dt) => {
     earthMatRef.current?.uniforms.camPos.value.copy(camera.position);
-    if (earthGroupRef.current) earthGroupRef.current.rotation.y += dt * 0.05;
-    // Clouds rotate slightly faster — realistic drift
-    if (cloudGroupRef.current) cloudGroupRef.current.rotation.y += dt * 0.062;
+
+    if (isTransitioningRef.current) {
+      const remaining = transitionTargetRef.current - rotYRef.current;
+      if (Math.abs(remaining) < 0.008) {
+        rotYRef.current = transitionTargetRef.current;
+        isTransitioningRef.current = false;
+      } else {
+        // Ease-out: fast start, slow finish
+        rotYRef.current += remaining * Math.min(dt * 4, 0.12);
+      }
+    } else {
+      rotYRef.current += dt * 0.05;
+    }
+
+    if (earthGroupRef.current) earthGroupRef.current.rotation.y = rotYRef.current;
+    if (cloudGroupRef.current) cloudGroupRef.current.rotation.y = rotYRef.current + 0.08;
   });
 
   return (
     <group rotation={[THREE.MathUtils.degToRad(10), 0, 0]}>
-      {/* Earth surface — day/night shader */}
-      <group ref={earthGroupRef} rotation={[0, INITIAL_Y, 0]}>
+      {/* Earth surface */}
+      <group ref={earthGroupRef}>
         <mesh>
           <sphereGeometry args={[1, 96, 96]} />
           <primitive object={earthMat} attach="material" />
         </mesh>
-        {/* Reykjavik pin */}
+        {/* Location pin */}
         <mesh position={pinPos}>
           <sphereGeometry args={[0.020, 12, 12]} />
           <meshBasicMaterial color="#38bdf8" />
@@ -105,15 +144,15 @@ function EarthScene() {
         </mesh>
       </group>
 
-      {/* Cloud layer — independent rotation, lit by directional light */}
-      <group ref={cloudGroupRef} rotation={[0, INITIAL_Y, 0]}>
+      {/* Cloud layer */}
+      <group ref={cloudGroupRef}>
         <mesh>
           <sphereGeometry args={[1.009, 64, 64]} />
           <primitive object={cloudMat} attach="material" />
         </mesh>
       </group>
 
-      {/* Atmosphere halo — BackSide Fresnel glow */}
+      {/* Atmosphere halo */}
       <mesh scale={[1.10, 1.10, 1.10]}>
         <sphereGeometry args={[1, 48, 48]} />
         <primitive object={atmosMat} attach="material" />
@@ -122,7 +161,13 @@ function EarthScene() {
   );
 }
 
-export function WeatherGlobeScene() {
+interface Props {
+  lat: number;
+  lon: number;
+  locationLabel: string;
+}
+
+export function WeatherGlobeScene({ lat, lon, locationLabel }: Props) {
   return (
     <div className="relative w-full h-full">
       <Canvas
@@ -132,11 +177,10 @@ export function WeatherGlobeScene() {
         dpr={[1, 2]}
         style={{ background: "transparent" }}
       >
-        {/* Directional sun light — position matches SUN_DIR in shader */}
         <directionalLight position={[1.2, 0.5, 0.85]} intensity={1.8} color="#fff8e8" />
         <ambientLight intensity={0.04} />
         <Suspense fallback={null}>
-          <EarthScene />
+          <EarthScene lat={lat} lon={lon} />
         </Suspense>
       </Canvas>
 
@@ -151,7 +195,7 @@ export function WeatherGlobeScene() {
             <path d="M4 0C2.07 0 .5 1.57.5 3.5 .5 6.13 4 10 4 10s3.5-3.87 3.5-6.5C7.5 1.57 5.93 0 4 0zm0 4.75a1.25 1.25 0 110-2.5 1.25 1.25 0 010 2.5z" />
           </svg>
           <span style={{ fontSize: "13px", fontFamily: "monospace", fontWeight: 600, color: "#e2e8f0" }}>
-            Reykjavik, Iceland
+            {locationLabel}
           </span>
         </div>
       </div>

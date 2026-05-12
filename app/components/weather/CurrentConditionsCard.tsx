@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { WeatherData } from "~/services/fetchers/open-meteo.server";
+import type { WeatherData } from "~/types/weather";
 import { wmoLabel, wmoIcon } from "~/utils/wmo";
 import { WeatherIcon } from "./WeatherIcon";
 
@@ -157,11 +157,13 @@ export function CurrentConditionsCard({ weather, city }: Props) {
 
         {/* Right: stat rows */}
         <div className="flex flex-col gap-1.5 flex-1 justify-center">
-          <StatRow label="Local Time" value={clock} />
-          <StatRow label="Humidity" value={`${current.humidity}%`} />
-          <StatRow label="Wind" value={`${current.windSpeed} km/h`} />
-          <StatRow label="Pressure" value={`${current.pressure} hPa`} />
-          <StatRow label="UV Index" value={String(current.uvIndex)} />
+          <StatRow label="Local Time"    value={clock} />
+          <StatRow label="Feels Like"    value={`${current.feelsLike}°C`} />
+          <StatRow label="Humidity"      value={`${current.humidity}%`} />
+          <StatRow label="Wind"          value={`${current.windSpeed} km/h ${current.windDirection}`} />
+          <StatRow label="Precipitation" value={`${current.precipitation} mm`} />
+          <StatRow label="Visibility"    value={`${current.visibility} km`} />
+          <StatRow label="Air Quality"   value="—" />
         </div>
       </div>
     </div>

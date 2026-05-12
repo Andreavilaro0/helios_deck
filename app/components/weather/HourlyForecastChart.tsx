@@ -1,4 +1,4 @@
-import type { WeatherData } from "~/services/fetchers/open-meteo.server";
+import type { WeatherData } from "~/types/weather";
 import { wmoIcon } from "~/utils/wmo";
 import { WeatherIcon } from "./WeatherIcon";
 

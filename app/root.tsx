@@ -12,7 +12,7 @@ import type { Route } from "./+types/root";
 import { AppSidebar, useSidebarVisible } from "~/components/layout/AppSidebar";
 import "./app.css";
 
-const FULL_SCREEN_ROUTES = ["/earth-weather"];
+const FULL_SCREEN_ROUTES: string[] = [];
 
 export const links: Route.LinksFunction = () => [];
 
