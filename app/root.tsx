@@ -5,11 +5,14 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLocation,
 } from "react-router";
 
 import type { Route } from "./+types/root";
 import { AppSidebar, useSidebarVisible } from "~/components/layout/AppSidebar";
 import "./app.css";
+
+const FULL_SCREEN_ROUTES = ["/earth-weather"];
 
 export const links: Route.LinksFunction = () => [];
 
@@ -32,15 +35,31 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 function AppShell() {
+  const { pathname } = useLocation();
   const showSidebar = useSidebarVisible();
+
+  if (FULL_SCREEN_ROUTES.includes(pathname)) {
+    return <Outlet />;
+  }
+
   return (
-    <div className="flex min-h-screen">
-      {showSidebar && <AppSidebar />}
+    <div
+      className="min-h-screen pt-[34px] pb-[34px] px-[48px]"
+      style={{ background: "#060e14" }}
+    >
       <div
-        className="flex-1 min-w-0"
-        style={{ paddingLeft: showSidebar ? "72px" : "0" }}
+        className="flex min-h-[calc(100vh-68px)] overflow-hidden"
+        style={{
+          borderRadius: "28px",
+          background: "#17262f",
+          border: "1px solid rgba(249,243,250,0.09)",
+          boxShadow: "0 0 0 1px rgba(0,0,0,0.5), 0 40px 80px rgba(0,0,0,0.6)",
+        }}
       >
-        <Outlet />
+        {showSidebar && <AppSidebar />}
+        <div className="flex-1 min-w-0">
+          <Outlet />
+        </div>
       </div>
     </div>
   );

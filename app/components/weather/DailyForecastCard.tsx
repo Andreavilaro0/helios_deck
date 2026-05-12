@@ -25,10 +25,10 @@ export function DailyForecastCard({ daily }: Props) {
           color: "rgba(255,255,255,0.28)",
         }}
       >
-        4-Day Forecast
+        5-Day Forecast
       </p>
       <div className="flex flex-col gap-2 flex-1">
-        {daily.slice(1, 5).map((d, i) => {
+        {daily.slice(1, 6).map((d, i) => {
           const dow = DAYS[(todayIdx + i + 1) % 7];
           const isNxt = i === 0;
           return (

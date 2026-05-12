@@ -1,9 +1,13 @@
 import { useRef, useMemo, useEffect, Suspense } from "react";
 import { Canvas, useFrame, useLoader } from "@react-three/fiber";
 import * as THREE from "three";
+import { EARTH_VERT, EARTH_FRAG, ATMOS_VERT, ATMOS_FRAG } from "./earth-shaders";
 
 const LAT = 64.14;
 const LON = -21.90;
+const INITIAL_Y = -1.6;
+// Sun angle: upper-right in world space, lights Europe from a cinematic morning angle
+const SUN_DIR = new THREE.Vector3(1.2, 0.5, 0.85).normalize();
 
 function latLonToVec3(lat: number, lon: number, r: number): THREE.Vector3 {
   const phi   = (90 - lat) * (Math.PI / 180);
@@ -16,90 +20,102 @@ function latLonToVec3(lat: number, lon: number, r: number): THREE.Vector3 {
 }
 
 function EarthScene() {
-  const groupRef = useRef<THREE.Group>(null);
+  const earthGroupRef = useRef<THREE.Group>(null);
+  const cloudGroupRef = useRef<THREE.Group>(null);
+  const earthMatRef   = useRef<THREE.ShaderMaterial | null>(null);
 
-  const [nightMap, cloudMap] = useLoader(THREE.TextureLoader, [
-    "/textures/earth_nightmap.png",
-    "/textures/2k_earth_clouds.jpg",
-  ]);
+  const [dayMap, nightMap, specMap, cloudMap, cloudAlpha] = useLoader(
+    THREE.TextureLoader,
+    [
+      "/textures/earth_daymap.jpg",
+      "/textures/earth_nightmap.png",
+      "/textures/earth_specular.jpg",
+      "/textures/04_earthcloudmap.jpg",
+      "/textures/05_earthcloudmaptrans.jpg",
+    ],
+  );
 
   useEffect(() => {
+    dayMap.colorSpace   = THREE.SRGBColorSpace;
     nightMap.colorSpace = THREE.SRGBColorSpace;
-  }, [nightMap]);
+  }, [dayMap, nightMap]);
 
-  const cloudMat = useMemo(() => new THREE.MeshBasicMaterial({
-    map: cloudMap,
+  const earthMat = useMemo(() => {
+    const mat = new THREE.ShaderMaterial({
+      uniforms: {
+        dayMap:   { value: dayMap },
+        nightMap: { value: nightMap },
+        specMap:  { value: specMap },
+        sunDir:   { value: SUN_DIR },
+        camPos:   { value: new THREE.Vector3(0, 0, 2.6) },
+      },
+      vertexShader:   EARTH_VERT,
+      fragmentShader: EARTH_FRAG,
+    });
+    earthMatRef.current = mat;
+    return mat;
+  }, [dayMap, nightMap, specMap]);
+
+  const atmosMat = useMemo(() => new THREE.ShaderMaterial({
+    uniforms:       {},
+    vertexShader:   ATMOS_VERT,
+    fragmentShader: ATMOS_FRAG,
+    transparent:    true,
+    side:           THREE.BackSide,
+    depthWrite:     false,
+  }), []);
+
+  const cloudMat = useMemo(() => new THREE.MeshLambertMaterial({
+    map:         cloudMap,
+    alphaMap:    cloudAlpha,
     transparent: true,
-    opacity: 0.25,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-  }), [cloudMap]);
+    depthWrite:  false,
+    opacity:     0.88,
+  }), [cloudMap, cloudAlpha]);
 
   const pinPos = useMemo(() => latLonToVec3(LAT, LON, 1.04), []);
 
-  // Atmospheric glow
-  const atmosMat = useMemo(() => new THREE.ShaderMaterial({
-    uniforms: {},
-    vertexShader: `
-      varying vec3 vNormal;
-      void main() {
-        vNormal = normalize(normalMatrix * normal);
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
-      }
-    `,
-    fragmentShader: `
-      varying vec3 vNormal;
-      void main() {
-        float rim = 1.0 - max(dot(vNormal, vec3(0,0,1)), 0.0);
-        rim = pow(rim, 3.0);
-        gl_FragColor = vec4(0.10, 0.40, 1.0, rim * 0.9);
-      }
-    `,
-    transparent: true,
-    side: THREE.FrontSide,
-    depthWrite: false,
-  }), []);
-
-  useFrame((_, dt) => {
-    if (groupRef.current) groupRef.current.rotation.y += dt * 0.05;
+  useFrame(({ camera }, dt) => {
+    earthMatRef.current?.uniforms.camPos.value.copy(camera.position);
+    if (earthGroupRef.current) earthGroupRef.current.rotation.y += dt * 0.05;
+    // Clouds rotate slightly faster — realistic drift
+    if (cloudGroupRef.current) cloudGroupRef.current.rotation.y += dt * 0.062;
   });
-
-  // Iceland at lon=-22° → in latLonToVec3 space: x=0.404r, z=0.164r.
-  // To maximise z (face camera): rotate Y by atan2(-x,-z) = atan2(-0.404, -0.164) ≈ -1.185 rad.
-  const INITIAL_Y = -1.185;
 
   return (
     <group rotation={[THREE.MathUtils.degToRad(10), 0, 0]}>
-      <group ref={groupRef} rotation={[0, INITIAL_Y, 0]}>
-        {/* Tierra con textura nocturna — luces de ciudad */}
+      {/* Earth surface — day/night shader */}
+      <group ref={earthGroupRef} rotation={[0, INITIAL_Y, 0]}>
         <mesh>
           <sphereGeometry args={[1, 96, 96]} />
-          <meshBasicMaterial map={nightMap} />
+          <primitive object={earthMat} attach="material" />
         </mesh>
-        {/* Nubes */}
-        <mesh>
-          <sphereGeometry args={[1.008, 64, 64]} />
-          <primitive object={cloudMat} attach="material" />
-        </mesh>
-        {/* Pin core — Reykjavik */}
+        {/* Reykjavik pin */}
         <mesh position={pinPos}>
-          <sphereGeometry args={[0.022, 12, 12]} />
+          <sphereGeometry args={[0.020, 12, 12]} />
           <meshBasicMaterial color="#38bdf8" />
         </mesh>
-        {/* Pin glow */}
         <mesh position={pinPos}>
-          <sphereGeometry args={[0.040, 12, 12]} />
-          <meshBasicMaterial color="#38bdf8" transparent opacity={0.3} />
+          <sphereGeometry args={[0.038, 12, 12]} />
+          <meshBasicMaterial color="#38bdf8" transparent opacity={0.28} />
         </mesh>
-        {/* Outer ring */}
         <mesh position={pinPos}>
-          <sphereGeometry args={[0.060, 12, 12]} />
-          <meshBasicMaterial color="#38bdf8" transparent opacity={0.12} />
+          <sphereGeometry args={[0.058, 12, 12]} />
+          <meshBasicMaterial color="#38bdf8" transparent opacity={0.10} />
         </mesh>
       </group>
-      {/* Atmósfera */}
-      <mesh scale={[1.08, 1.08, 1.08]}>
-        <sphereGeometry args={[1, 64, 64]} />
+
+      {/* Cloud layer — independent rotation, lit by directional light */}
+      <group ref={cloudGroupRef} rotation={[0, INITIAL_Y, 0]}>
+        <mesh>
+          <sphereGeometry args={[1.009, 64, 64]} />
+          <primitive object={cloudMat} attach="material" />
+        </mesh>
+      </group>
+
+      {/* Atmosphere halo — BackSide Fresnel glow */}
+      <mesh scale={[1.10, 1.10, 1.10]}>
+        <sphereGeometry args={[1, 48, 48]} />
         <primitive object={atmosMat} attach="material" />
       </mesh>
     </group>
@@ -113,22 +129,26 @@ export function WeatherGlobeScene() {
         key="weather-globe"
         camera={{ position: [0, 0, 2.6], fov: 42 }}
         gl={{ antialias: true, alpha: true }}
+        dpr={[1, 2]}
         style={{ background: "transparent" }}
       >
-        <ambientLight intensity={1} />
+        {/* Directional sun light — position matches SUN_DIR in shader */}
+        <directionalLight position={[1.2, 0.5, 0.85]} intensity={1.8} color="#fff8e8" />
+        <ambientLight intensity={0.04} />
         <Suspense fallback={null}>
           <EarthScene />
         </Suspense>
       </Canvas>
-      {/* Labels overlay */}
+
+      {/* Location label overlay */}
       <div className="absolute inset-x-0 top-3 pointer-events-none flex flex-col items-center gap-1">
-        <span style={{ fontSize: "8px", fontFamily: "monospace", color: "rgba(255,255,255,0.40)",
+        <span style={{ fontSize: "8px", fontFamily: "monospace", color: "rgba(255,255,255,0.38)",
           letterSpacing: "0.16em", textTransform: "uppercase" }}>
           Location on Earth
         </span>
         <div className="flex items-center gap-1.5">
           <svg width="8" height="10" viewBox="0 0 8 10" fill="#38bdf8">
-            <path d="M4 0C2.07 0 .5 1.57.5 3.5 .5 6.13 4 10 4 10s3.5-3.87 3.5-6.5C7.5 1.57 5.93 0 4 0zm0 4.75a1.25 1.25 0 110-2.5 1.25 1.25 0 010 2.5z"/>
+            <path d="M4 0C2.07 0 .5 1.57.5 3.5 .5 6.13 4 10 4 10s3.5-3.87 3.5-6.5C7.5 1.57 5.93 0 4 0zm0 4.75a1.25 1.25 0 110-2.5 1.25 1.25 0 010 2.5z" />
           </svg>
           <span style={{ fontSize: "13px", fontFamily: "monospace", fontWeight: 600, color: "#e2e8f0" }}>
             Reykjavik, Iceland

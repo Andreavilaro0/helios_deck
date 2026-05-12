@@ -8,7 +8,7 @@ import {
 import { getMoonPhase } from "~/utils/moon-phase";
 import { getSunsetTime, getSunriseTime, minutesUntilSunset } from "~/utils/sun";
 import { getSpaceWeatherImpact } from "~/utils/space-impact";
-import { DashboardTopbar } from "~/components/layout/DashboardTopbar";
+import { EarthWeatherHeader } from "~/components/weather/EarthWeatherHeader";
 import { SearchBar } from "~/components/weather/SearchBar";
 import { CurrentConditionsCard } from "~/components/weather/CurrentConditionsCard";
 import { HourlyForecastChart } from "~/components/weather/HourlyForecastChart";
@@ -61,7 +61,7 @@ export default function EarthWeatherPage({ loaderData }: Route.ComponentProps) {
 
   return (
     <div className="flex flex-col h-screen" style={{ background: "#050a12" }}>
-      <DashboardTopbar title="Earth Weather Explorer" subtitle="HELIOS Observatory" />
+      <EarthWeatherHeader />
 
       <main className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
         <SearchBar city={DEFAULT_CITY} />
@@ -69,7 +69,7 @@ export default function EarthWeatherPage({ loaderData }: Route.ComponentProps) {
         {/* 3-column main section */}
         <div
           className="grid gap-3"
-          style={{ gridTemplateColumns: "300px 1fr 240px", minHeight: "520px" }}
+          style={{ gridTemplateColumns: "310px 1fr 190px", minHeight: "580px" }}
         >
           {/* Left column: current conditions + hourly chart */}
           <div className="flex flex-col gap-3">
@@ -105,7 +105,7 @@ export default function EarthWeatherPage({ loaderData }: Route.ComponentProps) {
             style={{
               background: "#060b14",
               border: "1px solid rgba(255,255,255,0.07)",
-              minHeight: "520px",
+              minHeight: "580px",
             }}
           >
             <Suspense
