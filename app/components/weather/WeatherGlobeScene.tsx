@@ -18,14 +18,14 @@ function latLonToVec3(lat: number, lon: number, r: number): THREE.Vector3 {
 function EarthScene() {
   const groupRef = useRef<THREE.Group>(null);
 
-  const [dayMap, cloudMap] = useLoader(THREE.TextureLoader, [
-    "/textures/earth_daymap.jpg",
+  const [nightMap, cloudMap] = useLoader(THREE.TextureLoader, [
+    "/textures/earth_nightmap.png",
     "/textures/2k_earth_clouds.jpg",
   ]);
 
   useMemo(() => {
-    dayMap.colorSpace = THREE.SRGBColorSpace;
-  }, [dayMap]);
+    nightMap.colorSpace = THREE.SRGBColorSpace;
+  }, [nightMap]);
 
   const cloudMat = useMemo(() => new THREE.MeshBasicMaterial({
     map: cloudMap,
@@ -71,14 +71,10 @@ function EarthScene() {
   return (
     <group rotation={[THREE.MathUtils.degToRad(10), 0, 0]}>
       <group ref={groupRef} rotation={[0, INITIAL_Y, 0]}>
-        {/* Tierra con textura de día */}
+        {/* Tierra con textura nocturna — luces de ciudad */}
         <mesh>
           <sphereGeometry args={[1, 96, 96]} />
-          <meshStandardMaterial
-            map={dayMap}
-            roughness={0.8}
-            metalness={0.0}
-          />
+          <meshBasicMaterial map={nightMap} />
         </mesh>
         {/* Nubes */}
         <mesh>
@@ -122,9 +118,7 @@ export function WeatherGlobeScene() {
         gl={{ antialias: true, alpha: true }}
         style={{ background: "transparent" }}
       >
-        <ambientLight intensity={0.85} />
-        <directionalLight position={[5, 2, 3]} intensity={1.8} color="#fff8e0" />
-        <directionalLight position={[-3, 1, 2]} intensity={0.5} color="#4488ff" />
+        <ambientLight intensity={1} />
         <Suspense fallback={null}>
           <EarthScene />
         </Suspense>
