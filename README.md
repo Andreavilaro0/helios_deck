@@ -2,144 +2,143 @@
 
 [![CI](https://github.com/Andreavilaro0/helios_deck/actions/workflows/ci.yml/badge.svg)](https://github.com/Andreavilaro0/helios_deck/actions/workflows/ci.yml)
 
-A fullstack web observatory for heliophysical and geophysical data.
+Observatorio web fullstack de datos heliofísicos y geofísicos.
 
-Real signals. Real pipeline. No decorative demos.
+Señales reales. Pipeline real. Sin datos de demostración.
+
+🌐 **[Ver en producción →](https://heliosdeck-production-12ca.up.railway.app/cosmic-view)**
 
 ---
 
-## What It Does
+## Qué hace
 
-HELIOS_DECK ingests live data from space weather APIs (starting with NOAA SWPC), stores it in a local SQLite database, and presents it as a server-side-rendered dashboard. Every value on screen is a real measurement from a real instrument.
+HELIOS_DECK ingesta datos en vivo desde APIs de clima espacial (NOAA SWPC), los almacena en una base de datos SQLite y los presenta como un dashboard renderizado en servidor. Cada valor en pantalla es una medición real de un instrumento real.
 
-Signals tracked:
-- **Kp index** — planetary geomagnetic activity (NOAA SWPC)
-- **Solar wind speed** — bulk solar wind velocity (NOAA SWPC)
-- **X-ray flux (long channel)** — GOES 0.1–0.8 nm, A/B/C/M/X flare classification (NOAA SWPC)
-- **Proton flux (≥10 MeV)** — energetic particle flux, radiation storm context (NOAA SWPC)
+Señales monitorizadas:
+- **Índice Kp** — actividad geomagnética planetaria (NOAA SWPC)
+- **Velocidad del viento solar** — velocidad de flujo bulk del viento solar (NOAA SWPC)
+- **Flujo de rayos X (canal largo)** — GOES 0,1–0,8 nm, clasificación de llamaradas A/B/C/M/X (NOAA SWPC)
+- **Flujo de protones (≥10 MeV)** — flujo de partículas energéticas, contexto de tormenta de radiación (NOAA SWPC)
 
 ---
 
 ## Stack
 
-| Layer | Technology |
-|-------|-----------|
+| Capa | Tecnología |
+|------|-----------|
 | Frontend + SSR | React Router v7 |
-| Language | TypeScript (strict) |
-| Database | SQLite via `better-sqlite3` |
-| Styling | Tailwind CSS v4 |
-| UI primitives | shadcn _(Phase 2)_ |
-| Visual premium | Magic UI / custom glass system |
-| 3D view | Three.js / React Three Fiber (cosmic-view) |
+| Lenguaje | TypeScript (strict) |
+| Base de datos | SQLite mediante `better-sqlite3` |
+| Estilos | Tailwind CSS v4 |
+| Primitivos UI | shadcn |
+| Visual premium | Magic UI / sistema de vidrio personalizado |
+| Vista 3D | Three.js / React Three Fiber (cosmic-view) |
+| Despliegue | Railway (Docker) |
 
 ---
 
-## Project Status
+## Estado del proyecto
 
-**Current phase: 2L — Final checkpoint ✅**
+**Fase actual: 2L — Checkpoint final ✅**
 
-Phase 2 complete (2A–2L). Four real NOAA signals are live end-to-end: Kp index, solar wind speed, X-ray flux, and proton flux. The dashboard shows the full causal chain (Solar Activity → Solar Driver → Geomagnetic Response). `/cosmic-view` renders the Living Planet Observatory: a full-screen 3D Earth globe with GLSL shaders, Fresnel atmosphere, and 4 floating signal cards with freshness indicators.
+Fase 2 completa (2A–2L). Cuatro señales reales de NOAA están activas de extremo a extremo: índice Kp, velocidad del viento solar, flujo de rayos X y flujo de protones. El dashboard muestra la cadena causal completa (Actividad Solar → Conductor Solar → Respuesta Geomagnética). `/cosmic-view` renderiza el Observatorio Planeta Vivo: un globo terrestre 3D a pantalla completa con shaders GLSL, atmósfera Fresnel y 4 tarjetas de señal flotantes con indicadores de frescura.
 
-### Available Data Signals
+### Señales disponibles
 
-| Signal | Source | Unit | Dashboard Panel | Refresh Cadence |
-|--------|--------|------|-----------------|-----------------|
-| Kp index | NOAA SWPC | index | Geomagnetic Response | 3 h |
-| Solar wind speed | NOAA SWPC | km/s | Solar Driver | ~1 min (DSCOVR) |
-| X-ray flux (0.1–0.8 nm) | NOAA GOES | W/m² | Solar Activity | ~1 min |
-| Proton flux (≥10 MeV) | NOAA GOES | pfu | Solar Activity | ~1 min |
-
-See [`docs/plan.md`](docs/plan.md) for the full roadmap, [`docs/checkpoint-1.md`](docs/checkpoint-1.md) for the Phase 1 milestone summary, and [`docs/checkpoint-2.md`](docs/checkpoint-2.md) for the Phase 2 final state.
+| Señal | Fuente | Unidad | Panel del dashboard | Cadencia |
+|-------|--------|--------|---------------------|----------|
+| Índice Kp | NOAA SWPC | índice | Respuesta Geomagnética | 3 h |
+| Velocidad viento solar | NOAA SWPC | km/s | Conductor Solar | ~1 min (DSCOVR) |
+| Flujo de rayos X (0,1–0,8 nm) | NOAA GOES | W/m² | Actividad Solar | ~1 min |
+| Flujo de protones (≥10 MeV) | NOAA GOES | pfu | Actividad Solar | ~1 min |
 
 ---
 
-## Quick Start
+## Inicio rápido
 
 ```bash
 npm install
-npm run ingest:all   # Fetch all four NOAA signals in one command
-npm run dev          # Start dev server with HMR
+npm run ingest:all   # Descarga las cuatro señales de NOAA en un solo comando
+npm run dev          # Servidor de desarrollo con HMR
 ```
 
-Then open:
-- **http://localhost:5173/dashboard** — instrument console with causal chain layout
-- **http://localhost:5173/cosmic-view** — 3D Earth with live Kp field overlay
+Abre en el navegador:
+- **http://localhost:5173/dashboard** — consola de instrumentos con diseño de cadena causal
+- **http://localhost:5173/cosmic-view** — Tierra 3D con superposición del campo Kp en vivo
 
-> **If panels show "STALE":** run `npm run ingest:all` to refresh all signals from NOAA. Freshness thresholds: Kp 3 h, solar wind 1 h, X-ray 30 min, proton flux 1 h.
+> **Si los paneles muestran "STALE":** ejecuta `npm run ingest:all` para actualizar todas las señales desde NOAA. Umbrales de frescura: Kp 3 h, viento solar 1 h, rayos X 30 min, flujo de protones 1 h.
 
 ---
 
-## Development
+## Desarrollo
 
 ```bash
-npm run dev        # Dev server with HMR — http://localhost:5173
-npm run start      # Serve the production build
+npm run dev        # Servidor de desarrollo con HMR — http://localhost:5173
+npm run start      # Sirve el build de producción
 ```
 
 ---
 
-## Quality Checks
+## Comprobaciones de calidad
 
 ```bash
-npm run typecheck   # react-router typegen + tsc (strict mode)
-npm run build       # Production build (client + SSR)
-npm test            # Vitest — unit and component tests
+npm run typecheck   # react-router typegen + tsc (modo strict)
+npm run build       # Build de producción (cliente + SSR)
+npm test            # Vitest — tests unitarios y de componentes
 ```
 
-GitHub Actions runs these three checks automatically on every push and pull request. No secrets or external APIs are required — tests use an in-memory SQLite database and the ingest script is never executed in CI.
+GitHub Actions ejecuta estas tres comprobaciones automáticamente en cada push y pull request. No se requieren secretos ni APIs externas — los tests usan una base de datos SQLite en memoria y el script de ingesta nunca se ejecuta en CI.
 
 ---
 
-## Manual Ingestion
+## Ingesta manual
 
 ```bash
-npm run ingest:all                # All four signals in one command (recommended)
+npm run ingest:all                # Las cuatro señales en un solo comando (recomendado)
 
-# Or individually:
-npm run ingest:noaa-kp            # NOAA SWPC real-time Kp index
-npm run ingest:noaa-solar-wind    # NOAA SWPC real-time solar wind speed
-npm run ingest:noaa-xray-flux     # NOAA SWPC GOES X-ray flux (both channels)
-npm run ingest:noaa-proton-flux   # NOAA SWPC GOES integral proton flux (>=10 MeV)
+# O individualmente:
+npm run ingest:noaa-kp            # Índice Kp en tiempo real de NOAA SWPC
+npm run ingest:noaa-solar-wind    # Velocidad del viento solar en tiempo real
+npm run ingest:noaa-xray-flux     # Flujo de rayos X GOES de NOAA SWPC (ambos canales)
+npm run ingest:noaa-proton-flux   # Flujo de protones integrales GOES (>=10 MeV)
 ```
 
-Each command queries the corresponding NOAA SWPC endpoint, normalizes every entry into a `SignalRecord`, and persists new records to `data/helios.sqlite`. Duplicate entries (same timestamp, source, and signal) are skipped automatically.
+Cada comando consulta el endpoint correspondiente de NOAA SWPC, normaliza cada entrada en un `SignalRecord` y persiste los nuevos registros en `data/helios.sqlite`. Las entradas duplicadas (mismo timestamp, fuente y señal) se omiten automáticamente.
 
-`ingest:all` runs all four pipelines sequentially and prints a summary table. It exits with code 1 if any signal fails, code 0 if all succeed. Run at least once before `npm run dev` to populate the dashboard.
+`ingest:all` ejecuta los cuatro pipelines de forma secuencial e imprime una tabla de resumen. Sale con código 1 si alguna señal falla, código 0 si todas tienen éxito.
 
 ---
 
-## Data Flow
+## Flujo de datos
 
 ```
-NOAA SWPC API
-  └─ app/services/fetchers/noaa-swpc.server.ts   (raw HTTP)
+API NOAA SWPC
+  └─ app/services/fetchers/noaa-swpc.server.ts   (petición HTTP)
        └─ app/services/normalizers/noaa-swpc.ts   (→ SignalRecordInput[])
-            └─ app/services/ingest/noaa-kp.server.ts  (coordinator + dedup)
+            └─ app/services/ingest/noaa-kp.server.ts  (coordinador + dedup)
                  └─ app/services/signals.server.ts     (saveSignal → SQLite)
-                      └─ app/routes/dashboard.tsx       (loader reads DB)
+                      └─ app/routes/dashboard.tsx       (loader lee la BD)
                            └─ app/components/widgets/SignalCard.tsx
 ```
 
-See [`docs/architecture.md`](docs/architecture.md) for the full diagram.
+---
+
+## Documentación
+
+| Archivo | Propósito |
+|---------|-----------|
+| [`docs/plan.md`](docs/plan.md) | Plan del proyecto por fases |
+| [`docs/checkpoint-1.md`](docs/checkpoint-1.md) | Hito de la Fase 1 — walking skeleton |
+| [`docs/checkpoint-2.md`](docs/checkpoint-2.md) | Estado final de la Fase 2 — 4 señales + cosmic-view |
+| [`docs/architecture.md`](docs/architecture.md) | Arquitectura del sistema y consideraciones de despliegue |
+| [`docs/data-contract.md`](docs/data-contract.md) | Forma de `SignalRecord` y contrato del normalizador |
+| [`docs/api-sources.md`](docs/api-sources.md) | Comparación de fuentes de API |
+| [`docs/decisions.md`](docs/decisions.md) | Registro de decisiones técnicas (ADRs) |
+| [`docs/ai-usage.md`](docs/ai-usage.md) | Política de uso de IA y registro de sesiones |
+| [`docs/rubric-checklist.md`](docs/rubric-checklist.md) | Checklist de calidad para evaluación |
 
 ---
 
-## Documentation
+## Reglas de desarrollo
 
-| File | Purpose |
-|------|---------|
-| [`docs/plan.md`](docs/plan.md) | Phase-by-phase project plan |
-| [`docs/checkpoint-1.md`](docs/checkpoint-1.md) | Phase 1 walking skeleton milestone |
-| [`docs/checkpoint-2.md`](docs/checkpoint-2.md) | Phase 2 final state — all 4 signals + cosmic-view |
-| [`docs/architecture.md`](docs/architecture.md) | System architecture and deploy considerations |
-| [`docs/data-contract.md`](docs/data-contract.md) | `SignalRecord` shape and normalizer contract |
-| [`docs/api-sources.md`](docs/api-sources.md) | API source comparison and MVP recommendation |
-| [`docs/decisions.md`](docs/decisions.md) | Technical decision log (ADRs) |
-| [`docs/ai-usage.md`](docs/ai-usage.md) | AI tool usage policy and session log |
-| [`docs/rubric-checklist.md`](docs/rubric-checklist.md) | Quality checklist for evaluation |
-
----
-
-## Development Rules
-
-See [`CLAUDE.md`](CLAUDE.md) for the full set of rules enforced during development, including data flow constraints, library discipline, and code quality standards.
+Consulta [`CLAUDE.md`](CLAUDE.md) para el conjunto completo de reglas aplicadas durante el desarrollo, incluyendo restricciones del flujo de datos, disciplina de librerías y estándares de calidad de código.
