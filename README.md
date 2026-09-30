@@ -1,144 +1,138 @@
 # HELIOS_DECK
 
-[![CI](https://github.com/Andreavilaro0/helios_deck/actions/workflows/ci.yml/badge.svg)](https://github.com/Andreavilaro0/helios_deck/actions/workflows/ci.yml)
+**English** · [Español](README.es.md)
 
-Observatorio web fullstack de datos heliofísicos y geofísicos.
+A full-stack web dashboard for **space weather**. It downloads live data from NOAA, stores it in
+**SQLite** and renders it on the server. There is no demo data: every number on the screen is a
+real measurement from a real instrument.
 
-Señales reales. Pipeline real. Sin datos de demostración.
+![The cosmic view: a 3D Earth with four live NOAA signals](artifacts/screenshots/final-cosmic-view.png)
 
-🌐 **[Ver en producción →](https://heliosdeck-production-12ca.up.railway.app/cosmic-view)**
-
----
-
-## Qué hace
-
-HELIOS_DECK ingesta datos en vivo desde APIs de clima espacial (NOAA SWPC), los almacena en una base de datos SQLite y los presenta como un dashboard renderizado en servidor. Cada valor en pantalla es una medición real de un instrumento real.
-
-Señales monitorizadas:
-- **Índice Kp** — actividad geomagnética planetaria (NOAA SWPC)
-- **Velocidad del viento solar** — velocidad de flujo bulk del viento solar (NOAA SWPC)
-- **Flujo de rayos X (canal largo)** — GOES 0,1–0,8 nm, clasificación de llamaradas A/B/C/M/X (NOAA SWPC)
-- **Flujo de protones (≥10 MeV)** — flujo de partículas energéticas, contexto de tormenta de radiación (NOAA SWPC)
+> **Demo:** there is no live deployment at the moment. You can run it locally in two commands
+> (see [Run it locally](#run-it-locally)).
 
 ---
+
+## What it does
+
+HELIOS_DECK tracks four signals from NOAA's Space Weather Prediction Center (SWPC):
+
+| Signal | Source | Unit | Update rate |
+|---|---|---|---|
+| Kp index (geomagnetic activity) | NOAA SWPC | index | 3 h |
+| Solar wind speed | NOAA SWPC (DSCOVR) | km/s | ~1 min |
+| X-ray flux, 0.1–0.8 nm (solar flare class A/B/C/M/X) | NOAA GOES | W/m² | ~1 min |
+| Proton flux, ≥10 MeV (radiation storm context) | NOAA GOES | pfu | ~1 min |
+
+There are two views:
+
+- **`/dashboard`** — an instrument console. It follows the cause-and-effect chain:
+  solar activity → solar wind → geomagnetic response.
+- **`/cosmic-view`** — a full-screen 3D Earth (Three.js, custom GLSL shaders) with a live Kp overlay
+  and four floating signal cards.
+
+Each value shows how old it is. If the data is older than a set limit (Kp 3 h, solar wind 1 h,
+X-ray 30 min, protons 1 h), the card is marked **STALE**.
+
+## Architecture
+
+The code is split into layers. Each layer has one job, and no layer imports from a layer above it.
+
+```
+NOAA SWPC API
+  └─ app/services/fetchers/      HTTP request
+       └─ app/services/normalizers/   raw JSON → SignalRecord (one shared data contract)
+            └─ app/services/ingest/    coordinator + de-duplication
+                 └─ app/services/signals.server.ts   save to SQLite
+                      └─ app/routes/*.tsx   route loader reads the database (server-side)
+                           └─ React components   render only, no data logic
+```
+
+- **Ingestion is a separate step.** The page loader only reads from the database; it never calls
+  NOAA. Ingestion runs from scripts (`npm run ingest:all`).
+- **One data contract.** Every signal is normalized into the same `SignalRecord` shape, so adding a
+  new signal does not change the database or the UI components.
+- **No duplicates.** Records with the same timestamp, source and signal are skipped.
+
+More detail: [`docs/architecture.md`](docs/architecture.md) and
+[`docs/data-contract.md`](docs/data-contract.md).
 
 ## Stack
 
-| Capa | Tecnología |
-|------|-----------|
+| Layer | Technology |
+|---|---|
 | Frontend + SSR | React Router v7 |
-| Lenguaje | TypeScript (strict) |
-| Base de datos | SQLite mediante `better-sqlite3` |
-| Estilos | Tailwind CSS v4 |
-| Primitivos UI | shadcn |
-| Visual premium | Magic UI / sistema de vidrio personalizado |
-| Vista 3D | Three.js / React Three Fiber (cosmic-view) |
-| Despliegue | Railway (Docker) |
+| Language | TypeScript (strict mode) |
+| Database | SQLite with `better-sqlite3` |
+| Styles and UI | Tailwind CSS v4, shadcn |
+| 3D view | Three.js / React Three Fiber |
+| Tests | Vitest |
+| Packaging | Docker |
 
----
-
-## Estado del proyecto
-
-**Fase actual: 2L — Checkpoint final ✅**
-
-Fase 2 completa (2A–2L). Cuatro señales reales de NOAA están activas de extremo a extremo: índice Kp, velocidad del viento solar, flujo de rayos X y flujo de protones. El dashboard muestra la cadena causal completa (Actividad Solar → Conductor Solar → Respuesta Geomagnética). `/cosmic-view` renderiza el Observatorio Planeta Vivo: un globo terrestre 3D a pantalla completa con shaders GLSL, atmósfera Fresnel y 4 tarjetas de señal flotantes con indicadores de frescura.
-
-### Señales disponibles
-
-| Señal | Fuente | Unidad | Panel del dashboard | Cadencia |
-|-------|--------|--------|---------------------|----------|
-| Índice Kp | NOAA SWPC | índice | Respuesta Geomagnética | 3 h |
-| Velocidad viento solar | NOAA SWPC | km/s | Conductor Solar | ~1 min (DSCOVR) |
-| Flujo de rayos X (0,1–0,8 nm) | NOAA GOES | W/m² | Actividad Solar | ~1 min |
-| Flujo de protones (≥10 MeV) | NOAA GOES | pfu | Actividad Solar | ~1 min |
-
----
-
-## Inicio rápido
+## Run it locally
 
 ```bash
 npm install
-npm run ingest:all   # Descarga las cuatro señales de NOAA en un solo comando
-npm run dev          # Servidor de desarrollo con HMR
+npm run ingest:all   # download the four signals from NOAA
+npm run dev          # http://localhost:5173
 ```
 
-Abre en el navegador:
-- **http://localhost:5173/dashboard** — consola de instrumentos con diseño de cadena causal
-- **http://localhost:5173/cosmic-view** — Tierra 3D con superposición del campo Kp en vivo
+Then open **http://localhost:5173/dashboard** or **http://localhost:5173/cosmic-view**.
+If a card shows **STALE**, run `npm run ingest:all` again.
 
-> **Si los paneles muestran "STALE":** ejecuta `npm run ingest:all` para actualizar todas las señales desde NOAA. Umbrales de frescura: Kp 3 h, viento solar 1 h, rayos X 30 min, flujo de protones 1 h.
-
----
-
-## Desarrollo
+You can also ingest one signal at a time:
 
 ```bash
-npm run dev        # Servidor de desarrollo con HMR — http://localhost:5173
-npm run start      # Sirve el build de producción
+npm run ingest:noaa-kp
+npm run ingest:noaa-solar-wind
+npm run ingest:noaa-xray-flux
+npm run ingest:noaa-proton-flux
 ```
 
----
+`ingest:all` runs the four pipelines one after another, prints a summary table and exits with
+code 1 if any signal fails.
 
-## Comprobaciones de calidad
+## Tests and checks
 
 ```bash
-npm run typecheck   # react-router typegen + tsc (modo strict)
-npm run build       # Build de producción (cliente + SSR)
-npm test            # Vitest — tests unitarios y de componentes
+npm run typecheck   # react-router typegen + tsc (strict)
+npm run build       # production build (client + SSR)
+npm test            # Vitest unit and component tests
 ```
 
-GitHub Actions ejecuta estas tres comprobaciones automáticamente en cada push y pull request. No se requieren secretos ni APIs externas — los tests usan una base de datos SQLite en memoria y el script de ingesta nunca se ejecuta en CI.
+GitHub Actions runs these three checks on every push and pull request. The tests use an in-memory
+SQLite database, so CI needs no secrets and never calls NOAA.
 
----
+> **Known issue:** the `typecheck` step in CI has been failing since May 2026. Fixing it is the
+> next task.
 
-## Ingesta manual
+## Design decisions
 
-```bash
-npm run ingest:all                # Las cuatro señales en un solo comando (recomendado)
+All technical decisions are recorded as ADRs in [`docs/decisions.md`](docs/decisions.md). Some of
+them:
 
-# O individualmente:
-npm run ingest:noaa-kp            # Índice Kp en tiempo real de NOAA SWPC
-npm run ingest:noaa-solar-wind    # Velocidad del viento solar en tiempo real
-npm run ingest:noaa-xray-flux     # Flujo de rayos X GOES de NOAA SWPC (ambos canales)
-npm run ingest:noaa-proton-flux   # Flujo de protones integrales GOES (>=10 MeV)
-```
+- **React Router v7 SSR instead of Next.js** (ADR-001).
+- **SQLite with `better-sqlite3`**: one file, no server to run, enough for this amount of data
+  (ADR-003, ADR-010).
+- **The loader does not ingest data**; ingestion is a separate step (ADR-011, ADR-012).
+- **A normalized signal contract** (`SignalRecord`) shared by all sources (ADR-009).
 
-Cada comando consulta el endpoint correspondiente de NOAA SWPC, normaliza cada entrada en un `SignalRecord` y persiste los nuevos registros en `data/helios.sqlite`. Las entradas duplicadas (mismo timestamp, fuente y señal) se omiten automáticamente.
+## Documentation
 
-`ingest:all` ejecuta los cuatro pipelines de forma secuencial e imprime una tabla de resumen. Sale con código 1 si alguna señal falla, código 0 si todas tienen éxito.
+| File | Purpose |
+|---|---|
+| [`docs/plan.md`](docs/plan.md) | Project plan by phases |
+| [`docs/checkpoint-1.md`](docs/checkpoint-1.md) | Phase 1 milestone: walking skeleton |
+| [`docs/checkpoint-2.md`](docs/checkpoint-2.md) | Phase 2 final state: 4 signals + cosmic view |
+| [`docs/architecture.md`](docs/architecture.md) | System architecture and deployment notes |
+| [`docs/data-contract.md`](docs/data-contract.md) | `SignalRecord` shape and normalizer contract |
+| [`docs/api-sources.md`](docs/api-sources.md) | Comparison of API sources |
+| [`docs/decisions.md`](docs/decisions.md) | Technical decision log (ADRs) |
+| [`docs/ai-usage.md`](docs/ai-usage.md) | AI usage policy and session log |
 
----
+## How I built this
 
-## Flujo de datos
-
-```
-API NOAA SWPC
-  └─ app/services/fetchers/noaa-swpc.server.ts   (petición HTTP)
-       └─ app/services/normalizers/noaa-swpc.ts   (→ SignalRecordInput[])
-            └─ app/services/ingest/noaa-kp.server.ts  (coordinador + dedup)
-                 └─ app/services/signals.server.ts     (saveSignal → SQLite)
-                      └─ app/routes/dashboard.tsx       (loader lee la BD)
-                           └─ app/components/widgets/SignalCard.tsx
-```
-
----
-
-## Documentación
-
-| Archivo | Propósito |
-|---------|-----------|
-| [`docs/plan.md`](docs/plan.md) | Plan del proyecto por fases |
-| [`docs/checkpoint-1.md`](docs/checkpoint-1.md) | Hito de la Fase 1 — walking skeleton |
-| [`docs/checkpoint-2.md`](docs/checkpoint-2.md) | Estado final de la Fase 2 — 4 señales + cosmic-view |
-| [`docs/architecture.md`](docs/architecture.md) | Arquitectura del sistema y consideraciones de despliegue |
-| [`docs/data-contract.md`](docs/data-contract.md) | Forma de `SignalRecord` y contrato del normalizador |
-| [`docs/api-sources.md`](docs/api-sources.md) | Comparación de fuentes de API |
-| [`docs/decisions.md`](docs/decisions.md) | Registro de decisiones técnicas (ADRs) |
-| [`docs/ai-usage.md`](docs/ai-usage.md) | Política de uso de IA y registro de sesiones |
-| [`docs/rubric-checklist.md`](docs/rubric-checklist.md) | Checklist de calidad para evaluación |
-
----
-
-## Reglas de desarrollo
-
-Consulta [`CLAUDE.md`](CLAUDE.md) para el conjunto completo de reglas aplicadas durante el desarrollo, incluyendo restricciones del flujo de datos, disciplina de librerías y estándares de calidad de código.
+I used AI coding assistants during development. The rules I followed are in
+[`docs/ai-usage.md`](docs/ai-usage.md): every important prompt is logged, every generated change is
+reviewed line by line before it is committed, and architecture decisions are made and written down
+by me in the ADR log. The development rules for the assistant are in [`CLAUDE.md`](CLAUDE.md).
