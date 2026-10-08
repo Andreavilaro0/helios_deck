@@ -6,7 +6,7 @@ Observatorio web fullstack de datos heliofísicos y geofísicos.
 
 Señales reales. Pipeline real. Sin datos de demostración.
 
-🌐 **[Ver en producción →](https://heliosdeck-production-12ca.up.railway.app/cosmic-view)**
+🌐 **[Ver en producción →](https://helios.158-220-83-35.sslip.io/cosmic-view)**
 
 ---
 
