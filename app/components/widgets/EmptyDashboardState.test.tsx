@@ -11,11 +11,11 @@ describe("EmptyDashboardState", () => {
 
   it("shows a no-data message", () => {
     render(<EmptyDashboardState />);
-    expect(screen.getByText(/no signal data available/i)).toBeInTheDocument();
+    expect(screen.getByText(/sin datos de señal disponibles/i)).toBeInTheDocument();
   });
 
   it("tells the user to reload after ingesting", () => {
     render(<EmptyDashboardState />);
-    expect(screen.getByText(/reload this page/i)).toBeInTheDocument();
+    expect(screen.getByText(/recarga esta página/i)).toBeInTheDocument();
   });
 });

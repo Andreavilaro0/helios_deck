@@ -30,14 +30,14 @@ describe("DashboardSignalCard", () => {
     expect(screen.getByText("B — MINOR")).toBeTruthy();
   });
 
-  it("shows FRESH badge when fresh=true", () => {
+  it("shows RECIENTE badge when fresh=true", () => {
     render(<DashboardSignalCard {...BASE_PROPS} fresh={true} freshLabel="8m" />);
-    expect(screen.getByText("FRESH · 8m")).toBeTruthy();
+    expect(screen.getByText("RECIENTE · 8m")).toBeTruthy();
   });
 
-  it("shows STALE badge when fresh=false", () => {
+  it("shows ANTIGUO badge when fresh=false", () => {
     render(<DashboardSignalCard {...BASE_PROPS} fresh={false} freshLabel="2h" />);
-    expect(screen.getByText("STALE · 2h")).toBeTruthy();
+    expect(screen.getByText("ANTIGUO · 2h")).toBeTruthy();
   });
 
   it("renders tooltip text", () => {

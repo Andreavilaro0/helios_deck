@@ -13,20 +13,20 @@ const BASE_PROPS = {
 describe("DashboardHero", () => {
   it("renders QUIET variant with correct headline and risk label", () => {
     render(<DashboardHero overallStatus="QUIET" {...BASE_PROPS} />);
-    expect(screen.getByText(/QUIET CONDITIONS/)).toBeInTheDocument();
-    expect(screen.getByText("LOW")).toBeInTheDocument();
+    expect(screen.getByText(/CONDICIONES TRANQUILAS/)).toBeInTheDocument();
+    expect(screen.getByText("BAJO")).toBeInTheDocument();
   });
 
   it("renders ACTIVE variant with correct headline and risk label", () => {
     render(<DashboardHero overallStatus="ACTIVE" {...BASE_PROPS} />);
-    expect(screen.getByText(/ACTIVE CONDITIONS/)).toBeInTheDocument();
-    expect(screen.getByText("MODERATE")).toBeInTheDocument();
+    expect(screen.getByText(/CONDICIONES ACTIVAS/)).toBeInTheDocument();
+    expect(screen.getByText("MODERADO")).toBeInTheDocument();
   });
 
   it("renders STORM variant with correct headline and risk label", () => {
     render(<DashboardHero overallStatus="STORM" {...BASE_PROPS} />);
-    expect(screen.getByText(/GEOMAGNETIC STORM/)).toBeInTheDocument();
-    expect(screen.getByText("HIGH")).toBeInTheDocument();
+    expect(screen.getByText(/TORMENTA GEOMAGNÉTICA/)).toBeInTheDocument();
+    expect(screen.getByText("ALTO")).toBeInTheDocument();
   });
 
   it("shows freshnessAge in the Freshness mini-card", () => {

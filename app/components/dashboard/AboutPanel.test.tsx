@@ -22,11 +22,11 @@ describe("AboutPanel", () => {
 
   it("renders all main sections when open", () => {
     render(<AboutPanel open={true} onClose={() => {}} />);
-    expect(screen.getByText("What it does")).toBeTruthy();
-    expect(screen.getByText("Data pipeline")).toBeTruthy();
-    expect(screen.getByText("Data sources & APIs")).toBeTruthy();
-    expect(screen.getByText("Built with")).toBeTruthy();
-    expect(screen.getByText("Project stats")).toBeTruthy();
+    expect(screen.getByText("Qué hace")).toBeTruthy();
+    expect(screen.getByText("Pipeline de datos")).toBeTruthy();
+    expect(screen.getByText("Fuentes de datos y APIs")).toBeTruthy();
+    expect(screen.getByText("Construido con")).toBeTruthy();
+    expect(screen.getByText("Estadísticas del proyecto")).toBeTruthy();
   });
 
   it("calls onClose when close button is clicked", () => {
