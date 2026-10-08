@@ -5,6 +5,10 @@ vi.mock("~/services/signals.server", () => ({
   listRecentSignalsByName: vi.fn().mockReturnValue([]),
 }));
 
+vi.mock("~/services/auth/session.server", () => ({
+  requireUser: vi.fn().mockResolvedValue("user-1"),
+}));
+
 import { loader } from "./cosmic-view";
 import { getLatestSignalByName } from "~/services/signals.server";
 
@@ -19,16 +23,16 @@ const MOCK_SIGNAL = {
 };
 
 describe("cosmic-view loader", () => {
-  it("returns latestSignal when data exists", () => {
+  it("returns latestSignal when data exists", async () => {
     vi.mocked(getLatestSignalByName).mockReturnValue(MOCK_SIGNAL);
-    const result = loader({} as never);
+    const result = await loader({} as never);
     expect(result.latestSignal).toEqual(MOCK_SIGNAL);
     expect(getLatestSignalByName).toHaveBeenCalledWith("kp-index");
   });
 
-  it("returns null when no data exists", () => {
+  it("returns null when no data exists", async () => {
     vi.mocked(getLatestSignalByName).mockReturnValue(null);
-    const result = loader({} as never);
+    const result = await loader({} as never);
     expect(result.latestSignal).toBeNull();
   });
 });
